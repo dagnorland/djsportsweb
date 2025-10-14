@@ -21,10 +21,8 @@ export default async function RootLayout({
     return (
         <NextAuthProvider>
             <html lang="en">
-                <body className="dark">
-                    <div className={ `!h-screen !w-screen overflow-x-hidden !p-4 ${inter.className}` }>
-                        { children }
-                    </div>
+                <body className={`dark ${inter.className}`}>
+                    { children }
                     <script src="https://sdk.scdn.co/spotify-player.js"></script>
                 </body>
             </html>

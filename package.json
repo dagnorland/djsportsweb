@@ -1,6 +1,6 @@
 {
-  "name": "nextjs-spotiy-api-template",
-  "version": "0.1.0",
+  "name": "djsportsweb",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
