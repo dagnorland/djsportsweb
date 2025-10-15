@@ -89,6 +89,7 @@ export const clearAllPlaylistTypes = (): void => {
  */
 export const getPlaylistTypeOptions = (): { value: DJPlaylistType; label: string }[] => {
   return [
+    { value: "none", label: "Ingen" },
     { value: "hotspot", label: "Hotspot" },
     { value: "match", label: "Match" },
     { value: "funStuff", label: "Fun Stuff" },

@@ -134,12 +134,12 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
         <TableRow>
           <TableHead className="w-12">#</TableHead>
           <TableHead>Tittel</TableHead>
+          <TableHead className="text-center">
+            <Clock className="h-4 w-4 inline" />
+          </TableHead>
           <TableHead>Artist</TableHead>
           <TableHead>Album</TableHead>
           <TableHead className="text-right">Starttid</TableHead>
-          <TableHead className="text-right">
-            <Clock className="h-4 w-4 inline" />
-          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -185,19 +185,6 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
                     )}
                   </div>
                 </div>
-              </TableCell>
-              <TableCell>
-                <div className="truncate">
-                  {isTrack && track.artists?.map((artist: any, i: number) => (
-                    <span key={artist.id}>
-                      {i > 0 && ", "}
-                      {artist.name}
-                    </span>
-                  ))}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="truncate">{isTrack && track.album?.name}</div>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
@@ -252,10 +239,24 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
                     </div>
                   )}
                 </div>
-              </TableCell>
+              </TableCell>              
               <TableCell className="text-right text-muted-foreground">
                 {formatDuration(track.duration_ms)}
               </TableCell>
+              <TableCell>
+                <div className="truncate">
+                  {isTrack && track.artists?.map((artist: any, i: number) => (
+                    <span key={artist.id}>
+                      {i > 0 && ", "}
+                      {artist.name}
+                    </span>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="truncate">{isTrack && track.album?.name}</div>
+              </TableCell>
+
             </TableRow>
           );
         })}

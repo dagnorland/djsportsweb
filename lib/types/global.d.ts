@@ -25,6 +25,7 @@ export type SearchType = "album" | "artist" | "track" | "show" | "episode";
  * The DJ playlist types available in the application.
  */
 export type DJPlaylistType = 
+  | "none"
   | "hotspot" 
   | "match"
   | "funStuff"

@@ -39,6 +39,22 @@ export default function PlaylistsPage() {
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [loadingTracks, setLoadingTracks] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if screen width is below 600px
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 600);
+    };
+
+    // Check on mount
+    checkScreenSize();
+
+    // Listen for resize events
+    window.addEventListener('resize', checkScreenSize);
+
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Redirect til login hvis ikke innlogget
   useEffect(() => {
@@ -208,7 +224,7 @@ export default function PlaylistsPage() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left sidebar - Playlists */}
-        <aside className="w-80 border-r overflow-y-auto p-4">
+        <aside className={`${isMobile ? 'w-48' : 'w-80'} border-r overflow-y-auto p-4`}>
           <h2 className="text-2xl font-bold mb-4">Dine spillelister</h2>
           <PlaylistSidebar
             playlists={playlists}
