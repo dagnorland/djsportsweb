@@ -160,7 +160,7 @@ export default function PlaylistsPage() {
     }
   };
 
-  const handlePlayTrack = async (trackUri: string, position: number) => {
+  const handlePlayTrack = async (trackUri: string, position: number, startTime?: number) => {
     if (!session?.accessToken || !selectedPlaylistId) return;
 
     try {
@@ -168,14 +168,14 @@ export default function PlaylistsPage() {
       const playlist = playlists.find((p) => p.id === selectedPlaylistId);
       if (!playlist) return;
 
-      // Generate random position between 5000 and 40000 ms
-      const randomPosition = Math.floor(Math.random() * (40000 - 5000 + 1)) + 5000;
+      // Use custom start time if provided, otherwise start from beginning
+      const positionMs = startTime && startTime > 0 ? startTime : 0;
 
       // Start playback with context (playlist) and offset (track position)
       await startResumePlayback(session.accessToken, undefined, {
         context_uri: playlist.uri,
         offset: { position },
-        position_ms: randomPosition,
+        position_ms: positionMs,
       });
 
       // Update now playing after a short delay

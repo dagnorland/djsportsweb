@@ -1,10 +1,13 @@
 "use client";
 
-import { SimplifiedPlaylist } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { SimplifiedPlaylist, DJPlaylistType } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Music2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Music2, Settings } from "lucide-react";
 import Image from "next/image";
+import { getPlaylistType, savePlaylistType, getPlaylistTypeOptions } from "@/lib/utils/playlistTypes";
 
 interface PlaylistSidebarProps {
   playlists: SimplifiedPlaylist[];
@@ -19,6 +22,34 @@ export default function PlaylistSidebar({
   onSelectPlaylist,
   loading = false,
 }: PlaylistSidebarProps) {
+  const [playlistTypes, setPlaylistTypes] = useState<Record<string, DJPlaylistType>>({});
+
+  // Load playlist types from localStorage
+  useEffect(() => {
+    const types = getPlaylistTypeOptions().reduce((acc, option) => {
+      // This is just to initialize the structure, actual values come from localStorage
+      return acc;
+    }, {} as Record<string, DJPlaylistType>);
+    
+    // Load actual stored types
+    const storedTypes = Object.fromEntries(
+      playlists.map(playlist => {
+        const type = getPlaylistType(playlist.id);
+        return [playlist.id, type];
+      }).filter(([_, type]) => type !== null)
+    );
+    
+    setPlaylistTypes(storedTypes);
+  }, [playlists]);
+
+  const handlePlaylistTypeChange = (playlistId: string, newType: DJPlaylistType) => {
+    savePlaylistType(playlistId, newType);
+    setPlaylistTypes(prev => ({
+      ...prev,
+      [playlistId]: newType
+    }));
+  };
+
   if (loading) {
     return (
       <div className="space-y-2">
@@ -78,6 +109,24 @@ export default function PlaylistSidebar({
                 <p className="text-sm text-muted-foreground">
                   {playlist.tracks.total} spor
                 </p>
+                {/* DJ Playlist Type Dropdown */}
+                <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                  <Select
+                    value={playlistTypes[playlist.id] || ""}
+                    onValueChange={(value: DJPlaylistType) => handlePlaylistTypeChange(playlist.id, value)}
+                  >
+                    <SelectTrigger className="h-8 text-xs w-full max-w-[200px]">
+                      <SelectValue placeholder="Velg type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getPlaylistTypeOptions().map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </Card>
@@ -86,4 +135,3 @@ export default function PlaylistSidebar({
     </ScrollArea>
   );
 }
-

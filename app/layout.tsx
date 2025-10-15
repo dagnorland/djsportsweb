@@ -8,7 +8,7 @@ import { NextFont } from "next/dist/compiled/@next/font";
 const inter: NextFont = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-    title: "NextJS Spotify API",
+    title: "djSportsWeb",
     description: "Listen to Spotify and manage playlists from your own app !",
 };
 

@@ -34,6 +34,8 @@ export interface PlaylistTrack {
   is_local: boolean;
   /** Information about the track or episode. */
   track: Track | Episode | null;
+  /** Custom start time in milliseconds for this track */
+  start_time_ms?: number;
 }
 
 /**

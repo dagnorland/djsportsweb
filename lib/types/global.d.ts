@@ -22,6 +22,15 @@ export type SpotifyType =
 export type SearchType = "album" | "artist" | "track" | "show" | "episode";
 
 /**
+ * The DJ playlist types available in the application.
+ */
+export type DJPlaylistType = 
+  | "hotspot" 
+  | "match"
+  | "funStuff"
+  | "preMatch";
+
+/**
  * The spotify object containing the details of an image.
  *
  * @property height - The image height in pixels. If unknown: null or not returned.
