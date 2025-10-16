@@ -134,12 +134,12 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
         <TableRow>
           <TableHead className="w-12">#</TableHead>
           <TableHead>Tittel</TableHead>
+          <TableHead className="text-cente">Starttid</TableHead>
           <TableHead className="text-center">
             <Clock className="h-4 w-4 inline" />
           </TableHead>
           <TableHead>Artist</TableHead>
           <TableHead>Album</TableHead>
-          <TableHead className="text-right">Starttid</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -222,10 +222,13 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <span className="text-muted-foreground text-sm">
+                      <span className={`text-sm px-2 py-1 rounded ${
+                        startTime > 0 
+                          ? "bg-foreground text-background" 
+                          : "text-muted-foreground"
+                      }`}>
                         {startTime > 0 ? formatStartTime(startTime) : "0:00"}
-                      </span>
-                      <Button
+                      </span>                      <Button
                         size="sm"
                         variant="ghost"
                         className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"

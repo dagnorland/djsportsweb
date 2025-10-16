@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -38,24 +39,22 @@ export default function Page() {
                         <CardTitle className="text-2xl">Velkommen!</CardTitle>
                         <CardDescription>
                             Du er logget inn som: {session.user?.email || session.user?.name}
-                            
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                    <Button 
-                        type="button" 
-                        className="w-full" 
-                        onClick={() => router.push('/playlists')}
-                    >
-                        Playlist
-                    </Button>
                         <Button 
                             type="button" 
-                            variant="outline"
                             className="w-full" 
-                            onClick={() => signOut()}
+                            onClick={() => router.push('/playlists')}
                         >
-                            Logg ut
+                            Gå til Spillelister
+                        </Button>
+                        <Button 
+                            type="button" 
+                            className="w-full" 
+                            onClick={() => router.push('/match')}
+                        >
+                            Gå til Kamp
                         </Button>
                     </CardContent>
                 </Card>
@@ -68,9 +67,9 @@ export default function Page() {
         <div className="h-screen w-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
-                    <CardTitle className="text-2xl">Login with Spotify</CardTitle>
+                    <CardTitle className="text-2xl">Login med Spotify</CardTitle>
                     <CardDescription>
-                        You&apos;ll be redirected to Spotify. Enter your Spotify credentials to login to your Spotifyer account.
+                        Du vil bli omdirigert til Spotify. Skriv inn dine Spotify-innloggingsdetaljer for å logge inn på din Spotify-konto.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -79,7 +78,7 @@ export default function Page() {
                         className="w-full" 
                         onClick={(): Promise<SignInResponse | undefined> => signIn('spotify', { callbackUrl: '/' })}
                     >
-                        Login
+                        Logg inn
                     </Button>
                 </CardContent>
             </Card>

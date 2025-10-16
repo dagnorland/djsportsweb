@@ -21,7 +21,6 @@ import type {
 } from "@/lib/types";
 import PlaylistSidebar from "@/components/PlaylistSidebar";
 import TrackList from "@/components/TrackList";
-import NowPlayingBar from "@/components/NowPlayingBar";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function PlaylistsPage() {
@@ -219,62 +218,55 @@ export default function PlaylistsPage() {
     return null;
   }
 
-  return (
-    <div className="flex h-screen flex-col">
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left sidebar - Playlists */}
-        <aside className={`${isMobile ? 'w-48' : 'w-80'} border-r overflow-y-auto p-4`}>
-          <h2 className="text-2xl font-bold mb-4">Dine spillelister</h2>
-          <PlaylistSidebar
-            playlists={playlists}
-            selectedPlaylistId={selectedPlaylistId}
-            onSelectPlaylist={handleSelectPlaylist}
-            loading={loadingPlaylists}
-          />
-        </aside>
+// app/playlists/page.tsx - Oppdater bare return-delen
+// ... existing code ...
 
-        {/* Right panel - Tracks */}
-        <main className="flex-1 overflow-y-auto">
-          {selectedPlaylistId ? (
-            <div className="p-6">
-              {selectedPlaylistName && (
-                <h2 className="text-3xl font-bold mb-6">
-                  {selectedPlaylistName}
-                </h2>
-              )}
-              <TrackList 
-                tracks={tracks} 
-                loading={loadingTracks} 
-                onPlayTrack={handlePlayTrack}
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <h3 className="text-xl font-semibold mb-2">
-                  Velg en spilleliste
-                </h3>
-                <p className="text-muted-foreground">
-                  Klikk på en spilleliste til venstre for å se sporene
-                </p>
-              </div>
-            </div>
-          )}
-        </main>
-      </div>
-
-      {/* Bottom player bar */}
-      <footer className="border-t">
-        <NowPlayingBar
-          currentlyPlaying={nowPlaying}
-          onPlayPause={handlePlayPause}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onVolumeChange={handleVolumeChange}
+return (
+  <div className="flex h-screen flex-col">
+    {/* Main content */}
+    <div className="flex flex-1 overflow-hidden">
+      {/* Left sidebar - Playlists */}
+      <aside className={`${isMobile ? 'w-48' : 'w-80'} border-r overflow-y-auto p-4`}>
+        <h2 className="text-2xl font-bold mb-4">Dine spillelister</h2>
+        <PlaylistSidebar
+          playlists={playlists}
+          selectedPlaylistId={selectedPlaylistId}
+          onSelectPlaylist={handleSelectPlaylist}
+          loading={loadingPlaylists}
         />
-      </footer>
+      </aside>
+
+      {/* Right panel - Tracks */}
+      <main className="flex-1 overflow-y-auto">
+        {selectedPlaylistId ? (
+          <div className="p-6">
+            {selectedPlaylistName && (
+              <h2 className="text-3xl font-bold mb-6">
+                {selectedPlaylistName}
+              </h2>
+            )}
+            <TrackList 
+              tracks={tracks} 
+              loading={loadingTracks} 
+              onPlayTrack={handlePlayTrack}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <h3 className="text-xl font-semibold mb-2">
+                Velg en spilleliste
+              </h3>
+              <p className="text-muted-foreground">
+                Klikk på en spilleliste til venstre for å se sporene
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
     </div>
-  );
+
+  </div>
+);
 }
 

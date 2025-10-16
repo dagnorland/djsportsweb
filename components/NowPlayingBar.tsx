@@ -54,7 +54,7 @@ export default function NowPlayingBar({
 
   if (!currentlyPlaying?.item) {
     return (
-      <div className="h-24 px-4 flex items-center justify-center bg-muted/30">
+      <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center justify-center bg-muted/30 border-t z-40">
         <p className="text-sm text-muted-foreground">
           Ingen sang spilles for øyeblikket
         </p>
@@ -66,10 +66,10 @@ export default function NowPlayingBar({
   const isPlaying = currentlyPlaying.is_playing;
 
   return (
-    <div className="h-24 px-4 flex items-center gap-4 bg-background">
+    <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center gap-4 bg-background border-t z-40">
       {/* Track info */}
       <div className="flex items-center gap-3 w-80 min-w-0">
-        {track.album?.images && track.album.images.length > 0 ? (
+        {"album" in track && track.album?.images && track.album.images.length > 0 ? (
           <Image
             src={track.album.images[track.album.images.length - 1].url}
             alt={track.name}
@@ -85,7 +85,7 @@ export default function NowPlayingBar({
         <div className="min-w-0 flex-1">
           <p className="font-medium truncate">{track.name}</p>
           <p className="text-sm text-muted-foreground truncate">
-            {track.artists?.map((artist) => artist.name).join(", ")}
+            {"artists" in track && track.artists?.map((artist) => artist.name).join(", ")}
           </p>
         </div>
       </div>

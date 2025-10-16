@@ -7,13 +7,13 @@ import { CurrentlyPlaying } from "@/lib/types";
  *
  * @param {string} token - The access token for authentication.
  *
- * @returns {Promise<CurrentlyPlaying>} A promise that resolves to the currently playing track, or undefined if no track is playing.
+ * @returns {Promise<CurrentlyPlaying | null>} A promise that resolves to the currently playing track, or null if no track is playing.
  *
  * @see https://developer.spotify.com/documentation/web-api/reference/get-the-users-currently-playing-track
  */
 export default async function getCurrentlyPlayingTrack(
   token: string
-): Promise<CurrentlyPlaying> {
+): Promise<CurrentlyPlaying | null> {
   try {
     const res: Response = await fetch(
       "https://api.spotify.com/v1/me/player/currently-playing",
@@ -24,14 +24,25 @@ export default async function getCurrentlyPlayingTrack(
       }
     );
 
-    if (!res.ok) {
-      throw new Error("Failed to fetch data");
+    // Handle 204 No Content (no music playing)
+    if (res.status === 204) {
+      return null;
     }
 
-    const data: CurrentlyPlaying = await res.json();
+    if (!res.ok) {
+      throw new Error(`Failed to fetch data: ${res.status} ${res.statusText}`);
+    }
+
+    // Check if response has content before parsing JSON
+    const text = await res.text();
+    if (!text.trim()) {
+      return null;
+    }
+
+    const data: CurrentlyPlaying = JSON.parse(text);
     return data;
   } catch (error) {
     console.error("An error occurred while fetching data:", error);
-    throw error;
+    return null; // Return null instead of throwing
   }
 }
