@@ -34,3 +34,34 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# electron
+/dist/
+/out/
+*.dmg
+*.exe
+*.deb
+*.rpm
+*.AppImage
+*.snap
+*.tar.gz
+*.zip
+*.dmg
+*.pkg
+*.msi
+*.nsis
+*.appx
+*.flatpak
+
+# electron-builder
+/app-builds/
+/release/
+/dist_electron/
+
+# electron logs
+electron-main.log
+electron-renderer.log
+
+# electron cache
+.electron-gyp/
+.electron/

@@ -1,14 +1,12 @@
-// app/layout.tsx
-/* eslint-disable @next/next/no-sync-scripts */
 import type { Metadata } from "next";
 import { NextAuthProvider } from "../providers/NextAuthProvider";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { NextFont } from "next/dist/compiled/@next/font";
 import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
+import Script from "next/script";
 
-const inter: NextFont = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "djSports",
@@ -20,25 +18,29 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>): Promise<JSX.Element> {
-
     return (
-        <NextAuthProvider>
-            <html lang="no">
+        <html lang="no">
+            <head>
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#1db954" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                 <meta name="apple-mobile-web-app-title" content="djSports" />
                 <link rel="apple-touch-icon" href="/icon-192x192.png" />
-                <body className={`dark ${inter.className}`}>
+            </head>
+            <body className={`dark ${inter.className}`}>
+                <NextAuthProvider>
                     <Navigation />
                     <main className="pb-24">
                         {children}
                     </main>
                     <GlobalNowPlayingBar />
-                    <script src="https://sdk.scdn.co/spotify-player.js"></script>
-                </body>
-            </html>
-        </NextAuthProvider >
+                    <Script 
+                        src="https://sdk.scdn.co/spotify-player.js" 
+                        strategy="afterInteractive"
+                    />
+                </NextAuthProvider>
+            </body>
+        </html>
     );
 }
