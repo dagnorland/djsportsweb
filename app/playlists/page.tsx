@@ -22,6 +22,9 @@ import type {
 import PlaylistSidebar from "@/components/PlaylistSidebar";
 import TrackList from "@/components/TrackList";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, X } from "lucide-react";
 
 export default function PlaylistsPage() {
   const { data: session, status } = useSession();
@@ -39,6 +42,8 @@ export default function PlaylistsPage() {
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const [loadingTracks, setLoadingTracks] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
 
   // Check if screen width is below 600px
   useEffect(() => {
@@ -213,6 +218,22 @@ export default function PlaylistsPage() {
     );
   }
 
+  // Filter playlists based on search query
+  const filteredPlaylists = playlists.filter(playlist =>
+    playlist.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const clearSearch = () => {
+    setSearchQuery("");
+  };
+
+  const toggleSearch = () => {
+    setIsSearchVisible(!isSearchVisible);
+    if (isSearchVisible) {
+      setSearchQuery("");
+    }
+  };
+
   // Hvis ikke innlogget, vis ingenting (redirect skjer i useEffect)
   if (!session) {
     return null;
@@ -227,9 +248,45 @@ return (
     <div className="flex flex-1 overflow-hidden">
       {/* Left sidebar - Playlists */}
       <aside className={`${isMobile ? 'w-48' : 'w-80'} border-r overflow-y-auto p-4`}>
-        <h2 className="text-2xl font-bold mb-4">Dine spillelister</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <h2 className="text-2xl font-bold">Dine spillelister</h2>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleSearch}
+            className="h-8 w-8 p-0"
+            title={isSearchVisible ? "Skjul søk" : "Søk spillelister"}
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        {isSearchVisible && (
+          <div className="mb-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Søk spillelister..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1"
+                autoFocus
+              />
+              {searchQuery && (
+                <Button variant="outline" size="sm" onClick={clearSearch} className="h-8 w-8 p-0">
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground">
+                {filteredPlaylists.length} spilleliste{filteredPlaylists.length !== 1 ? 'r' : ''} funnet
+              </p>
+            )}
+          </div>
+        )}
+        
         <PlaylistSidebar
-          playlists={playlists}
+          playlists={filteredPlaylists}
           selectedPlaylistId={selectedPlaylistId}
           onSelectPlaylist={handleSelectPlaylist}
           loading={loadingPlaylists}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { SimplifiedPlaylist, DJPlaylistType } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Music2, Settings } from "lucide-react";
+import { Music2 } from "lucide-react";
 import Image from "next/image";
 import { getPlaylistType, savePlaylistType, getPlaylistTypeOptions } from "@/lib/utils/playlistTypes";
 
@@ -65,6 +65,7 @@ export default function PlaylistSidebar({
     }));
   };
 
+
   if (loading) {
     return (
       <div className="space-y-1">
@@ -91,6 +92,7 @@ export default function PlaylistSidebar({
       </div>
     );
   }
+
 
   return (
     <ScrollArea className="h-full">
