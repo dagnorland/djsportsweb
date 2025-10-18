@@ -53,7 +53,7 @@ export function Navigation() {
 
           {/* Brukerinfo og logg ut */}
           {session && (
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-20">
               <span className="text-sm text-muted-foreground">
                 {session.user?.name || session.user?.email}
               </span>

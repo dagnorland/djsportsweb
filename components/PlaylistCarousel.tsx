@@ -4,7 +4,6 @@ import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { PlaylistTrack, SimplifiedPlaylist } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
 import Image from "next/image";
 import { Music2 } from "lucide-react";

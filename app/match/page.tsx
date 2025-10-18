@@ -155,13 +155,13 @@ export default function MatchPage() {
 
   // Performance metrics display
   const renderPerformanceMetrics = useMemo(() => {
-    if (process.env.NODE_ENV !== 'development' || !showPerformanceMetrics) return null;
+    if ((process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'production') || !showPerformanceMetrics) return null;
     
     const allLogs = performanceMonitor.getLogs();
     const summary = performanceMonitor.getSummary();
     
     return (
-      <div className="fixed bottom-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs max-w-sm z-50 border border-gray-600">
+      <div className="fixed top-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs max-w-sm z-50 border border-gray-600">
         <div className="flex justify-between items-center mb-2">
           <div className="font-bold">📊 Performance Monitor</div>
           <button 
