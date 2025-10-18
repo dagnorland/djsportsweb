@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { PlaylistTrack, SimplifiedPlaylist } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ interface PlaylistCarouselProps {
   currentTrackUri?: string;
 }
 
-export default function PlaylistCarousel({ 
+const PlaylistCarousel = memo(function PlaylistCarousel({ 
   playlist, 
   tracks, 
   onPlayTrack,
@@ -44,35 +44,13 @@ export default function PlaylistCarousel({
     }
   }, [tracks]);
 
-  const currentTrack = tracksWithStartTimes[currentTrackIndex];
-  if (!currentTrack?.track) return null;
-
-  const track = currentTrack.track;
-  const isTrack = "album" in track;
-  const startTime = currentTrack.start_time_ms || 0;
-
-  const handlePlay = () => {
-    if (onPlayTrack && track) {
-      onPlayTrack(track.uri, currentTrackIndex, startTime > 0 ? startTime : undefined);
-    }
-  };
-
-  const handleNext = () => {
-    setCurrentTrackIndex((prev) => (prev + 1) % tracks.length);
-  };
-
-  const handlePrevious = () => {
-    setCurrentTrackIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
-  };
-
-
-  const formatStartTime = (ms: number) => {
+  const formatStartTime = useCallback((ms: number) => {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
+  }, []);
 
-  const getPlaylistTypeColor = (type: string) => {
+  const getPlaylistTypeColor = useCallback((type: string) => {
     switch (type) {
       case "hotspot": return "bg-red-500";
       case "match": return "bg-blue-500";
@@ -80,9 +58,9 @@ export default function PlaylistCarousel({
       case "preMatch": return "bg-yellow-500";
       default: return "bg-gray-500";
     }
-  };
+  }, []);
 
-  const getPlaylistTypeLabel = (type: string) => {
+  const getPlaylistTypeLabel = useCallback((type: string) => {
     switch (type) {
       case "hotspot": return "Hotspot";
       case "match": return "Match";
@@ -90,7 +68,40 @@ export default function PlaylistCarousel({
       case "preMatch": return "Pre Match";
       default: return "Ingen";
     }
-  };
+  }, []);
+
+  const handlePlay = useCallback(() => {
+    const currentTrack = tracksWithStartTimes[currentTrackIndex];
+    if (!currentTrack?.track) return;
+    
+    const track = currentTrack.track;
+    const startTime = currentTrack.start_time_ms || 0;
+    
+    if (onPlayTrack && track) {
+      onPlayTrack(track.uri, currentTrackIndex, startTime > 0 ? startTime : undefined);
+    }
+  }, [onPlayTrack, currentTrackIndex, tracksWithStartTimes]);
+
+  const handleNext = useCallback(() => {
+    setCurrentTrackIndex((prev) => (prev + 1) % tracks.length);
+  }, [tracks.length]);
+
+  const handlePrevious = useCallback(() => {
+    setCurrentTrackIndex((prev) => (prev - 1 + tracks.length) % tracks.length);
+  }, [tracks.length]);
+
+  // Memoize expensive computations
+  const playlistTypeColor = useMemo(() => getPlaylistTypeColor(playlistType), [playlistType, getPlaylistTypeColor]);
+
+  const currentTrack = tracksWithStartTimes[currentTrackIndex];
+  const track = currentTrack?.track;
+  const isTrack = track && "album" in track;
+  const startTime = currentTrack?.start_time_ms || 0;
+  
+  const formattedStartTime = useMemo(() => startTime > 0 ? formatStartTime(startTime) : null, [startTime, formatStartTime]);
+  const isCurrentTrackPlaying = useMemo(() => isPlaying && currentTrackUri === track?.uri, [isPlaying, currentTrackUri, track?.uri]);
+
+  if (!currentTrack?.track) return null;
 
   return (
     <Card className="w-full max-w-48 mx-auto">
@@ -99,7 +110,7 @@ export default function PlaylistCarousel({
         <div className="mb-2">
           <h3 className="font-semibold truncate text-xs">{playlist.name}</h3>
           {/* Color line for playlist type */}
-          <div className={`h-1 w-full rounded-full mt-1 ${getPlaylistTypeColor(playlistType)}`}></div>
+          <div className={`h-1 w-full rounded-full mt-1 ${playlistTypeColor}`}></div>
         </div>
 
         {/* Current track display */}
@@ -122,7 +133,7 @@ export default function PlaylistCarousel({
               {isTrack && track.album?.images && track.album.images.length > 0 ? (
                 <Image
                   src={track.album.images[track.album.images.length - 1].url}
-                  alt={track.name}
+                  alt={track?.name || "Ukjent spor"}
                   fill
                   className="object-cover rounded-lg"
                 />
@@ -139,7 +150,7 @@ export default function PlaylistCarousel({
                   onClick={handlePlay}
                   className="rounded-full h-12 w-12 p-0 bg-black/50 hover:bg-black/70 border-0 shadow-lg"
                 >
-                  {isPlaying && currentTrackUri === track.uri ? (
+                  {isCurrentTrackPlaying ? (
                     <Pause className="h-6 w-6 text-white" />
                   ) : (
                     <Play className="h-6 w-6 text-white" />
@@ -162,15 +173,15 @@ export default function PlaylistCarousel({
 
           {/* Track info */}
           <div className="text-center space-y-0.5">
-            <h4 className="font-medium truncate text-xs">{track.name}</h4>
-            {isTrack && track.artists && (
+            <h4 className="font-medium truncate text-xs">{track?.name || "Ukjent spor"}</h4>
+            {isTrack && track?.artists && (
               <p className="text-xs text-muted-foreground truncate">
-                {track.artists.map(artist => artist.name).join(", ")}
+                {track?.artists?.map(artist => artist.name).join(", ") || "Ukjent artist"}
               </p>
             )}
-            {startTime > 0 && (
+            {formattedStartTime && (
               <p className="text-xs text-muted-foreground">
-                {formatStartTime(startTime)}
+                {formattedStartTime}
               </p>
             )}
           </div>
@@ -185,4 +196,6 @@ export default function PlaylistCarousel({
       </CardContent>
     </Card>
   );
-}
+});
+
+export default PlaylistCarousel;

@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-27
+
+### Enhanced
+- **MatchPage og PlaylistCarousel**: Optimalisert spilleliste- og sporiadlasting
+  - Implementert caching-mekanismer for forbedret ytelse
+  - Batch-ladning av spor for raskere innlasting
+  - Detaljerte ytelsesmetrikker for utviklermodus
+  
+- **Avspillingsfunksjonalitet**: Refaktorert sporavspilling
+  - Bruker forhåndsberegnede mappinger for raskere tilgang
+  - Optimalisert sporiadlasting og caching
+
+### Added
+- **Performance Monitoring**: Ytelsesovervåking i utviklermodus
+  - Detaljerte metrikker for sporiadlasting
+  - Cache-hit/miss-statistikk
+  - Lastingstider og optimaliseringsindikatorer
+
+### Technical Details
+- Nytt caching-system i `lib/utils/cache.ts`
+- Optimalisert sporiadlasting i `lib/spotify/optimized/`
+- Ytelsesmetrikker i `lib/utils/performance.ts`
+- Forbedret UI-komponenter for ytelsesovervåking
+
 ## [0.2.0] - 2025-10-14
 
 ### Added

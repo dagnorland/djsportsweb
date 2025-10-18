@@ -1,15 +1,18 @@
 // app/match/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { getCurrentUserPlaylists, getPlaylistItems, getCurrentlyPlayingTrack } from "@/lib/spotify";
+import { getCurrentlyPlayingTrack } from "@/lib/spotify";
 import { SimplifiedPlaylist, PlaylistTrack, CurrentlyPlaying } from "@/lib/types";
 import { getAllPlaylistTypes } from "@/lib/utils/playlistTypes";
 import PlaylistCarousel from "@/components/PlaylistCarousel";
 import { getPlaylistTypeColor } from "@/lib/utils";
+import { loadPlaylistsCached, loadMultiplePlaylistTracks, preloadCriticalPlaylists } from "@/lib/spotify/optimized/playlistLoader";
+import { playTrackOptimized, updateTrackMapping, getTrackPlaybackMetrics } from "@/lib/spotify/optimized/trackPlayer";
+import { performanceMonitor } from "@/lib/utils/performance";
 
 export default function MatchPage() {
   const { data: session, status } = useSession();
@@ -23,6 +26,8 @@ export default function MatchPage() {
   const [playlistTracks, setPlaylistTracks] = useState<Record<string, PlaylistTrack[]>>({});
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const [loading, setLoading] = useState(true);
+  const [performanceMetrics, setPerformanceMetrics] = useState<any>(null);
+  const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
 
   // Redirect til login hvis ikke innlogget
   useEffect(() => {
@@ -31,44 +36,46 @@ export default function MatchPage() {
     }
   }, [status, router]);
 
-  // Load playlists and filter hotspot ones
+  // Load playlists and filter by type
   useEffect(() => {
     if (session?.accessToken) {
-      loadPlaylists();
+      loadPlaylistsOptimized();
       updateNowPlaying();
-      const interval = setInterval(updateNowPlaying, 5000);
+      const interval = setInterval(updateNowPlaying, 10000); // Reduced frequency
       return () => clearInterval(interval);
     }
   }, [session]);
 
-  // Load tracks for all playlists
+  // Load tracks for all playlists with optimized batching
   useEffect(() => {
     const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
     if (allPlaylists.length > 0 && session?.accessToken) {
-      loadAllPlaylistTracks();
+      loadAllPlaylistTracksOptimized(allPlaylists);
     }
   }, [hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, session]);
 
-  const loadPlaylists = async () => {
+  const loadPlaylistsOptimized = useCallback(async () => {
     if (!session?.accessToken) return;
 
     try {
       setLoading(true);
-      const data = await getCurrentUserPlaylists(session.accessToken, 0, 50);
-      setPlaylists(data.items);
+      console.log("🚀 Loading playlists with caching...");
+      
+      const data = await loadPlaylistsCached(session.accessToken, 0, 50);
+      setPlaylists(data);
       
       // Filter playlists by type
       const playlistTypes = getAllPlaylistTypes();
-      const hotspot = data.items.filter(playlist => 
+      const hotspot = data.filter(playlist => 
         playlistTypes[playlist.id] === "hotspot"
       );
-      const match = data.items.filter(playlist => 
+      const match = data.filter(playlist => 
         playlistTypes[playlist.id] === "match"
       );
-      const funStuff = data.items.filter(playlist => 
+      const funStuff = data.filter(playlist => 
         playlistTypes[playlist.id] === "funStuff"
       );
-      const preMatch = data.items.filter(playlist => 
+      const preMatch = data.filter(playlist => 
         playlistTypes[playlist.id] === "preMatch"
       );
       
@@ -76,40 +83,38 @@ export default function MatchPage() {
       setMatchPlaylists(match);
       setFunStuffPlaylists(funStuff);
       setPreMatchPlaylists(preMatch);
+
+      // Preload critical playlists
+      const allPlaylists = [...hotspot, ...match, ...funStuff, ...preMatch];
+      await preloadCriticalPlaylists(session.accessToken, allPlaylists);
+      
     } catch (error) {
       console.error("Feil ved henting av spillelister:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.accessToken]);
 
-  const loadAllPlaylistTracks = async () => {
+  const loadAllPlaylistTracksOptimized = useCallback(async (allPlaylists: SimplifiedPlaylist[]) => {
     if (!session?.accessToken) return;
 
     try {
-      const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
-      const tracksPromises = allPlaylists.map(async (playlist) => {
-        try {
-          const data = await getPlaylistItems(session.accessToken!, playlist.id, 0, 100);
-          return { playlistId: playlist.id, tracks: data.items };
-        } catch (error) {
-          console.error(`Feil ved henting av spor for ${playlist.name}:`, error);
-          return { playlistId: playlist.id, tracks: [] };
-        }
-      });
-
-      const results = await Promise.all(tracksPromises);
-      const tracksMap: Record<string, PlaylistTrack[]> = {};
+      console.log(`🎵 Loading tracks for ${allPlaylists.length} playlists with batching...`);
       
-      results.forEach(({ playlistId, tracks }) => {
-        tracksMap[playlistId] = tracks;
-      });
-      
+      const tracksMap = await loadMultiplePlaylistTracks(session.accessToken, allPlaylists, 3);
       setPlaylistTracks(tracksMap);
+      
+      // Update track mapping for optimized playback
+      updateTrackMapping(allPlaylists, tracksMap);
+      
+      // Update performance metrics
+      const metrics = getTrackPlaybackMetrics();
+      setPerformanceMetrics(metrics);
+      
     } catch (error) {
       console.error("Feil ved henting av alle spilleliste-spor:", error);
     }
-  };
+  }, [session?.accessToken]);
 
   const updateNowPlaying = async () => {
     if (!session?.accessToken) return;
@@ -122,35 +127,136 @@ export default function MatchPage() {
     }
   };
 
-  const handlePlayTrack = async (trackUri: string, position: number, startTime?: number) => {
+  const handlePlayTrack = useCallback(async (trackUri: string, position: number, startTime?: number) => {
     if (!session?.accessToken) return;
 
     try {
-      // Find the playlist containing this track
-      const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
-      const playlist = allPlaylists.find(p => 
-        playlistTracks[p.id]?.some(track => track.track?.uri === trackUri)
-      );
+      console.log(`🎵 Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
       
-      if (!playlist) return;
-
-      // Use custom start time if provided, otherwise start from beginning
-      const positionMs = startTime && startTime > 0 ? startTime : 0;
-
-      // Start playback with context (playlist) and offset (track position)
-      const { startResumePlayback } = await import("@/lib/spotify");
-      await startResumePlayback(session.accessToken, undefined, {
-        context_uri: playlist.uri,
-        offset: { position },
-        position_ms: positionMs,
+      // Use optimized track playback
+      await playTrackOptimized(session.accessToken, {
+        trackUri,
+        position,
+        startTime,
+        playlistId: undefined // Will be resolved by the optimized function
       });
 
       // Update now playing after a short delay
       setTimeout(updateNowPlaying, 500);
+      
+      // Update performance metrics
+      const metrics = getTrackPlaybackMetrics();
+      setPerformanceMetrics(metrics);
+      
     } catch (error) {
       console.error("Feil ved start av spor:", error);
     }
-  };
+  }, [session?.accessToken, updateNowPlaying]);
+
+  // Performance metrics display
+  const renderPerformanceMetrics = useMemo(() => {
+    if (process.env.NODE_ENV !== 'development' || !showPerformanceMetrics) return null;
+    
+    const allLogs = performanceMonitor.getLogs();
+    const summary = performanceMonitor.getSummary();
+    
+    return (
+      <div className="fixed bottom-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs max-w-sm z-50 border border-gray-600">
+        <div className="flex justify-between items-center mb-2">
+          <div className="font-bold">📊 Performance Monitor</div>
+          <button 
+            onClick={() => setShowPerformanceMetrics(false)}
+            className="text-gray-400 hover:text-white"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {/* Overall stats */}
+        <div className="mb-3 space-y-1">
+          <div>Total Operations: {allLogs.length}</div>
+          <div>Cache Hits: {summary['load_playlists']?.count || 0}</div>
+          <div>Track Loads: {summary['load_playlist_tracks']?.count || 0}</div>
+          <div>Track Plays: {summary['play_track_optimized']?.count || 0}</div>
+          <div>Spotify API Calls: {summary['spotify_api_call']?.count || 0}</div>
+          {summary['spotify_api_call']?.avgDuration && (
+            <div className="text-xs text-gray-300">
+              Avg Spotify API: {summary['spotify_api_call'].avgDuration.toFixed(2)}ms
+            </div>
+          )}
+        </div>
+        
+        {/* Recent track starts */}
+        {summary['track_start'] && (
+          <div className="mt-2">
+            <div className="font-semibold mb-1">Recent Track Starts:</div>
+            {allLogs
+              .filter(log => log.operation === 'track_start')
+              .slice(-3)
+              .map((log, index) => (
+                <div key={index} className="text-xs mb-1">
+                  {log.metadata?.trackUri?.split(':').pop()?.substring(0, 15)}... 
+                  <br />
+                  <span className="text-gray-300">
+                    Total: {log.duration?.toFixed(2)}ms
+                    {log.metadata?.spotifyApiDuration && (
+                      <span> | Spotify: {log.metadata.spotifyApiDuration.toFixed(2)}ms</span>
+                    )}
+                  </span>
+                </div>
+              ))}
+          </div>
+        )}
+        
+        {/* Performance warnings */}
+        {summary['play_track_optimized']?.avgDuration > 1000 && (
+          <div className="mt-2 text-yellow-400 text-xs">
+            ⚠️ Slow track starts detected
+          </div>
+        )}
+        
+        {/* Clear logs button */}
+        <button 
+          onClick={() => performanceMonitor.clearLogs()}
+          className="mt-2 text-xs text-gray-400 hover:text-white underline"
+        >
+          Clear Logs
+        </button>
+      </div>
+    );
+  }, [performanceMetrics, showPerformanceMetrics]);
+
+  const renderPlaylistSection = useCallback((title: string, playlists: SimplifiedPlaylist[], type: string) => {
+    if (playlists.length === 0) return null;
+    
+    return (
+      <div className="mb-6 relative">
+        {/* Rotated label on the left */}
+        <div className="absolute left-[20px] top-[60px] h-full flex items-start pt-4">
+          <div className="transform -rotate-90 origin-bottom-left text-lg font-semibold text-muted-foreground whitespace-nowrap">
+            {title}
+          </div>
+        </div>
+        
+        {/* Content with left margin to avoid overlap */}
+        <div className="ml-0">
+          <div className={`h-1 w-full rounded-full mb-3 ${getPlaylistTypeColor(type)}`}></div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+            {playlists.map((playlist) => (
+              <PlaylistCarousel
+                key={playlist.id}
+                playlist={playlist}
+                tracks={playlistTracks[playlist.id] || []}
+                onPlayTrack={handlePlayTrack}
+                isPlaying={nowPlaying?.is_playing || false}
+                currentTrackUri={nowPlaying?.item?.uri}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }, [playlistTracks, handlePlayTrack, nowPlaying]);
 
   // Vis loading mens session sjekkes
   if (status === "loading") {
@@ -182,40 +288,19 @@ export default function MatchPage() {
     );
   }
 
-  const renderPlaylistSection = (title: string, playlists: SimplifiedPlaylist[], type: string) => {
-    if (playlists.length === 0) return null;
-    
-    return (
-      <div className="mb-6 relative">
-        {/* Rotated label on the left */}
-        <div className="absolute left-[20px] top-[60px] h-full flex items-start pt-4">
-          <div className="transform -rotate-90 origin-bottom-left text-lg font-semibold text-muted-foreground whitespace-nowrap">
-            {title}
-          </div>
-        </div>
-        
-        {/* Content with left margin to avoid overlap */}
-        <div className="ml-0">
-          <div className={`h-1 w-full rounded-full mb-3 ${getPlaylistTypeColor(type)}`}></div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-            {playlists.map((playlist) => (
-              <PlaylistCarousel
-                key={playlist.id}
-                playlist={playlist}
-                tracks={playlistTracks[playlist.id] || []}
-                onPlayTrack={handlePlayTrack}
-                isPlaying={nowPlaying?.is_playing || false}
-                currentTrackUri={nowPlaying?.item?.uri}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
+      {/* Performance toggle button (development only) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => setShowPerformanceMetrics(!showPerformanceMetrics)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+          >
+            {showPerformanceMetrics ? 'Hide' : 'Show'} Performance
+          </button>
+        </div>
+      )}
 
       {/* Scrollable section for other playlist types */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
@@ -236,6 +321,9 @@ export default function MatchPage() {
           </Card>
         )}
       </div>
+      
+      {/* Performance metrics overlay */}
+      {renderPerformanceMetrics}
     </div>
   );
 }
