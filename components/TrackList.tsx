@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Music2, Clock, Edit3, Check, X } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   saveTrackStartTime, 
   getTrackStartTime, 
@@ -30,6 +30,8 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
   const [tracksWithStartTimes, setTracksWithStartTimes] = useState<PlaylistTrack[]>([]);
   const [editingTrack, setEditingTrack] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>("");
+  const [focusedTrackIndex, setFocusedTrackIndex] = useState<number>(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Load start times from localStorage when tracks change
   useEffect(() => {
@@ -38,6 +40,14 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
       setTracksWithStartTimes(tracksWithTimes);
     }
   }, [tracks]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingTrack && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editingTrack]);
 
   const formatDuration = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -68,6 +78,77 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
     setEditValue(formatStartTime(currentStartTime));
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent, trackIndex: number) => {
+    if (e.key === 'Enter' && !editingTrack) {
+      const track = tracksWithStartTimes[trackIndex];
+      if (track?.track?.id) {
+        const startTime = track.start_time_ms || 0;
+        handleEditStartTime(track.track.id, startTime);
+        setFocusedTrackIndex(trackIndex);
+      }
+    } else if (e.key === 'ArrowDown' && !editingTrack) {
+      e.preventDefault();
+      const nextIndex = Math.min(trackIndex + 1, tracksWithStartTimes.length - 1);
+      setFocusedTrackIndex(nextIndex);
+    } else if (e.key === 'ArrowUp' && !editingTrack) {
+      e.preventDefault();
+      const prevIndex = Math.max(trackIndex - 1, 0);
+      setFocusedTrackIndex(prevIndex);
+    } else if (e.key === 'Escape' && editingTrack) {
+      handleCancelEdit();
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (editingTrack) {
+        handleSaveStartTime(editingTrack);
+        // Move to next track after saving
+        const currentIndex = tracksWithStartTimes.findIndex(track => track.track?.id === editingTrack);
+        if (currentIndex < tracksWithStartTimes.length - 1) {
+          const nextTrack = tracksWithStartTimes[currentIndex + 1];
+          if (nextTrack?.track?.id) {
+            const nextStartTime = nextTrack.start_time_ms || 0;
+            handleEditStartTime(nextTrack.track.id, nextStartTime);
+            setFocusedTrackIndex(currentIndex + 1);
+          }
+        } else {
+          setFocusedTrackIndex(-1);
+        }
+      }
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (editingTrack) {
+        handleSaveStartTime(editingTrack);
+        const currentIndex = tracksWithStartTimes.findIndex(track => track.track?.id === editingTrack);
+        if (currentIndex < tracksWithStartTimes.length - 1) {
+          const nextTrack = tracksWithStartTimes[currentIndex + 1];
+          if (nextTrack?.track?.id) {
+            const nextStartTime = nextTrack.start_time_ms || 0;
+            handleEditStartTime(nextTrack.track.id, nextStartTime);
+            setFocusedTrackIndex(currentIndex + 1);
+          }
+        }
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (editingTrack) {
+        handleSaveStartTime(editingTrack);
+        const currentIndex = tracksWithStartTimes.findIndex(track => track.track?.id === editingTrack);
+        if (currentIndex > 0) {
+          const prevTrack = tracksWithStartTimes[currentIndex - 1];
+          if (prevTrack?.track?.id) {
+            const prevStartTime = prevTrack.start_time_ms || 0;
+            handleEditStartTime(prevTrack.track.id, prevStartTime);
+            setFocusedTrackIndex(currentIndex - 1);
+          }
+        }
+      }
+    }
+  };
+
   const handleSaveStartTime = (trackId: string) => {
     const startTimeMs = parseStartTime(editValue);
     saveTrackStartTime(trackId, startTimeMs);
@@ -88,6 +169,7 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
   const handleCancelEdit = () => {
     setEditingTrack(null);
     setEditValue("");
+    setFocusedTrackIndex(-1);
   };
 
   const handleRemoveStartTime = (trackId: string) => {
@@ -155,8 +237,12 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
           return (
             <TableRow 
               key={track.id || index} 
-              className="hover:bg-accent/50 cursor-pointer group"
+              className={`hover:bg-accent/50 cursor-pointer group ${
+                focusedTrackIndex === index ? 'bg-accent/30' : ''
+              }`}
               onClick={() => onPlayTrack?.(track.uri, index, startTime > 0 ? startTime : undefined)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              tabIndex={0}
             >
               <TableCell className="font-medium text-muted-foreground">
                 {index + 1}
@@ -191,8 +277,10 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
                   {editingTrack === trackId ? (
                     <div className="flex items-center gap-1">
                       <Input
+                        ref={inputRef}
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={handleInputKeyDown}
                         placeholder="mm:ss"
                         className="w-20 h-8 text-sm"
                         onClick={(e) => e.stopPropagation()}

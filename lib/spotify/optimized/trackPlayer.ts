@@ -2,7 +2,7 @@
  * Optimized track playback with pre-computed mappings and performance logging
  */
 
-import { startResumePlayback } from "@/lib/spotify";
+import { startResumePlayback, getAvailableDevices } from "@/lib/spotify";
 import { withTiming, logTrackStart, logTrackStartComplete, performanceMonitor } from "@/lib/utils/performance";
 import { SimplifiedPlaylist, PlaylistTrack } from "@/lib/types";
 
@@ -91,6 +91,22 @@ export const playTrackOptimized = withTiming(
     try {
       console.log(`🎵 Starting track: ${trackUri}${startTime ? ` at ${startTime}ms` : ''}`);
       
+      // Check for available devices first
+      console.log(`🔍 Checking for available Spotify devices...`);
+      const devices = await getAvailableDevices(token);
+      
+      if (!devices || devices.length === 0) {
+        throw new Error("Ingen Spotify-enheter tilgjengelig. Vennligst åpne Spotify på en enhet og prøv igjen.");
+      }
+      
+      const activeDevice = devices.find(device => device.is_active);
+      if (!activeDevice) {
+        console.log(`⚠️ Ingen aktiv enhet funnet. Tilgjengelige enheter: ${devices.map(d => d.name).join(', ')}`);
+        throw new Error("Ingen aktiv Spotify-enhet. Vennligst åpne Spotify på en enhet og prøv igjen.");
+      }
+      
+      console.log(`✅ Aktiv enhet funnet: ${activeDevice.name} (${activeDevice.type})`);
+      
       // Get track info from pre-computed mapping
       const trackInfo = trackMappingCache.getTrackInfo(trackUri);
       
@@ -113,7 +129,7 @@ export const playTrackOptimized = withTiming(
       console.log(`🚀 Sending request to Spotify API...`);
       
       // Start playback with optimized parameters
-      await startResumePlayback(token, undefined, {
+      await startResumePlayback(token, activeDevice.id || undefined, {
         context_uri: trackInfo.playlistUri,
         offset: { position: trackInfo.position },
         position_ms: positionMs,

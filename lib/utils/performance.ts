@@ -52,7 +52,7 @@ class PerformanceMonitor {
     this.logs.delete(id);
 
     // Log to console for development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
       console.log(`⏱️ ${log.operation}: ${duration.toFixed(2)}ms`, log.metadata);
     }
 

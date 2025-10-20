@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2025-01-27
+
+### Fixed
+- **PlaylistCarousel navigasjon**: Fikset "previous track" knapp for første spilleliste i hver kategori
+  - Løst event handling problemer som forhindret klikk-funksjonalitet
+  - Fikset z-index konflikter mellom play-knapp og navigasjonsknapper
+  - Implementert robust fallback-logikk for track-navigasjon
+  - Forbedret pointer events håndtering for bedre brukeropplevelse
+
+### Technical Details
+- Lagt til eksplisitt event handling med preventDefault() og stopPropagation()
+- Implementert z-index løsning (relative z-10) for navigasjonsknapper
+- Fikset pointer events konflikter mellom overlappende elementer
+- Forbedret fallback-mekanisme for track arrays (tracksWithStartTimes vs tracks)
+
+## [0.4.0] - 2025-01-27
+
+### Enhanced
+- **Auto-advance funksjonalitet**: Implementert automatisk fremgang for spillelister
+  - MatchPage og PlaylistCarousel støtter nå automatisk avspilling av neste spor
+  - Forbedret brukeropplevelse med sømløs overgang mellom spor
+  
+- **Error handling**: Forbedret feilhåndtering under sporavspilling
+  - Brukervennlige feilmeldinger ved avspillingsproblemer
+  - Bedre håndtering av nettverksfeil og API-problemer
+  - Tydelige indikatorer for feiltilstander
+
+### Fixed
+- **Track playback interval**: Justert avspillingsintervall for forbedret responsivitet
+  - Optimalisert polling-frekvens for bedre ytelse
+  - Redusert serverbelastning med smartere oppdateringsintervaller
+  
+- **Focus management**: Forbedret fokus-håndtering for redigering av sporstarttider
+  - Bedre navigasjon i TrackList-komponenten
+  - Forbedret tilgjengelighet for tastaturnavigasjon
+  - Smidigere redigeringsopplevelse
+
 ## [0.3.0] - 2025-01-27
 
 ### Enhanced

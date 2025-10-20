@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
+import VersionDisplay from "./VersionDisplay";
 
 const navigationItems = [
   { name: "Hjem", href: "/" },
@@ -27,6 +28,7 @@ export function Navigation() {
           {/* Logo og navigasjon */}
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center space-x-2">
+              <VersionDisplay className="text-xs text-muted-foreground" />
               <h1 className="text-xl font-bold">DJ Sports</h1>
             </Link>
             
@@ -53,7 +55,7 @@ export function Navigation() {
 
           {/* Brukerinfo og logg ut */}
           {session && (
-            <div className="flex items-center space-x-20">
+            <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
                 {session.user?.name || session.user?.email}
               </span>

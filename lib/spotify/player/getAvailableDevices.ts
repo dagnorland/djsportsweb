@@ -28,8 +28,8 @@ export default async function getAvailableDevices(
       throw new Error("Failed to fetch data");
     }
 
-    const data: Device[] = await res.json();
-    return data;
+    const data = await res.json();
+    return data.devices || [];
   } catch (error) {
     console.error("An error occurred while fetching data:", error);
     throw error;

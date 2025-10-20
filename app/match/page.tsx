@@ -28,6 +28,9 @@ export default function MatchPage() {
   const [loading, setLoading] = useState(true);
   const [performanceMetrics, setPerformanceMetrics] = useState<any>(null);
   const [showPerformanceMetrics, setShowPerformanceMetrics] = useState(false);
+  const [autoAdvancePlaylists, setAutoAdvancePlaylists] = useState<Set<string>>(new Set());
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [lastPlayedTrackUri, setLastPlayedTrackUri] = useState<string | null>(null);
 
   // Redirect til login hvis ikke innlogget
   useEffect(() => {
@@ -41,7 +44,7 @@ export default function MatchPage() {
     if (session?.accessToken) {
       loadPlaylistsOptimized();
       updateNowPlaying();
-      const interval = setInterval(updateNowPlaying, 10000); // Reduced frequency
+      const interval = setInterval(updateNowPlaying, 2000); // Increased frequency for better responsiveness
       return () => clearInterval(interval);
     }
   }, [session]);
@@ -127,10 +130,39 @@ export default function MatchPage() {
     }
   };
 
+  // Handle automatic carousel advancement when track starts playing
+  useEffect(() => {
+    if (nowPlaying?.is_playing && nowPlaying.item?.uri) {
+      const currentTrackUri = nowPlaying.item.uri;
+      
+      // Only trigger auto-advance if this is a new track (not the same as last played)
+      if (currentTrackUri !== lastPlayedTrackUri) {
+        console.log(`🎵 New track started playing: ${currentTrackUri}`);
+        setLastPlayedTrackUri(currentTrackUri);
+        
+        // Find which playlist contains the currently playing track
+        const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
+        const playingPlaylist = allPlaylists.find(playlist => {
+          const tracks = playlistTracks[playlist.id] || [];
+          return tracks.some(playlistTrack => playlistTrack.track?.uri === currentTrackUri);
+        });
+
+        if (playingPlaylist) {
+          console.log(`🎯 Setting auto-advance for playlist: ${playingPlaylist.name}`);
+          // Always set auto-advance for the playing playlist
+          setAutoAdvancePlaylists(prev => new Set([...Array.from(prev), playingPlaylist.id]));
+        }
+      }
+    }
+  }, [nowPlaying, hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, playlistTracks, lastPlayedTrackUri]);
+
   const handlePlayTrack = useCallback(async (trackUri: string, position: number, startTime?: number) => {
     if (!session?.accessToken) return;
 
     try {
+      // Clear any previous error messages
+      setErrorMessage(null);
+      
       console.log(`🎵 Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
       
       // Use optimized track playback
@@ -150,12 +182,19 @@ export default function MatchPage() {
       
     } catch (error) {
       console.error("Feil ved start av spor:", error);
+      
+      // Set user-friendly error message
+      const errorMsg = error instanceof Error ? error.message : "Ukjent feil ved avspilling";
+      setErrorMessage(errorMsg);
+      
+      // Clear error message after 5 seconds
+      setTimeout(() => setErrorMessage(null), 5000);
     }
   }, [session?.accessToken, updateNowPlaying]);
 
   // Performance metrics display
   const renderPerformanceMetrics = useMemo(() => {
-    if ((process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'production') || !showPerformanceMetrics) return null;
+    if (!showPerformanceMetrics) return null;
     
     const allLogs = performanceMonitor.getLogs();
     const summary = performanceMonitor.getSummary();
@@ -250,6 +289,21 @@ export default function MatchPage() {
                 onPlayTrack={handlePlayTrack}
                 isPlaying={nowPlaying?.is_playing || false}
                 currentTrackUri={nowPlaying?.item?.uri}
+                shouldAutoAdvance={(() => {
+                  const shouldAdvance = autoAdvancePlaylists.has(playlist.id);
+                  if (shouldAdvance) {
+                    console.log(`🎯 Auto-advance is TRUE for playlist: ${playlist.name}`);
+                  }
+                  return shouldAdvance;
+                })()}
+                onAutoAdvance={() => {
+                  console.log(`✅ Auto-advance completed for playlist: ${playlist.name}`);
+                  setAutoAdvancePlaylists(prev => {
+                    const newSet = new Set(Array.from(prev));
+                    newSet.delete(playlist.id);
+                    return newSet;
+                  });
+                }}
               />
             ))}
           </div>
@@ -290,17 +344,30 @@ export default function MatchPage() {
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col">
-      {/* Performance toggle button (development only) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={() => setShowPerformanceMetrics(!showPerformanceMetrics)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
-          >
-            {showPerformanceMetrics ? 'Hide' : 'Show'} Performance
-          </button>
+      {/* Error message */}
+      {errorMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg max-w-md">
+          <div className="flex items-center justify-between">
+            <span className="text-sm">{errorMessage}</span>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="ml-2 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Performance toggle button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={() => setShowPerformanceMetrics(!showPerformanceMetrics)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+        >
+          {showPerformanceMetrics ? 'Hide' : 'Show'} Performance
+        </button>
+      </div>
 
       {/* Scrollable section for other playlist types */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">

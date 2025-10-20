@@ -37,7 +37,18 @@ export default async function startResumePlayback(
     );
 
     if (!res.ok) {
-      throw new Error("Failed to fetch data");
+      // Get more detailed error information
+      let errorMessage = "Failed to fetch data";
+      try {
+        const errorData = await res.json();
+        if (errorData.error) {
+          errorMessage = errorData.error.message || errorMessage;
+        }
+      } catch (e) {
+        // If we can't parse the error, use the status text
+        errorMessage = `${res.status} ${res.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
     // Response is 204 No Content on success
