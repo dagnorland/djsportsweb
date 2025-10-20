@@ -33,7 +33,18 @@ export default async function seekToPosition(
       throw new Error("Failed to fetch data");
     }
 
-    return await res.json();
+    // Spotify API returns 204 No Content for successful seek, no JSON to parse
+    if (res.status === 204) {
+      return;
+    }
+
+    // Only try to parse JSON if there's content
+    const text = await res.text();
+    if (!text.trim()) {
+      return;
+    }
+
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
     throw error;

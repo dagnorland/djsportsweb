@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-01-27
+
+### Added
+- **TrackListSetStartTime komponent**: Ny funksjonalitet for å sette starttider på spor
+  - Mulighet til å redigere starttider for individuelle spor
+  - Forbedret brukeropplevelse for DJ-funksjonalitet
+  - Integrert med eksisterende avspillingssystem
+
+- **TrackListSwitcher komponent**: Ny komponent for å bytte mellom forskjellige sporvisninger
+  - Fleksibel visning av spor i forskjellige formater
+  - Forbedret navigasjon og organisering av spor
+
+- **Favicon og PWA-støtte**: Utvidet favicon-støtte og Progressive Web App-funksjonalitet
+  - Flere favicon-størrelser for bedre kompatibilitet
+  - PWA manifest for installasjon som app
+  - Forbedret mobil- og desktop-opplevelse
+
+### Enhanced
+- **GlobalNowPlayingBar**: Forbedret global avspillingskontroll
+  - Bedre integrasjon med alle sider
+  - Forbedret brukergrensesnitt og responsivitet
+
+- **Navigation**: Oppdatert navigasjonssystem
+  - Forbedret brukeropplevelse
+  - Bedre integrasjon med nye komponenter
+
+- **PlaylistCarousel**: Forbedret spilleliste-karusell
+  - Bedre ytelse og brukeropplevelse
+  - Forbedret navigasjon og interaksjon
+
+### Fixed
+- **Player API-funksjoner**: Oppdaterte og forbedrede Spotify player API-integrasjoner
+  - pausePlayback: Forbedret pause-funksjonalitet
+  - seekToPosition: Bedre posisjonering i spor
+  - setPlaybackVolume: Forbedret volumkontroll
+  - setRepeatMode: Bedre repeat-funksjonalitet
+  - skipToNext/Previous: Forbedret spor-navigasjon
+  - startResumePlayback: Bedre avspillingsstart
+  - togglePlaybackShuffle: Forbedret shuffle-funksjonalitet
+
+- **Layout og routing**: Oppdaterte app-layout og routing-struktur
+  - Forbedret favicon-håndtering
+  - Bedre organisering av app-struktur
+
+### Technical Details
+- Oppdaterte Spotify player API-integrasjoner for bedre stabilitet
+- Forbedret komponentarkitektur med nye spesialiserte komponenter
+- Utvidet PWA-funksjonalitet for bedre mobil-opplevelse
+- Forbedret favicon-støtte på tvers av plattformer
+
 ## [0.4.1] - 2025-01-27
 
 ### Fixed

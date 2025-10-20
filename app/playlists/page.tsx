@@ -20,7 +20,7 @@ import type {
   CurrentlyPlaying,
 } from "@/lib/types";
 import PlaylistSidebar from "@/components/PlaylistSidebar";
-import TrackList from "@/components/TrackList";
+import TrackListSwitcher from "@/components/TrackListSwitcher";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -302,10 +302,20 @@ return (
                 {selectedPlaylistName}
               </h2>
             )}
-            <TrackList 
+            <TrackListSwitcher 
               tracks={tracks} 
               loading={loadingTracks} 
               onPlayTrack={handlePlayTrack}
+              onPauseTrack={async () => {
+                if (session?.accessToken) {
+                  try {
+                    await pausePlayback(session.accessToken);
+                    setTimeout(updateNowPlaying, 500);
+                  } catch (error) {
+                    console.error("Feil ved pause:", error);
+                  }
+                }
+              }}
             />
           </div>
         ) : (

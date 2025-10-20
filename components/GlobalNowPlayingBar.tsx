@@ -31,6 +31,7 @@ export default function GlobalNowPlayingBar() {
     return () => clearInterval(interval);
   }, [session?.accessToken]);
 
+
   const handlePlayPause = async () => {
     if (!session?.accessToken || !nowPlaying) return;
 
@@ -94,6 +95,7 @@ export default function GlobalNowPlayingBar() {
       console.error("Feil ved volumendring:", error);
     }
   };
+
 
   return (
     <NowPlayingBar

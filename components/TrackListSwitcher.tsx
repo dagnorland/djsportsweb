@@ -1,0 +1,54 @@
+"use client";
+
+import { PlaylistTrack } from "@/lib/types";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { List, Sliders } from "lucide-react";
+import TrackList from "./TrackList";
+import TrackListSetStartTime from "./TrackListSetStartTime";
+
+interface TrackListSwitcherProps {
+  tracks: PlaylistTrack[];
+  loading?: boolean;
+  onPlayTrack?: (trackUri: string, position: number, startTime?: number) => void;
+  onPauseTrack?: () => void;
+}
+
+export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack, onPauseTrack }: TrackListSwitcherProps) {
+  const [activeView, setActiveView] = useState<"list" | "slider">("list");
+
+  return (
+    <div className="space-y-4">
+      <Tabs value={activeView} onValueChange={(value) => setActiveView(value as "list" | "slider")}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Standard liste
+          </TabsTrigger>
+          <TabsTrigger value="slider" className="flex items-center gap-2">
+            <Sliders className="h-4 w-4" />
+            Starttid slider
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="list" className="mt-4">
+          <TrackList 
+            tracks={tracks} 
+            loading={loading} 
+            onPlayTrack={onPlayTrack} 
+          />
+        </TabsContent>
+        
+        <TabsContent value="slider" className="mt-4">
+          <TrackListSetStartTime 
+            tracks={tracks} 
+            loading={loading} 
+            onPlayTrack={onPlayTrack}
+            onPauseTrack={onPauseTrack}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

@@ -56,7 +56,19 @@ export default async function startResumePlayback(
       return;
     }
 
-    return await res.json();
+    // Only try to parse JSON if there's content
+    const text = await res.text();
+    if (!text.trim()) {
+      return;
+    }
+
+    // Try to parse JSON, but handle parsing errors gracefully
+    try {
+      return JSON.parse(text);
+    } catch (parseError) {
+      console.warn("Response is not valid JSON:", text.substring(0, 100));
+      return;
+    }
   } catch (error) {
     console.error(error);
     throw error;

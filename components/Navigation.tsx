@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
+import Image from "next/image";
 
 const navigationItems = [
   { name: "Hjem", href: "/" },
@@ -29,6 +30,13 @@ export function Navigation() {
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center space-x-2">
               <VersionDisplay className="text-xs text-muted-foreground" />
+              <Image 
+                src="/icon-192x192.png" 
+                alt="DJ Sports Logo" 
+                width={32} 
+                height={32}
+                className="rounded-md"
+              />
               <h1 className="text-xl font-bold">DJ Sports</h1>
             </Link>
             

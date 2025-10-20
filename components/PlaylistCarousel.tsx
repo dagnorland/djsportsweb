@@ -146,17 +146,17 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   if (!currentTrack?.track) return null;
 
   return (
-    <Card className="w-full max-w-48 mx-auto">
-      <CardContent className="p-2">
+    <Card className="w-full h-full">
+      <CardContent className="p-4">
         {/* Playlist header */}
-        <div className="mb-2">
-          <h3 className="font-semibold truncate text-xs">{playlist.name}</h3>
+        <div className="mb-4">
+          <h3 className="font-semibold truncate text-sm">{playlist.name}</h3>
           {/* Color line for playlist type */}
           <div className={`h-1 w-full rounded-full mt-1 ${playlistTypeColor}`}></div>
         </div>
 
         {/* Current track display */}
-        <div className="space-y-2">
+        <div className="space-y-4">
           {/* Track image with navigation and play button */}
           <div className="flex items-center justify-center space-x-1">
             {/* Previous button */}
@@ -165,14 +165,14 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
               size="sm"
               onClick={handlePrevious}
               disabled={(tracksWithStartTimes.length > 0 ? tracksWithStartTimes.length : tracks.length) <= 1}
-              className="h-6 w-6 p-0 relative z-10"
+              className="h-8 w-8 p-0 relative z-10"
               style={{ pointerEvents: 'auto' }}
             >
-              <SkipBack className="h-3 w-3" />
+              <SkipBack className="h-4 w-4" />
             </Button>
             
             {/* Track image with play button overlay */}
-            <div className="relative aspect-square w-2/3 group">
+            <div className="relative aspect-square w-full max-w-48 group">
               {isTrack && track.album?.images && track.album.images.length > 0 ? (
                 <Image
                   src={track.album.images[track.album.images.length - 1].url}
@@ -191,12 +191,12 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
                 <Button
                   size="lg"
                   onClick={handlePlay}
-                  className="rounded-full h-12 w-12 p-0 bg-black/50 hover:bg-black/70 border-0 shadow-lg pointer-events-auto"
+                  className="rounded-full h-16 w-16 p-0 bg-black/50 hover:bg-black/70 border-0 shadow-lg pointer-events-auto"
                 >
                   {isCurrentTrackPlaying ? (
-                    <Pause className="h-6 w-6 text-white" />
+                    <Pause className="h-8 w-8 text-white" />
                   ) : (
-                    <Play className="h-6 w-6 text-white" />
+                    <Play className="h-8 w-8 text-white" />
                   )}
                 </Button>
               </div>
@@ -208,23 +208,23 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
               size="sm"
               onClick={handleNext}
               disabled={(tracksWithStartTimes.length > 0 ? tracksWithStartTimes.length : tracks.length) <= 1}
-              className="h-6 w-6 p-0 relative z-10"
+              className="h-8 w-8 p-0 relative z-10"
               style={{ pointerEvents: 'auto' }}
             >
-              <SkipForward className="h-3 w-3" />
+              <SkipForward className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Track info */}
           <div className="text-center space-y-0.5">
-            <h4 className="font-medium truncate text-xs">{track?.name || "Ukjent spor"}</h4>
+            <h4 className="font-medium truncate text-sm">{track?.name || "Ukjent spor"}</h4>
             {isTrack && track?.artists && (
-              <p className="text-xs text-muted-foreground truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {track?.artists?.map(artist => artist.name).join(", ") || "Ukjent artist"}
               </p>
             )}
             {formattedStartTime && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {formattedStartTime}
               </p>
             )}
@@ -233,7 +233,7 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
 
 
           {/* Track counter */}
-          <div className="text-center text-xs text-muted-foreground">
+          <div className="text-center text-sm text-muted-foreground">
             {currentTrackIndex + 1} av {tracksWithStartTimes.length > 0 ? tracksWithStartTimes.length : tracks.length}
           </div>
         </div>
