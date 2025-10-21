@@ -15,9 +15,10 @@ interface TrackListSetStartTimeProps {
   loading?: boolean;
   onPlayTrack?: (trackUri: string, position: number, startTime?: number) => void;
   onPauseTrack?: () => void;
+  onNavigatePlaylist?: (direction: 'next' | 'previous') => void;
 }
 
-export default function TrackListSetStartTime({ tracks, loading = false, onPlayTrack, onPauseTrack }: TrackListSetStartTimeProps) {
+export default function TrackListSetStartTime({ tracks, loading = false, onPlayTrack, onPauseTrack, onNavigatePlaylist }: TrackListSetStartTimeProps) {
   const [tracksWithStartTimes, setTracksWithStartTimes] = useState<PlaylistTrack[]>([]);
   const [focusedTrackIndex, setFocusedTrackIndex] = useState<number>(0);
   const [isSliderFocused, setIsSliderFocused] = useState<boolean>(true);
@@ -29,6 +30,23 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
     if (tracks.length > 0) {
       const tracksWithTimes = loadTrackStartTimes(tracks);
       setTracksWithStartTimes(tracksWithTimes);
+      // Set focus on first track and slider when tracks load
+      setFocusedTrackIndex(0);
+      setIsSliderFocused(true);
+    }
+  }, [tracks]);
+
+  // Focus the container when tracks change to ensure keyboard navigation works
+  const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (tracks.length > 0 && containerRef.current) {
+      // Small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        containerRef.current?.focus();
+        // Ensure the first track row is visually focused
+        setFocusedTrackIndex(0);
+        setIsSliderFocused(true);
+      }, 100);
     }
   }, [tracks]);
 
@@ -121,6 +139,12 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
     } else if (e.key === 'Tab') {
       e.preventDefault();
       setIsSliderFocused(!isSliderFocused);
+    } else if (e.key === 'PageDown' || (e.key === 'ArrowRight' && e.ctrlKey)) {
+      e.preventDefault();
+      onNavigatePlaylist?.('next');
+    } else if (e.key === 'PageUp' || (e.key === 'ArrowLeft' && e.ctrlKey)) {
+      e.preventDefault();
+      onNavigatePlaylist?.('previous');
     }
   };
 
@@ -165,6 +189,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
 
   return (
     <div 
+      ref={containerRef}
       className="space-y-2 focus:outline-none" 
       tabIndex={0}
       onKeyDown={handleKeyDown}
@@ -184,7 +209,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
             key={track.id || index}
             className={`flex items-center gap-4 p-4 rounded-lg border transition-all cursor-pointer group ${
               isFocused 
-                ? 'bg-accent border-accent-foreground/20 shadow-md' 
+                ? 'bg-accent border-primary/50 shadow-lg ring-1 ring-primary/20' 
                 : 'hover:bg-accent/50 border-transparent'
             }`}
             onClick={() => {
@@ -236,7 +261,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
               </div>
               <div 
                 ref={isFocused ? sliderRef : null}
-                className={`w-80 ${isFocused && isSliderFocused ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                className={`w-80 ${isFocused && isSliderFocused ? 'ring-2 ring-primary ring-offset-2 rounded' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsSliderFocused(true);
@@ -264,6 +289,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
         <p><strong>Starttid:</strong> Venstre/høyre piltaster for å justere starttid og spille automatisk</p>
         <p><strong>Avspilling:</strong> Enter for å spille/stoppe (toggle), Space for å spille</p>
         <p><strong>Slider:</strong> Tab for å bytte slider-fokus</p>
+        <p><strong>Spillelister:</strong> PageDown/Ctrl+→ for neste, PageUp/Ctrl+← for forrige</p>
       </div>
     </div>
   );

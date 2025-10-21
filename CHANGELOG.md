@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-01-27
+
+### Enhanced
+- **Hovedside (app/page.tsx)**: Forbedret hovedside med oppdatert funksjonalitet
+  - Forbedret brukeropplevelse og navigasjon
+  - Oppdatert layout og design
+
+- **Spilleliste-side (app/playlists/page.tsx)**: Forbedret spilleliste-funksjonalitet
+  - Bedre integrasjon med avspillingssystem
+  - Forbedret brukergrensesnitt
+
+- **NowPlayingBar**: Oppdatert avspillingskontroll
+  - Forbedret funksjonalitet og brukeropplevelse
+  - Bedre integrasjon med andre komponenter
+
+- **TrackListSetStartTime**: Forbedret funksjonalitet for starttidsredigering
+  - Bedre brukeropplevelse for DJ-funksjonalitet
+  - Forbedret redigeringsgrensesnitt
+
+- **TrackListSwitcher**: Oppdatert sporvisningskomponent
+  - Forbedret navigasjon mellom sporvisninger
+  - Bedre brukeropplevelse
+
+### Technical Details
+- Oppdaterte komponenter for bedre integrasjon
+- Forbedret brukeropplevelse på tvers av alle sider
+- Optimalisert komponentarkitektur
+
 ## [0.5.0] - 2025-01-27
 
 ### Added

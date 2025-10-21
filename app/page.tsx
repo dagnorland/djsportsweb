@@ -20,7 +20,7 @@ export default function Page() {
     // Viser loading mens session sjekkes
     if (status === "loading") {
         return (
-            <div className="h-screen w-screen flex items-center justify-center p-4">
+            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
                 <Card className="w-full max-w-sm">
                     <CardHeader>
                         <CardTitle>Laster...</CardTitle>
@@ -33,7 +33,7 @@ export default function Page() {
     // Hvis bruker er innlogget
     if (session) {
         return (
-            <div className="h-screen w-screen flex items-center justify-center p-4">
+            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
                 <Card className="w-full max-w-sm">
                     <CardHeader>
                         <CardTitle className="text-2xl">Velkommen!</CardTitle>
@@ -64,7 +64,7 @@ export default function Page() {
 
     // Hvis bruker IKKE er innlogget
     return (
-        <div className="h-screen w-screen flex items-center justify-center p-4">
+        <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
             <Card className="w-full max-w-sm">
                 <CardHeader>
                     <CardTitle className="text-2xl">Login med Spotify</CardTitle>

@@ -13,10 +13,11 @@ interface TrackListSwitcherProps {
   loading?: boolean;
   onPlayTrack?: (trackUri: string, position: number, startTime?: number) => void;
   onPauseTrack?: () => void;
+  onNavigatePlaylist?: (direction: 'next' | 'previous') => void;
 }
 
-export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack, onPauseTrack }: TrackListSwitcherProps) {
-  const [activeView, setActiveView] = useState<"list" | "slider">("list");
+export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack, onPauseTrack, onNavigatePlaylist }: TrackListSwitcherProps) {
+  const [activeView, setActiveView] = useState<"list" | "slider">("slider");
 
   return (
     <div className="space-y-4">
@@ -46,6 +47,7 @@ export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack
             loading={loading} 
             onPlayTrack={onPlayTrack}
             onPauseTrack={onPauseTrack}
+            onNavigatePlaylist={onNavigatePlaylist}
           />
         </TabsContent>
       </Tabs>

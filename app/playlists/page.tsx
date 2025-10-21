@@ -93,6 +93,13 @@ export default function PlaylistsPage() {
       setLoadingPlaylists(true);
       const data = await getCurrentUserPlaylists(session.accessToken, 0, 50);
       setPlaylists(data.items);
+      
+      // Automatisk velg første playlist hvis ingen er valgt
+      if (data.items.length > 0 && !selectedPlaylistId) {
+        const firstPlaylist = data.items[0];
+        setSelectedPlaylistId(firstPlaylist.id);
+        setSelectedPlaylistName(firstPlaylist.name);
+      }
     } catch (error) {
       console.error("Feil ved henting av spillelister:", error);
     } finally {
@@ -130,6 +137,23 @@ export default function PlaylistsPage() {
     setSelectedPlaylistId(playlistId);
     const playlist = playlists.find((p) => p.id === playlistId);
     setSelectedPlaylistName(playlist?.name || null);
+  };
+
+  const handleNavigatePlaylist = (direction: 'next' | 'previous') => {
+    if (filteredPlaylists.length === 0) return;
+    
+    const currentIndex = filteredPlaylists.findIndex(p => p.id === selectedPlaylistId);
+    if (currentIndex === -1) return;
+    
+    let newIndex;
+    if (direction === 'next') {
+      newIndex = (currentIndex + 1) % filteredPlaylists.length;
+    } else {
+      newIndex = currentIndex === 0 ? filteredPlaylists.length - 1 : currentIndex - 1;
+    }
+    
+    const newPlaylist = filteredPlaylists[newIndex];
+    handleSelectPlaylist(newPlaylist.id);
   };
 
   const handlePlayPause = async () => {
@@ -243,7 +267,7 @@ export default function PlaylistsPage() {
 // ... existing code ...
 
 return (
-  <div className="flex h-screen flex-col">
+  <div className="flex h-[calc(100vh-6rem)] flex-col">
     {/* Main content */}
     <div className="flex flex-1 overflow-hidden">
       {/* Left sidebar - Playlists */}
@@ -316,6 +340,7 @@ return (
                   }
                 }
               }}
+              onNavigatePlaylist={handleNavigatePlaylist}
             />
           </div>
         ) : (
