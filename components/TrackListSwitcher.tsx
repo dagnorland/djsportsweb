@@ -23,23 +23,16 @@ export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack
     <div className="space-y-4">
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as "list" | "slider")}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="list" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Standard liste
-          </TabsTrigger>
           <TabsTrigger value="slider" className="flex items-center gap-2">
             <Sliders className="h-4 w-4" />
             Starttid slider
           </TabsTrigger>
+
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            Standard liste
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="list" className="mt-4">
-          <TrackList 
-            tracks={tracks} 
-            loading={loading} 
-            onPlayTrack={onPlayTrack} 
-          />
-        </TabsContent>
         
         <TabsContent value="slider" className="mt-4">
           <TrackListSetStartTime 
@@ -50,6 +43,16 @@ export default function TrackListSwitcher({ tracks, loading = false, onPlayTrack
             onNavigatePlaylist={onNavigatePlaylist}
           />
         </TabsContent>
+
+        <TabsContent value="list" className="mt-4">
+          <TrackList 
+            tracks={tracks} 
+            loading={loading} 
+            onPlayTrack={onPlayTrack} 
+          />
+        </TabsContent>
+        
+
       </Tabs>
     </div>
   );
