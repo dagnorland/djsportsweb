@@ -25,6 +25,8 @@ import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
+import { logger } from "@/lib/utils/logger";
+import { RouteGuard } from "@/components/RouteGuard";
 
 export default function PlaylistsPage() {
   const { data: session, status } = useSession();
@@ -101,7 +103,7 @@ export default function PlaylistsPage() {
         setSelectedPlaylistName(firstPlaylist.name);
       }
     } catch (error) {
-      console.error("Feil ved henting av spillelister:", error);
+      logger.error("Feil ved henting av spillelister:", error);
     } finally {
       setLoadingPlaylists(false);
     }
@@ -115,7 +117,7 @@ export default function PlaylistsPage() {
       const data = await getPlaylistItems(session.accessToken, playlistId, 0, 100);
       setTracks(data.items);
     } catch (error) {
-      console.error("Feil ved henting av spor:", error);
+      logger.error("Feil ved henting av spor:", error);
     } finally {
       setLoadingTracks(false);
     }
@@ -168,7 +170,7 @@ export default function PlaylistsPage() {
       // Oppdater umiddelbart
       setTimeout(updateNowPlaying, 500);
     } catch (error) {
-      console.error("Feil ved play/pause:", error);
+      logger.error("Feil ved play/pause:", error);
     }
   };
 
@@ -179,7 +181,7 @@ export default function PlaylistsPage() {
       await skipToNext(session.accessToken);
       setTimeout(updateNowPlaying, 500);
     } catch (error) {
-      console.error("Feil ved neste sang:", error);
+      logger.error("Feil ved neste sang:", error);
     }
   };
 
@@ -190,7 +192,7 @@ export default function PlaylistsPage() {
       await skipToPrevious(session.accessToken);
       setTimeout(updateNowPlaying, 500);
     } catch (error) {
-      console.error("Feil ved forrige sang:", error);
+      logger.error("Feil ved forrige sang:", error);
     }
   };
 
@@ -200,7 +202,7 @@ export default function PlaylistsPage() {
     try {
       await setPlaybackVolume(session.accessToken, volume);
     } catch (error) {
-      console.error("Feil ved endring av volum:", error);
+      logger.error("Feil ved endring av volum:", error);
     }
   };
 
@@ -225,20 +227,22 @@ export default function PlaylistsPage() {
       // Update now playing after a short delay
       setTimeout(updateNowPlaying, 500);
     } catch (error) {
-      console.error("Feil ved start av spor:", error);
+      logger.error("Feil ved start av spor:", error);
     }
   };
 
   // Vis loading mens session sjekkes
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Card className="max-w-sm">
-          <CardHeader>
-            <CardTitle>Laster...</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+      <RouteGuard requireAuth={false}>
+        <div className="flex items-center justify-center h-screen">
+          <Card className="max-w-sm">
+            <CardHeader>
+              <CardTitle>Laster...</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+      </RouteGuard>
     );
   }
 
@@ -267,9 +271,10 @@ export default function PlaylistsPage() {
 // ... existing code ...
 
 return (
-  <div className="flex h-[calc(100vh-6rem)] flex-col">
-    {/* Main content */}
-    <div className="flex flex-1 overflow-hidden">
+  <RouteGuard requireAuth={true}>
+    <div className="flex h-[calc(100vh-6rem)] flex-col">
+      {/* Main content */}
+      <div className="flex flex-1 overflow-hidden">
       {/* Left sidebar - Playlists */}
       <aside className={`${isMobile ? 'w-48' : 'w-80'} border-r overflow-y-auto p-4`}>
         <div className="flex items-center gap-2 mb-4">
@@ -336,7 +341,7 @@ return (
                     await pausePlayback(session.accessToken);
                     setTimeout(updateNowPlaying, 500);
                   } catch (error) {
-                    console.error("Feil ved pause:", error);
+                    logger.error("Feil ved pause:", error);
                   }
                 }
               }}
@@ -358,7 +363,8 @@ return (
       </main>
     </div>
 
-  </div>
+    </div>
+  </RouteGuard>
 );
 }
 

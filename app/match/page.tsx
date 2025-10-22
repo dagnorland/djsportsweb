@@ -13,6 +13,8 @@ import { getPlaylistTypeColor } from "@/lib/utils";
 import { loadPlaylistsCached, loadMultiplePlaylistTracks, preloadCriticalPlaylists } from "@/lib/spotify/optimized/playlistLoader";
 import { playTrackOptimized, updateTrackMapping, getTrackPlaybackMetrics } from "@/lib/spotify/optimized/trackPlayer";
 import { performanceMonitor } from "@/lib/utils/performance";
+import { logger } from "@/lib/utils/logger";
+import { RouteGuard } from "@/components/RouteGuard";
 
 export default function MatchPage() {
   const { data: session, status } = useSession();
@@ -62,7 +64,7 @@ export default function MatchPage() {
 
     try {
       setLoading(true);
-      console.log("🚀 Loading playlists with caching...");
+      logger.spotify("Loading playlists with caching...");
       
       const data = await loadPlaylistsCached(session.accessToken, 0, 50);
       setPlaylists(data);
@@ -92,7 +94,7 @@ export default function MatchPage() {
       await preloadCriticalPlaylists(session.accessToken, allPlaylists);
       
     } catch (error) {
-      console.error("Feil ved henting av spillelister:", error);
+      logger.error("Feil ved henting av spillelister:", error);
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ export default function MatchPage() {
     if (!session?.accessToken) return;
 
     try {
-      console.log(`🎵 Loading tracks for ${allPlaylists.length} playlists with batching...`);
+      logger.spotify(`Loading tracks for ${allPlaylists.length} playlists with batching...`);
       
       const tracksMap = await loadMultiplePlaylistTracks(session.accessToken, allPlaylists, 3);
       setPlaylistTracks(tracksMap);
@@ -115,7 +117,7 @@ export default function MatchPage() {
       setPerformanceMetrics(metrics);
       
     } catch (error) {
-      console.error("Feil ved henting av alle spilleliste-spor:", error);
+      logger.error("Feil ved henting av alle spilleliste-spor:", error);
     }
   }, [session?.accessToken]);
 
@@ -137,7 +139,7 @@ export default function MatchPage() {
       
       // Only trigger auto-advance if this is a new track (not the same as last played)
       if (currentTrackUri !== lastPlayedTrackUri) {
-        console.log(`🎵 New track started playing: ${currentTrackUri}`);
+        logger.spotify(`New track started playing: ${currentTrackUri}`);
         setLastPlayedTrackUri(currentTrackUri);
         
         // Find which playlist contains the currently playing track
@@ -148,7 +150,7 @@ export default function MatchPage() {
         });
 
         if (playingPlaylist) {
-          console.log(`🎯 Setting auto-advance for playlist: ${playingPlaylist.name}`);
+          logger.spotify(`Setting auto-advance for playlist: ${playingPlaylist.name}`);
           // Always set auto-advance for the playing playlist
           setAutoAdvancePlaylists(prev => new Set([...Array.from(prev), playingPlaylist.id]));
         }
@@ -163,7 +165,7 @@ export default function MatchPage() {
       // Clear any previous error messages
       setErrorMessage(null);
       
-      console.log(`🎵 Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
+      logger.spotify(`Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
       
       // Use optimized track playback
       await playTrackOptimized(session.accessToken, {
@@ -181,7 +183,7 @@ export default function MatchPage() {
       setPerformanceMetrics(metrics);
       
     } catch (error) {
-      console.error("Feil ved start av spor:", error);
+      logger.error("Feil ved start av spor:", error);
       
       // Set user-friendly error message
       const errorMsg = error instanceof Error ? error.message : "Ukjent feil ved avspilling";
@@ -292,12 +294,12 @@ export default function MatchPage() {
                 shouldAutoAdvance={(() => {
                   const shouldAdvance = autoAdvancePlaylists.has(playlist.id);
                   if (shouldAdvance) {
-                    console.log(`🎯 Auto-advance is TRUE for playlist: ${playlist.name}`);
+                    logger.spotify(`Auto-advance is TRUE for playlist: ${playlist.name}`);
                   }
                   return shouldAdvance;
                 })()}
                 onAutoAdvance={() => {
-                  console.log(`✅ Auto-advance completed for playlist: ${playlist.name}`);
+                  logger.spotify(`Auto-advance completed for playlist: ${playlist.name}`);
                   setAutoAdvancePlaylists(prev => {
                     const newSet = new Set(Array.from(prev));
                     newSet.delete(playlist.id);
@@ -343,7 +345,8 @@ export default function MatchPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col">
+    <RouteGuard requireAuth={true}>
+      <div className="h-[calc(100vh-6rem)] flex flex-col">
       {/* Error message */}
       {errorMessage && (
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg max-w-md">
@@ -389,8 +392,9 @@ export default function MatchPage() {
         )}
       </div>
       
-      {/* Performance metrics overlay */}
-      {renderPerformanceMetrics}
-    </div>
+        {/* Performance metrics overlay */}
+        {renderPerformanceMetrics}
+      </div>
+    </RouteGuard>
   );
 }

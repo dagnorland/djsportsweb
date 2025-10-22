@@ -9,6 +9,7 @@ import Image from "next/image";
 import { Music2 } from "lucide-react";
 import { getPlaylistType } from "@/lib/utils/playlistTypes";
 import { loadTrackStartTimes } from "@/lib/utils/trackStartTimes";
+import { logger } from "@/lib/utils/logger";
 
 interface PlaylistCarouselProps {
   playlist: SimplifiedPlaylist;
@@ -54,7 +55,7 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   // Handle automatic advancement when track starts playing
   useEffect(() => {
     if (shouldAutoAdvance && onAutoAdvance && !hasAutoAdvancedRef.current) {
-      console.log(`🎯 Auto-advancing playlist: ${playlist.name}`);
+      logger.spotify(`Auto-advancing playlist: ${playlist.name}`);
       
       // Move to next track after a short delay to allow the current track to start playing
       const timeoutId = setTimeout(() => {

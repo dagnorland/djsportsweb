@@ -5,14 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] - 2025-01-27
+## [0.8.0] - 2025-10-22
+
+### Added
+- **ErrorBoundary komponent**: Ny feilhåndteringskomponent for bedre brukeropplevelse
+  - Automatisk feilfangst og visning av brukervennlige feilmeldinger
+  - Forbedret stabilitet ved uventede feil i komponenter
+  - Integrert med eksisterende feilhåndteringssystem
+
+- **RouteGuard komponent**: Ny rutebeskyttelse for autentisering
+  - Automatisk omdirigering til innlogging for beskyttede ruter
+  - Forbedret sikkerhet og brukeropplevelse
+  - Integrert med NextAuth.js autentisering
+
+- **Konfigurasjonssystem**: Nytt sentralisert konfigurasjonssystem
+  - Miljøvariabel-håndtering i `lib/config/env.ts`
+  - Type-sikker konfigurasjon for alle miljøer
+  - Forbedret sikkerhet for sensitive verdier
+
+### Enhanced
+- **Logger-system**: Utvidet logging og feilhåndtering
+  - Detaljert logging i `lib/utils/logger.ts`
+  - Forbedret feilhåndtering i `lib/utils/errorHandler.ts`
+  - Bedre debugging og overvåking av applikasjonen
+
+- **Performance-optimalisering**: Forbedret ytelse og caching
+  - Optimalisert polling-mekanismer i `lib/hooks/useOptimizedPolling.ts`
+  - Forbedret loading states i `lib/hooks/useLoadingState.ts`
+  - Bedre cache-håndtering og ytelse
+
+- **UI-komponenter**: Oppdaterte og forbedrede brukergrensesnitt
+  - Forbedret skeleton-komponenter for bedre loading states
+  - Oppdaterte core utilities for bedre kompatibilitet
+  - Forbedret komponentarkitektur og gjenbrukbarhet
+
+### Fixed
+- **Autentisering**: Forbedret NextAuth.js integrasjon
+  - Oppdaterte token-typer og håndtering
+  - Forbedret sikkerhet og stabilitet
+  - Bedre integrasjon med Spotify API
+
+- **Build og distribusjon**: Forbedret Electron-applikasjon
+  - Oppdaterte build-konfigurasjoner
+  - Forbedret distribusjon og installasjon
+  - Bedre kompatibilitet på tvers av plattformer
+
+### Technical Details
+- Nytt konfigurasjonssystem for bedre miljøhåndtering
+- Utvidet logging og feilhåndtering for bedre debugging
+- Forbedret performance med optimaliserte hooks og caching
+- Oppdaterte type-definisjoner for bedre TypeScript-støtte
+- Forbedret komponentarkitektur med nye utility-komponenter
+
+## [0.7.0] - 2025-10-21
 
 ### Minor Updates
 - General improvements and optimizations
 - Enhanced user experience across components
 - Default tasklist page
 
-## [0.6.0] - 2025-01-27
+## [0.6.0] - 2025-10-21
 
 ### Enhanced
 - **Hovedside (app/page.tsx)**: Forbedret hovedside med oppdatert funksjonalitet
@@ -40,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Forbedret brukeropplevelse på tvers av alle sider
 - Optimalisert komponentarkitektur
 
-## [0.5.0] - 2025-01-27
+## [0.5.0] - 2025-10-20
 
 ### Added
 - **TrackListSetStartTime komponent**: Ny funksjonalitet for å sette starttider på spor
@@ -90,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Utvidet PWA-funksjonalitet for bedre mobil-opplevelse
 - Forbedret favicon-støtte på tvers av plattformer
 
-## [0.4.1] - 2025-01-27
+## [0.4.1] - 2025-10-20
 
 ### Fixed
 - **PlaylistCarousel navigasjon**: Fikset "previous track" knapp for første spilleliste i hver kategori
@@ -105,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fikset pointer events konflikter mellom overlappende elementer
 - Forbedret fallback-mekanisme for track arrays (tracksWithStartTimes vs tracks)
 
-## [0.4.0] - 2025-01-27
+## [0.4.0] - 2025-10-20
 
 ### Enhanced
 - **Auto-advance funksjonalitet**: Implementert automatisk fremgang for spillelister
@@ -127,7 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Forbedret tilgjengelighet for tastaturnavigasjon
   - Smidigere redigeringsopplevelse
 
-## [0.3.0] - 2025-01-27
+## [0.3.0] - 2025-10-18
 
 ### Enhanced
 - **MatchPage og PlaylistCarousel**: Optimalisert spilleliste- og sporiadlasting

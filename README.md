@@ -1,15 +1,17 @@
-# Next.js Spotify API Template
+# djSports - Spotify Music Management App
 
-This is a Next.js template project designed to interact with the Spotify API and Web Playback SDK. It includes TypeScript types and fetch actions related to the Spotify API, making it easier to build applications that require Spotify data.
+En avansert Next.js-applikasjon for å administrere Spotify-spillelister med fokus på sportsarrangementer. Appen inkluderer optimalisert caching, feilhåndtering, og en moderne brukeropplevelse.
 
-## Features
+## Hovedfunksjoner
 
-- **Next.js**: A React framework for building server-side rendered applications.
-- **TypeScript**: Strongly typed JavaScript for better code quality and developer experience.
-- **Spotify API Integration**: Predefined types and fetch actions to interact with the Spotify API and Web Playback SDK.
-- **NextAuth.js**: A powerful authentication service for Next.js with support for Spotify.
-- **TailwindCSS**: A utility-first CSS framework for building custom designs quickly and efficiently.
-- **shadcn/ui**: An awesome component library made using TaildwindCSS. Feel free to bring your own.
+- **🎵 Spotify Integration**: Fullstendig integrering med Spotify API og Web Playback SDK
+- **⚡ Optimalisert Ytelse**: Intelligent caching og adaptive polling-intervaller
+- **🔐 Sikker Autentisering**: NextAuth.js med Spotify OAuth og token-refreshing
+- **🎨 Moderne UI**: shadcn/ui komponenter med TailwindCSS
+- **📱 Responsiv Design**: Optimalisert for både desktop og mobil
+- **🛡️ Robust Feilhåndtering**: Sentralisert error handling med brukervennlige meldinger
+- **♿ Tilgjengelighet**: Route guards, keyboard navigation og loading states
+- **🔧 TypeScript**: Fullstendig type safety med forbedrede type-definisjoner
 
 ## Getting Started
 
@@ -61,48 +63,55 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 ### Spotify API Setup
 
-To use the Spotify API, you need to set up your Spotify Developer account and obtain the necessary credentials:
+For å bruke Spotify API, må du sette opp en Spotify Developer-konto og få nødvendige legitimasjoner:
 
-1. Go to the [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) and log in.
+1. Gå til [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) og logg inn.
 
-2. Create a new application to get your Client ID and Client Secret.
+2. Opprett en ny applikasjon for å få Client ID og Client Secret.
 
-3. Create a `.env.local` file in the root of your project and add your credentials:
+3. Kopier `env.example` til `.env.local` og fyll inn dine legitimasjoner:
+
+```bash
+cp env.example .env.local
+```
+
+4. Fyll inn dine Spotify-legitimasjoner i `.env.local`:
 
 ```
-SPOTIFY_CLIENT_ID=your-client-id
-SPOTIFY_CLIENT_SECRET=your-client-secret
-```
-
-4. In `.env.local`, add a JWT Secret by choosing a password and configure NextAuth Url:
-
-```
-SPOTIFY_CLIENT_ID=your-client-id
-SPOTIFY_CLIENT_SECRET=your-client-secret
-JWT_SECRET=mysupersecretpassword
+SPOTIFY_CLIENT_ID=din_spotify_client_id
+SPOTIFY_CLIENT_SECRET=din_spotify_client_secret
+JWT_SECRET=din_sikre_jwt_secret_minst_32_tegn
 NEXTAUTH_URL=http://localhost:3000
 ```
 
-### Fetching Data from Spotify API
+**Viktig**: JWT_SECRET må være minst 32 tegn lang for sikkerhet.
 
-This template includes predefined fetch actions to interact with the Spotify API. You can find these actions in the `lib/spotify` folder. Here's an example of how to fetch all the current user's playlists:
+## Nye Forbedringer
 
-```typescript
-import { getUserPlaylists } from "@/lib/spotify";
-[...]
-const playlists = await getUserPlaylists(token, userId);
-console.log(playlists);
-```
+### 🔧 Sikkerhet & Konfigurasjon
+- **Miljøvariabel-validering**: Automatisk validering av påkrevde miljøvariabler ved oppstart
+- **Sikker JWT-håndtering**: Forbedret token-refreshing med bedre feilhåndtering
+- **Type-safe konfigurasjon**: TypeScript-definerte miljøvariabler
 
-Every Spotify's object type is listed in the `lib/types` folder. Many of them are reworked from [Definitly Typed](https://github.com/DefinitelyTyped/DefinitelyTyped). It is highly recommanded to use those types to ensure type safety across your project and to have a nice experience developping it. Here's an exemple of how to fetch all the current user's playlists with type assertion:
+### ⚡ Ytelse-optimalisering
+- **Adaptive polling**: Intelligent polling med eksponentiell backoff ved feil
+- **Optimalisert caching**: LRU-cache med automatisk opprydding
+- **Preloading**: Kritiske spillelister lastes inn på forhånd
 
-```typescript
-import { getUserPlaylists } from "@/lib/spotify";
-import { Paging, SimplifiedPlaylist } from "@/lib/types";
-[...]
-const playlists: Paging<SimplifiedPlaylist> = await getUserPlaylists(token, userId);
-console.log(playlists);
-```
+### 🛡️ Robust Feilhåndtering
+- **Error Boundary**: Sentralisert feilhåndtering med brukervennlige meldinger
+- **Retry-logikk**: Automatisk retry med eksponentiell backoff
+- **Kategoriserte feil**: Spotify API, nettverk og valideringsfeil
+
+### ♿ Tilgjengelighet & UX
+- **Route Guards**: Automatisk omdirigering for ikke-autentiserte brukere
+- **Loading States**: Forbedrede loading-indikatorer og skeleton-komponenter
+- **Keyboard Navigation**: Fullstendig keyboard-støtte for alle komponenter
+
+### 🔧 TypeScript-forbedringer
+- **Type Safety**: Fjernet alle `any` typer og forbedret type-definisjoner
+- **NextAuth Types**: Forbedrede type-definisjoner for autentisering
+- **Error Types**: Type-safe feilhåndtering med kategoriserte feiltyper
 
 ### Playing Spotify Music with Web Playback SDK
 
@@ -172,8 +181,37 @@ To learn more about TailwindCSS, go to the [TaildwindCSS](https://tailwindcss.co
 
 To learn more about shadcn/ui, visit the [shadcn/ui](https://ui.shadcn.com/docs) documentation.
 
-## Comment
+## Utvikling
 
-Hi, I'm Cyprien De Roef and I'm a student developper for 8 months now. If you're reading this, first of all: thanks! 
+### Arkitektur
+- **Next.js 14**: App Router med server-side rendering
+- **TypeScript**: Fullstendig type safety
+- **TailwindCSS**: Utility-first CSS framework
+- **shadcn/ui**: Moderne komponentbibliotek
+- **NextAuth.js**: Sikker autentisering
+- **Spotify Web API**: Fullstendig API-integrasjon
 
-I was looking for a Next.js template to start a Spotify clone project and play with their API but I didn't find anything suitable and recent enough to do what I want to do, so I figured I would do it myself and make it public. I made it so in the hope it will be useful for someone, but I would also really appreciate if you suggest any improvement you would find interesting. On the same note, if you see any mistake feel free to inform me. I'm trying my best here to provide something consistant, but I may have some things lying around. In the meantime, enjoy! :)
+### Kodekvalitet
+- **ESLint**: Automatisk kodekvalitetskontroll
+- **TypeScript**: Streng type-sjekking
+- **Error Boundaries**: Robust feilhåndtering
+- **Logging**: Strukturert logging med miljøbaserte nivåer
+
+### Ytelse
+- **Caching**: Intelligent caching med TTL og LRU-eviction
+- **Polling**: Adaptive polling med backoff-strategier
+- **Preloading**: Kritiske ressurser lastes på forhånd
+- **Bundle Optimization**: Optimalisert JavaScript-bundling
+
+## Bidrag
+
+Vi setter pris på bidrag! Vennligst:
+1. Fork prosjektet
+2. Opprett en feature branch
+3. Commit dine endringer
+4. Push til branch
+5. Opprett en Pull Request
+
+## Lisens
+
+Dette prosjektet er lisensiert under MIT-lisensen.

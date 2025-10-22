@@ -336,7 +336,7 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
               </TableCell>
               <TableCell>
                 <div className="truncate">
-                  {isTrack && track.artists?.map((artist: any, i: number) => (
+                  {isTrack && track.artists?.map((artist: { id: string; name: string }, i: number) => (
                     <span key={artist.id}>
                       {i > 0 && ", "}
                       {artist.name}

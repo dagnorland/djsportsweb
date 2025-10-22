@@ -1,14 +1,12 @@
 
-type TODO = any;
-
-function toVal(mix: TODO) {
+function toVal(mix: string | number | boolean | bigint | null | undefined | { [key: string]: any }) {
   let k,
     y,
     str = "";
 
-  if (typeof mix === "string" || typeof mix === "number") {
+  if (typeof mix === "string" || typeof mix === "number" || typeof mix === "bigint") {
     str += mix;
-  } else if (typeof mix === "object") {
+  } else if (typeof mix === "object" && mix !== null) {
     if (Array.isArray(mix)) {
       let len = mix.length;
       for (k = 0; k < len; k++) {

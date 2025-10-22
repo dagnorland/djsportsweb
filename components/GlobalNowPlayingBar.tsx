@@ -5,31 +5,36 @@ import { useSession } from "next-auth/react";
 import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
+import { logger } from "@/lib/utils/logger";
+import { useOptimizedPolling } from "@/lib/hooks/useOptimizedPolling";
 
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
 
-  // Polling for now playing status
-  useEffect(() => {
+  // Optimized polling for now playing status
+  const updateNowPlaying = async () => {
     if (!session?.accessToken) return;
-
-    const updateNowPlaying = async () => {
-      try {
-        const data = await getCurrentlyPlayingTrack(session.accessToken!);
-        setNowPlaying(data);
-      } catch (error) {
-        setNowPlaying(null);
-      }
-    };
-
-    // Initial fetch
-    updateNowPlaying();
     
-    // Poll every 5 seconds
-    const interval = setInterval(updateNowPlaying, 5000);
-    return () => clearInterval(interval);
-  }, [session?.accessToken]);
+    try {
+      const data = await getCurrentlyPlayingTrack(session.accessToken);
+      setNowPlaying(data);
+    } catch (error) {
+      setNowPlaying(null);
+      throw error; // Re-throw for polling error handling
+    }
+  };
+
+  useOptimizedPolling({
+    enabled: !!session?.accessToken,
+    interval: 3000, // 3 seconds base interval
+    maxInterval: 15000, // Max 15 seconds on errors
+    onPoll: updateNowPlaying,
+    onError: (error) => {
+      logger.warn("Now playing polling error:", error);
+    },
+    name: "now-playing"
+  });
 
 
   const handlePlayPause = async () => {
@@ -44,7 +49,7 @@ export default function GlobalNowPlayingBar() {
       // Update state immediately for better UX
       setNowPlaying(prev => prev ? { ...prev, is_playing: !prev.is_playing } : null);
     } catch (error) {
-      console.error("Feil ved play/pause:", error);
+      logger.error("Feil ved play/pause:", error);
     }
   };
 
@@ -59,11 +64,11 @@ export default function GlobalNowPlayingBar() {
           const data = await getCurrentlyPlayingTrack(session.accessToken!);
           setNowPlaying(data);
         } catch (error) {
-          console.error("Feil ved oppdatering etter skip:", error);
+          logger.error("Feil ved oppdatering etter skip:", error);
         }
       }, 1000);
     } catch (error) {
-      console.error("Feil ved skip til neste:", error);
+      logger.error("Feil ved skip til neste:", error);
     }
   };
 
@@ -78,11 +83,11 @@ export default function GlobalNowPlayingBar() {
           const data = await getCurrentlyPlayingTrack(session.accessToken!);
           setNowPlaying(data);
         } catch (error) {
-          console.error("Feil ved oppdatering etter skip:", error);
+          logger.error("Feil ved oppdatering etter skip:", error);
         }
       }, 1000);
     } catch (error) {
-      console.error("Feil ved skip til forrige:", error);
+      logger.error("Feil ved skip til forrige:", error);
     }
   };
 
@@ -92,7 +97,7 @@ export default function GlobalNowPlayingBar() {
     try {
       await setPlaybackVolume(session.accessToken, volume);
     } catch (error) {
-      console.error("Feil ved volumendring:", error);
+      logger.error("Feil ved volumendring:", error);
     }
   };
 

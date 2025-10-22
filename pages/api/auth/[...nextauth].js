@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
+import { env } from "@/lib/config/env";
 
 const scopes = [
     "streaming",
@@ -28,7 +29,7 @@ async function refreshAccessToken(token) {
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
+                'Authorization': 'Basic ' + Buffer.from(env.SPOTIFY_CLIENT_ID + ":" + env.SPOTIFY_CLIENT_SECRET).toString('base64'),
             },
             body: params,
         });
@@ -52,35 +53,16 @@ async function refreshAccessToken(token) {
     }
 }
 
-async function refreshAccessTokenOriginal(token) {
-    const params = new URLSearchParams();
-    params.append('grant_type', 'refresh_token');
-    params.append('refresh_token', token.refresh_token);
-    const url = "https://accounts.spotify.com/api/token";
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ":" + process.env.SPOTIFY_CLIENT_SECRET).toString('base64'),
-        },
-        body: params,
-    });
-    const data = await response.json();
-    return {
-        access_token: data.access_token,
-        refresh_token: data.refresh_token ?? token.refresh_token,
-        accessTokenExpires: Date.now() + data.expires_in * 1000,
-    };
-}
 
 export const authOptions ={
     providers: [
         SpotifyProvider({
-            clientId: process.env.SPOTIFY_CLIENT_ID,
-            clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+            clientId: env.SPOTIFY_CLIENT_ID,
+            clientSecret: env.SPOTIFY_CLIENT_SECRET,
             authorization: LOGIN_URL,
         }),
     ],
-    secret: process.env.JWT_SECRET,
+    secret: env.JWT_SECRET,
     //pages: {
         //signIn: '/login',
     //},

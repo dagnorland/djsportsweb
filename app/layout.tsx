@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -40,17 +41,19 @@ export default async function RootLayout({
                 <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
             </head>
             <body className={`dark ${inter.className}`}>
-                <NextAuthProvider>
-                    <Navigation />
-                    <main className="pb-24">
-                        {children}
-                    </main>
-                    <GlobalNowPlayingBar />
-                    <Script 
-                        src="https://sdk.scdn.co/spotify-player.js" 
-                        strategy="afterInteractive"
-                    />
-                </NextAuthProvider>
+                <ErrorBoundary>
+                    <NextAuthProvider>
+                        <Navigation />
+                        <main className="pb-24">
+                            {children}
+                        </main>
+                        <GlobalNowPlayingBar />
+                        <Script 
+                            src="https://sdk.scdn.co/spotify-player.js" 
+                            strategy="afterInteractive"
+                        />
+                    </NextAuthProvider>
+                </ErrorBoundary>
             </body>
         </html>
     );
