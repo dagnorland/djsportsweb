@@ -39,8 +39,20 @@ export default async function RootLayout({
                 <link rel="apple-touch-icon" href="/icon-192x192.png" />
                 <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
                 <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                try {
+                                    var theme = localStorage.getItem('theme') || 'dark';
+                                    document.documentElement.classList.add(theme);
+                                } catch (e) {}
+                            })();
+                        `,
+                    }}
+                />
             </head>
-            <body className={`dark ${inter.className}`}>
+            <body className={inter.className}>
                 <ErrorBoundary>
                     <NextAuthProvider>
                         <Navigation />
@@ -48,8 +60,8 @@ export default async function RootLayout({
                             {children}
                         </main>
                         <GlobalNowPlayingBar />
-                        <Script 
-                            src="https://sdk.scdn.co/spotify-player.js" 
+                        <Script
+                            src="https://sdk.scdn.co/spotify-player.js"
                             strategy="afterInteractive"
                         />
                     </NextAuthProvider>

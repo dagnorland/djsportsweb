@@ -1,74 +1,62 @@
 "use client";
-import * as Switch from "@radix-ui/react-switch";
-import { Moon, Sun } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
+import { Moon, Sun, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "./button";
+
+type Theme = "light" | "dark" | "sports";
 
 export function ThemeSwitcherTransition() {
-    const [isDarkMode, setIsDarkMode] = useState(true);
-    const ref = useRef(null);
-
-    const toggleDarkMode = async (isDarkMode: boolean) => {
-        /**
-         * Return early if View Transition API is not supported
-         * or user prefers reduced motion
-         */
-        if (
-            !ref ||
-            // @ts-ignore
-            !document.startViewTransition
-        ) {
-            setIsDarkMode(isDarkMode);
-            return;
-        }
-
-        // @ts-ignore
-        await document.startViewTransition(() => {
-            flushSync(() => {
-                setIsDarkMode(isDarkMode);
-            });
-        }).ready;
-
-        // @ts-ignore
-        const { top, left, width, height } = ref.current.getBoundingClientRect();
-        const x = left + width / 2;
-        const y = top + height / 2;
-        const right = window.innerWidth - left;
-        const bottom = window.innerHeight - top;
-        const maxRadius = Math.hypot(Math.max(left, right), Math.max(top, bottom));
-
-        document.documentElement.animate(
-            {
-                clipPath: [
-                    `circle(0px at ${x}px ${y}px)`,
-                    `circle(${maxRadius}px at ${x}px ${y}px)`,
-                ],
-            },
-            {
-                duration: 500,
-                easing: "ease-in-out",
-                pseudoElement: "::view-transition-new(root)",
-            },
-        );
-    };
+    const [theme, setTheme] = useState<Theme>("dark");
 
     useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
+        // Load theme from localStorage on mount
+        const savedTheme = localStorage.getItem("theme") as Theme | null;
+        if (savedTheme) {
+            setTheme(savedTheme);
+            applyTheme(savedTheme);
         }
-    }, [isDarkMode]);
+    }, []);
+
+    const applyTheme = (newTheme: Theme) => {
+        document.documentElement.classList.remove("light", "dark", "sports");
+        document.documentElement.classList.add(newTheme);
+    };
+
+    const handleThemeChange = (newTheme: Theme) => {
+        setTheme(newTheme);
+        localStorage.setItem("theme", newTheme);
+        applyTheme(newTheme);
+    };
 
     return (
-        <Switch.Root checked={ isDarkMode } onCheckedChange={ toggleDarkMode } className="h-10 px-4 py-2 transition-color rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground">
-            <Switch.Thumb ref={ ref }>
-                { isDarkMode ? (
-                    <Moon />
-                ) : (
-                    <Sun />
-                ) }
-            </Switch.Thumb>
-        </Switch.Root>
+        <div className="flex items-center gap-1 rounded-md border p-1">
+            <Button
+                variant={theme === "light" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleThemeChange("light")}
+                className="h-8 w-8 p-0"
+                title="Light theme"
+            >
+                <Sun className="h-4 w-4" />
+            </Button>
+            <Button
+                variant={theme === "dark" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleThemeChange("dark")}
+                className="h-8 w-8 p-0"
+                title="Dark theme"
+            >
+                <Moon className="h-4 w-4" />
+            </Button>
+            <Button
+                variant={theme === "sports" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleThemeChange("sports")}
+                className="h-8 w-8 p-0"
+                title="Sports theme"
+            >
+                <Zap className="h-4 w-4" />
+            </Button>
+        </div>
     );
 }
