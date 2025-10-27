@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2025-10-27
+
+### Enhanced
+- **djCloud Smart CTA**: Intelligent button recommendations based on sync state
+  - Backup button becomes CTA (primary style) when local changes are newer than cloud
+  - Restore button becomes CTA (primary style) when cloud is newer than local
+  - Both buttons use outline style when data is in sync
+  - Improved visual hierarchy guides users to recommended action
+
+- **djCloud Sync Indicators**: Enhanced visibility of sync state badges
+  - Increased arrow icon size (h-3 → h-4) for better visibility
+  - Enlarged badge container (h-4 → h-5) for more prominent display
+  - Thicker border (border-2) with primary color accent
+  - Added shadow effect for improved visual prominence
+  - Orange up-arrow (↑) clearly indicates backup needed
+  - Blue down-arrow (↓) clearly indicates restore available
+
+### Technical Details
+- Refactored sync state logic into reusable `getSyncState()` function
+- Dynamic button variant switching based on sync comparison
+- Enhanced badge styling for improved user awareness
+
 ## [0.9.0] - 2025-10-27
 
 ### Added

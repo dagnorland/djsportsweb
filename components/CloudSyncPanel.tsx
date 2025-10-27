@@ -161,8 +161,8 @@ export function CloudSyncPanel() {
     return null;
   }
 
-  // Determine sync indicator
-  const getSyncIndicator = () => {
+  // Determine sync state
+  const getSyncState = (): 'backup' | 'restore' | 'synced' | null => {
     if (!syncStatus || !syncStatus.lastCloudSync || !syncStatus.lastLocalChange) {
       return null; // No cloud data yet or no local changes
     }
@@ -178,14 +178,25 @@ export function CloudSyncPanel() {
     if (localTime > cloudTime) {
       // Local is newer - needs backup
       console.log('  ↑ Local > Cloud - Backup needed');
-      return <ArrowUp className="h-3 w-3 text-orange-500" />;
+      return 'backup';
     } else if (cloudTime > localTime) {
       // Cloud is newer - can restore
       console.log('  ↓ Cloud > Local - Restore available');
-      return <ArrowDown className="h-3 w-3 text-blue-500" />;
+      return 'restore';
     }
     console.log('  ✓ In sync');
-    return null; // In sync
+    return 'synced'; // In sync
+  };
+
+  // Determine sync indicator
+  const getSyncIndicator = () => {
+    const state = getSyncState();
+    if (state === 'backup') {
+      return <ArrowUp className="h-4 w-4 text-orange-500" />;
+    } else if (state === 'restore') {
+      return <ArrowDown className="h-4 w-4 text-blue-500" />;
+    }
+    return null; // In sync or no data
   };
 
   return (
@@ -195,7 +206,7 @@ export function CloudSyncPanel() {
           <Cloud className="h-4 w-4" />
           <span className="hidden xl:inline">djCloud</span>
           {getSyncIndicator() && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-background border">
+            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-background border-2 border-primary shadow-sm">
               {getSyncIndicator()}
             </span>
           )}
@@ -272,6 +283,7 @@ export function CloudSyncPanel() {
             <Button
               onClick={handleSaveToCloud}
               disabled={loading}
+              variant={getSyncState() === 'backup' ? 'default' : 'outline'}
               className="flex items-center gap-2"
             >
               <Upload className="h-4 w-4" />
@@ -281,7 +293,7 @@ export function CloudSyncPanel() {
             <Button
               onClick={handleLoadFromCloud}
               disabled={loading}
-              variant="outline"
+              variant={getSyncState() === 'restore' ? 'default' : 'outline'}
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
