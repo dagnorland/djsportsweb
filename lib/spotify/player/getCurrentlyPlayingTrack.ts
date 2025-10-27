@@ -29,8 +29,15 @@ export default async function getCurrentlyPlayingTrack(
       return null;
     }
 
+    // Handle 401 Unauthorized (token expired or invalid)
+    if (res.status === 401) {
+      console.warn("Spotify token expired or invalid");
+      return null;
+    }
+
     if (!res.ok) {
-      throw new Error(`Failed to fetch data: ${res.status} ${res.statusText}`);
+      console.error(`Failed to fetch currently playing track: ${res.status} ${res.statusText}`);
+      return null;
     }
 
     // Check if response has content before parsing JSON

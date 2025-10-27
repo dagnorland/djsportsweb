@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2025-10-27
+
+### Added
+- **Multi-Theme Support**: Three distinct themes for different use cases
+  - Light theme - Clean, professional light mode with soft blue accents
+  - Dark theme - Existing dark theme with purple accents (default)
+  - SPORTS theme - High-energy yellow and black theme inspired by Sola Håndball
+  - Theme switcher with icon buttons (Sun/Moon/Zap) in navigation bar
+  - Theme preference persists in localStorage
+  - Smooth theme initialization prevents flash on page load
+
+### Enhanced
+- **Navigation & User Experience**: Streamlined app navigation
+  - /playlists is now the default start page after login
+  - Removed "Hjem", "Innstillinger", and "Statistikk" menu items
+  - Logo now links directly to /playlists
+  - Simplified navigation for focused DJ workflow
+
+- **Image Quality**: Significantly improved album cover display
+  - Match page now uses highest resolution images (640x640px) instead of lowest (64x64px)
+  - Added responsive image sizing with Next.js Image optimization
+  - Priority loading for better performance
+
+- **Performance Monitoring**: Improved developer tools
+  - Renamed "Show Performance" button to "Log"
+  - Moved Log button to navigation bar (appears next to "Kamp" menu)
+  - Only visible when on /match page
+  - Custom event-based communication between Navigation and Match page
+
+### Fixed
+- **Continuous Page Reloading**: Resolved POST request loop issues
+  - Fixed unstable useEffect dependencies in playlists and match pages
+  - Wrapped async functions in useCallback with stable dependencies
+  - Simplified middleware to only run on home page redirect
+  - Removed duplicate redirect logic causing loops
+
+- **Error Handling**: Better Spotify API error management
+  - 401 Unauthorized errors now handled gracefully (token expired/invalid)
+  - No longer throws errors when no track is playing (204 responses)
+  - Improved error logging and user feedback
+
+- **djCloud Sync Optimization**: Reduced unnecessary polling
+  - Sync status polling only runs when djCloud dialog is open
+  - Removed debug console logs from sync comparison
+  - Prevents continuous sync checks on match page
+
+### Technical Details
+- Function hoisting fixed by moving useCallback definitions before useEffects
+- Custom event system for cross-component communication (Navigation ↔ Match)
+- Server-side middleware redirect for authenticated users
+- Theme system uses CSS custom properties with Tailwind
+- Improved React hook dependency arrays for stable renders
+
 ## [0.9.1] - 2025-10-27
 
 ### Enhanced

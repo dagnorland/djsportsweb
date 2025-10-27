@@ -34,56 +34,32 @@ export default function MatchPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastPlayedTrackUri, setLastPlayedTrackUri] = useState<string | null>(null);
 
-  // Redirect til login hvis ikke innlogget
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
-
-  // Load playlists and filter by type
-  useEffect(() => {
-    if (session?.accessToken) {
-      loadPlaylistsOptimized();
-      updateNowPlaying();
-      const interval = setInterval(updateNowPlaying, 2000); // Increased frequency for better responsiveness
-      return () => clearInterval(interval);
-    }
-  }, [session]);
-
-  // Load tracks for all playlists with optimized batching
-  useEffect(() => {
-    const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
-    if (allPlaylists.length > 0 && session?.accessToken) {
-      loadAllPlaylistTracksOptimized(allPlaylists);
-    }
-  }, [hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, session]);
-
+  // Define callbacks before useEffects
   const loadPlaylistsOptimized = useCallback(async () => {
     if (!session?.accessToken) return;
 
     try {
       setLoading(true);
       logger.spotify("Loading playlists with caching...");
-      
+
       const data = await loadPlaylistsCached(session.accessToken, 0, 50);
       setPlaylists(data);
-      
+
       // Filter playlists by type
       const playlistTypes = getAllPlaylistTypes();
-      const hotspot = data.filter(playlist => 
+      const hotspot = data.filter(playlist =>
         playlistTypes[playlist.id] === "hotspot"
       );
-      const match = data.filter(playlist => 
+      const match = data.filter(playlist =>
         playlistTypes[playlist.id] === "match"
       );
-      const funStuff = data.filter(playlist => 
+      const funStuff = data.filter(playlist =>
         playlistTypes[playlist.id] === "funStuff"
       );
-      const preMatch = data.filter(playlist => 
+      const preMatch = data.filter(playlist =>
         playlistTypes[playlist.id] === "preMatch"
       );
-      
+
       setHotspotPlaylists(hotspot);
       setMatchPlaylists(match);
       setFunStuffPlaylists(funStuff);
@@ -92,7 +68,7 @@ export default function MatchPage() {
       // Preload critical playlists
       const allPlaylists = [...hotspot, ...match, ...funStuff, ...preMatch];
       await preloadCriticalPlaylists(session.accessToken, allPlaylists);
-      
+
     } catch (error) {
       logger.error("Feil ved henting av spillelister:", error);
     } finally {
@@ -105,23 +81,23 @@ export default function MatchPage() {
 
     try {
       logger.spotify(`Loading tracks for ${allPlaylists.length} playlists with batching...`);
-      
+
       const tracksMap = await loadMultiplePlaylistTracks(session.accessToken, allPlaylists, 3);
       setPlaylistTracks(tracksMap);
-      
+
       // Update track mapping for optimized playback
       updateTrackMapping(allPlaylists, tracksMap);
-      
+
       // Update performance metrics
       const metrics = getTrackPlaybackMetrics();
       setPerformanceMetrics(metrics);
-      
+
     } catch (error) {
       logger.error("Feil ved henting av alle spilleliste-spor:", error);
     }
   }, [session?.accessToken]);
 
-  const updateNowPlaying = async () => {
+  const updateNowPlaying = useCallback(async () => {
     if (!session?.accessToken) return;
 
     try {
@@ -130,7 +106,35 @@ export default function MatchPage() {
     } catch (error) {
       setNowPlaying(null);
     }
-  };
+  }, [session?.accessToken]);
+
+  // Listen for performance metrics toggle from Navigation
+  useEffect(() => {
+    const handleToggle = () => {
+      setShowPerformanceMetrics(prev => !prev);
+    };
+
+    window.addEventListener('togglePerformanceMetrics', handleToggle);
+    return () => window.removeEventListener('togglePerformanceMetrics', handleToggle);
+  }, []);
+
+  // Load playlists and filter by type
+  useEffect(() => {
+    if (session?.accessToken) {
+      loadPlaylistsOptimized();
+      updateNowPlaying();
+      const interval = setInterval(updateNowPlaying, 2000); // Increased frequency for better responsiveness
+      return () => clearInterval(interval);
+    }
+  }, [session?.accessToken, loadPlaylistsOptimized, updateNowPlaying]);
+
+  // Load tracks for all playlists with optimized batching
+  useEffect(() => {
+    const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
+    if (allPlaylists.length > 0 && session?.accessToken) {
+      loadAllPlaylistTracksOptimized(allPlaylists);
+    }
+  }, [hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, session?.accessToken, loadAllPlaylistTracksOptimized]);
 
   // Handle automatic carousel advancement when track starts playing
   useEffect(() => {
@@ -361,16 +365,6 @@ export default function MatchPage() {
           </div>
         </div>
       )}
-
-      {/* Performance toggle button */}
-      <div className="fixed top-4 right-4 z-50">
-        <button
-          onClick={() => setShowPerformanceMetrics(!showPerformanceMetrics)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
-        >
-          {showPerformanceMetrics ? 'Hide' : 'Show'} Performance
-        </button>
-      </div>
 
       {/* Scrollable section for other playlist types */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">

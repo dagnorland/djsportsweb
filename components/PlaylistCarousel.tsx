@@ -176,10 +176,12 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
             <div className="relative aspect-square w-full max-w-48 group">
               {isTrack && track.album?.images && track.album.images.length > 0 ? (
                 <Image
-                  src={track.album.images[track.album.images.length - 1].url}
+                  src={track.album.images[0].url}
                   alt={track?.name || "Ukjent spor"}
                   fill
                   className="object-cover rounded-lg"
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  priority
                 />
               ) : (
                 <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">

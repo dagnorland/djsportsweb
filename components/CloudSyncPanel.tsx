@@ -70,16 +70,16 @@ export function CloudSyncPanel() {
     }
   }, [isExpanded, spotifyUserId]);
 
-  // Poll sync status periodically to detect local changes
+  // Poll sync status periodically to detect local changes (only when dialog is open)
   useEffect(() => {
-    if (!spotifyUserId) return;
+    if (!spotifyUserId || !isExpanded) return;
 
     const intervalId = setInterval(() => {
       loadSyncStatus();
     }, 5000); // Check every 5 seconds
 
     return () => clearInterval(intervalId);
-  }, [spotifyUserId]);
+  }, [spotifyUserId, isExpanded]);
 
   const loadSyncStatus = async () => {
     if (!spotifyUserId) return;
@@ -171,20 +171,13 @@ export function CloudSyncPanel() {
     const cloudTime = Math.floor(new Date(syncStatus.lastCloudSync).getTime() / 1000);
     const localTime = Math.floor(new Date(syncStatus.lastLocalChange).getTime() / 1000);
 
-    console.log('🔍 Sync comparison:');
-    console.log('  Local:', new Date(localTime * 1000).toISOString(), `(${localTime}s)`);
-    console.log('  Cloud:', new Date(cloudTime * 1000).toISOString(), `(${cloudTime}s)`);
-
     if (localTime > cloudTime) {
       // Local is newer - needs backup
-      console.log('  ↑ Local > Cloud - Backup needed');
       return 'backup';
     } else if (cloudTime > localTime) {
       // Cloud is newer - can restore
-      console.log('  ↓ Cloud > Local - Restore available');
       return 'restore';
     }
-    console.log('  ✓ In sync');
     return 'synced'; // In sync
   };
 

@@ -9,18 +9,21 @@ import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
 import { CloudSyncPanel } from "@/components/CloudSyncPanel";
+import { ThemeSwitcherTransition } from "@/components/ui/theme-switcher-transition";
 
 const navigationItems = [
-  { name: "Hjem", href: "/" },
   { name: "Spillelister", href: "/playlists" },
   { name: "Kamp", href: "/match" },
-  { name: "Innstillinger", href: "/settings" },
-  { name: "Statistikk", href: "/stats" },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
+
+  const handleToggleLog = () => {
+    // Dispatch custom event for match page to listen to
+    window.dispatchEvent(new CustomEvent('togglePerformanceMetrics'));
+  };
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -29,12 +32,12 @@ export function Navigation() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo og navigasjon */}
           <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-2">
+            <Link href="/playlists" className="flex items-center space-x-2">
               <VersionDisplay className="text-xs text-muted-foreground" />
-              <Image 
-                src="/icon-192x192.png" 
-                alt="DJ Sports Logo" 
-                width={32} 
+              <Image
+                src="/icon-192x192.png"
+                alt="DJ Sports Logo"
+                width={32}
                 height={32}
                 className="rounded-md"
               />
@@ -43,7 +46,7 @@ export function Navigation() {
             
             {/* Navigasjonsmeny - kun synlig hvis innlogget */}
             {session && (
-              <div className="hidden md:flex space-x-6">
+              <div className="hidden md:flex space-x-6 items-center">
                 {navigationItems.map((item) => (
                   <Link
                     key={item.href}
@@ -58,6 +61,16 @@ export function Navigation() {
                     {item.name}
                   </Link>
                 ))}
+                {pathname === '/match' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleToggleLog}
+                    className="text-xs"
+                  >
+                    Log
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -65,6 +78,7 @@ export function Navigation() {
           {/* Brukerinfo og logg ut */}
           {session && (
             <div className="flex items-center space-x-4">
+              <ThemeSwitcherTransition />
               <div className="hidden lg:block">
                 <CloudSyncPanel />
               </div>

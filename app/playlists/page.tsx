@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -47,6 +47,54 @@ export default function PlaylistsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
+  // Define callbacks before useEffects
+  const loadPlaylists = useCallback(async () => {
+    if (!session?.accessToken) return;
+
+    try {
+      setLoadingPlaylists(true);
+      const data = await getCurrentUserPlaylists(session.accessToken, 0, 50);
+      setPlaylists(data.items);
+
+      // Automatisk velg første playlist hvis ingen er valgt
+      if (data.items.length > 0 && !selectedPlaylistId) {
+        const firstPlaylist = data.items[0];
+        setSelectedPlaylistId(firstPlaylist.id);
+        setSelectedPlaylistName(firstPlaylist.name);
+      }
+    } catch (error) {
+      logger.error("Feil ved henting av spillelister:", error);
+    } finally {
+      setLoadingPlaylists(false);
+    }
+  }, [session?.accessToken, selectedPlaylistId]);
+
+  const loadTracks = useCallback(async (playlistId: string) => {
+    if (!session?.accessToken) return;
+
+    try {
+      setLoadingTracks(true);
+      const data = await getPlaylistItems(session.accessToken, playlistId, 0, 100);
+      setTracks(data.items);
+    } catch (error) {
+      logger.error("Feil ved henting av spor:", error);
+    } finally {
+      setLoadingTracks(false);
+    }
+  }, [session?.accessToken]);
+
+  const updateNowPlaying = useCallback(async () => {
+    if (!session?.accessToken) return;
+
+    try {
+      const data = await getCurrentlyPlayingTrack(session.accessToken);
+      setNowPlaying(data);
+    } catch (error) {
+      // Ikke logg feil her - det er normalt at ingen sang spilles
+      setNowPlaying(null);
+    }
+  }, [session?.accessToken]);
+
   // Check if screen width is below 600px
   useEffect(() => {
     const checkScreenSize = () => {
@@ -62,13 +110,6 @@ export default function PlaylistsPage() {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Redirect til login hvis ikke innlogget
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
-
   // Hent spillelister ved lasting og start polling for now playing
   useEffect(() => {
     if (session?.accessToken) {
@@ -79,61 +120,14 @@ export default function PlaylistsPage() {
       const interval = setInterval(updateNowPlaying, 5000);
       return () => clearInterval(interval);
     }
-  }, [session]);
+  }, [session?.accessToken, loadPlaylists, updateNowPlaying]);
 
   // Hent spor når spilleliste velges
   useEffect(() => {
     if (selectedPlaylistId && session?.accessToken) {
       loadTracks(selectedPlaylistId);
     }
-  }, [selectedPlaylistId, session]);
-
-  const loadPlaylists = async () => {
-    if (!session?.accessToken) return;
-
-    try {
-      setLoadingPlaylists(true);
-      const data = await getCurrentUserPlaylists(session.accessToken, 0, 50);
-      setPlaylists(data.items);
-      
-      // Automatisk velg første playlist hvis ingen er valgt
-      if (data.items.length > 0 && !selectedPlaylistId) {
-        const firstPlaylist = data.items[0];
-        setSelectedPlaylistId(firstPlaylist.id);
-        setSelectedPlaylistName(firstPlaylist.name);
-      }
-    } catch (error) {
-      logger.error("Feil ved henting av spillelister:", error);
-    } finally {
-      setLoadingPlaylists(false);
-    }
-  };
-
-  const loadTracks = async (playlistId: string) => {
-    if (!session?.accessToken) return;
-
-    try {
-      setLoadingTracks(true);
-      const data = await getPlaylistItems(session.accessToken, playlistId, 0, 100);
-      setTracks(data.items);
-    } catch (error) {
-      logger.error("Feil ved henting av spor:", error);
-    } finally {
-      setLoadingTracks(false);
-    }
-  };
-
-  const updateNowPlaying = async () => {
-    if (!session?.accessToken) return;
-
-    try {
-      const data = await getCurrentlyPlayingTrack(session.accessToken);
-      setNowPlaying(data);
-    } catch (error) {
-      // Ikke logg feil her - det er normalt at ingen sang spilles
-      setNowPlaying(null);
-    }
-  };
+  }, [selectedPlaylistId, session?.accessToken, loadTracks]);
 
   const handleSelectPlaylist = (playlistId: string) => {
     setSelectedPlaylistId(playlistId);
