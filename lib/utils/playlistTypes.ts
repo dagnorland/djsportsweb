@@ -3,6 +3,7 @@
  */
 
 import { DJPlaylistType } from "@/lib/types";
+import { setLastModified } from '@/lib/supabase/syncService';
 
 const STORAGE_KEY = 'playlistTypes';
 
@@ -13,11 +14,12 @@ const STORAGE_KEY = 'playlistTypes';
  */
 export const savePlaylistType = (playlistId: string, playlistType: DJPlaylistType): void => {
   if (typeof window === 'undefined') return; // SSR safety
-  
+
   try {
     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     existing[playlistId] = playlistType;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    setLastModified(); // Update sync timestamp
   } catch (error) {
     console.error('Failed to save playlist type:', error);
   }
@@ -46,11 +48,12 @@ export const getPlaylistType = (playlistId: string): DJPlaylistType | null => {
  */
 export const removePlaylistType = (playlistId: string): void => {
   if (typeof window === 'undefined') return; // SSR safety
-  
+
   try {
     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     delete existing[playlistId];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    setLastModified(); // Update sync timestamp
   } catch (error) {
     console.error('Failed to remove playlist type:', error);
   }
