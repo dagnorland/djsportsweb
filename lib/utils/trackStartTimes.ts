@@ -2,6 +2,8 @@
  * Utility functions for managing track start times with localStorage persistence
  */
 
+import { setLastModified } from '@/lib/supabase/syncService';
+
 const STORAGE_KEY = 'trackStartTimes';
 
 /**
@@ -11,11 +13,12 @@ const STORAGE_KEY = 'trackStartTimes';
  */
 export const saveTrackStartTime = (trackId: string, startTimeMs: number): void => {
   if (typeof window === 'undefined') return; // SSR safety
-  
+
   try {
     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     existing[trackId] = startTimeMs;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    setLastModified(); // Update sync timestamp
   } catch (error) {
     console.error('Failed to save track start time:', error);
   }
@@ -44,11 +47,12 @@ export const getTrackStartTime = (trackId: string): number => {
  */
 export const removeTrackStartTime = (trackId: string): void => {
   if (typeof window === 'undefined') return; // SSR safety
-  
+
   try {
     const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     delete existing[trackId];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+    setLastModified(); // Update sync timestamp
   } catch (error) {
     console.error('Failed to remove track start time:', error);
   }

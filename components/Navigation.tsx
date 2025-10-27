@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
+import { CloudSyncPanel } from "@/components/CloudSyncPanel";
 
 const navigationItems = [
   { name: "Hjem", href: "/" },
@@ -64,6 +65,9 @@ export function Navigation() {
           {/* Brukerinfo og logg ut */}
           {session && (
             <div className="flex items-center space-x-4">
+              <div className="hidden lg:block">
+                <CloudSyncPanel />
+              </div>
               <span className="text-sm text-muted-foreground">
                 {session.user?.name || session.user?.email}
               </span>

@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-10-27
+
+### Added
+- **djCloud - Cloud Synchronization System**: Complete cloud backup and restore functionality
+  - Branded as "djCloud" for professional DJ-focused user experience
+  - Backup/Restore buttons for intuitive data management
+  - Supabase integration for reliable cloud storage
+  - Automatic synchronization of track start times and playlist types across devices
+  - Device name management for multi-device setup tracking
+
+- **CloudSyncPanel Component**: New modal dialog for cloud sync management
+  - Centered modal dialog with clean, accessible interface
+  - Device name input and management
+  - Visual sync status indicators with timestamps
+  - Real-time sync status display (last cloud sync vs. last local change)
+
+- **Smart Sync Indicators**: Visual feedback for sync state
+  - Orange up-arrow (↑) badge when local changes need backup
+  - Blue down-arrow (↓) badge when cloud has newer data
+  - Automatic indicator updates via periodic polling (5 seconds)
+  - Second-level timestamp precision to avoid false sync warnings
+
+- **Automatic Change Tracking**: Intelligent local change detection
+  - Timestamp updates when saving/removing track start times
+  - Timestamp updates when saving/removing playlist types
+  - Local timestamp synchronization after successful backup/restore
+  - Persistent timestamp storage in localStorage
+
+### Enhanced
+- **Environment Configuration**: Browser-safe environment variable handling
+  - Added NEXT_PUBLIC_ prefix support for client-side Supabase access
+  - Server-only variables properly isolated from browser code
+  - Improved security with proper variable scoping
+
+- **TypeScript Support**: Complete type safety for Supabase integration
+  - Database type definitions with JSON field support
+  - Proper type inference for all Supabase operations
+  - Type-safe sync operations and status checks
+
+- **User Experience**: Improved cloud sync workflow
+  - Console logging for sync comparison debugging
+  - Toast notifications for all sync operations
+  - Loading states during backup/restore operations
+  - Automatic page reload after restore to reflect changes
+
+### Fixed
+- **Import Issues**: Resolved getCurrentUser import error
+  - Changed from named export to default export import
+  - Fixed CloudSyncPanel component initialization
+
+- **TypeScript Build Errors**: Resolved all Supabase type inference issues
+  - Fixed Database schema type definitions
+  - Added proper type assertions for JSONB fields
+  - Resolved maybeSingle() return type issues
+
+### Technical Details
+- Supabase cloud storage with Row Level Security policies
+- Automatic timestamp management for sync detection
+- Browser-compatible environment variable configuration
+- Type-safe database operations with proper error handling
+- Periodic polling for real-time sync status updates
+- Device-specific data tracking and management
+
 ## [0.8.0] - 2025-10-22
 
 ### Added
