@@ -5,6 +5,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { getCurrentlyPlayingTrack } from "@/lib/spotify";
 import { SimplifiedPlaylist, PlaylistTrack, CurrentlyPlaying } from "@/lib/types";
 import { getAllPlaylistTypes } from "@/lib/utils/playlistTypes";
@@ -356,20 +362,20 @@ export default function MatchPage() {
 
   const renderPlaylistSection = useCallback((title: string, playlists: SimplifiedPlaylist[], type: string) => {
     if (playlists.length === 0) return null;
-    
+
     return (
-      <div className="mb-6 relative">
-        {/* Rotated label on the left */}
-        <div className="absolute left-[20px] top-[60px] h-full flex items-start pt-4">
-          <div className="transform -rotate-90 origin-bottom-left text-lg font-semibold text-muted-foreground whitespace-nowrap">
-            {title}
+      <AccordionItem value={type}>
+        <AccordionTrigger className="hover:no-underline">
+          <div className="flex items-center gap-3 w-full pr-2">
+            <div className="text-lg font-semibold text-muted-foreground whitespace-nowrap">
+              {title}
+            </div>
+            <div className={`h-1 flex-1 rounded-full ${getPlaylistTypeColor(type)}`}></div>
           </div>
-        </div>
-        
-        {/* Content with left margin to avoid overlap */}
-        <div className="ml-0">
-          <div className={`h-1 w-full rounded-full mb-3 ${getPlaylistTypeColor(type)}`}></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 w-full">
+        </AccordionTrigger>
+        <AccordionContent>
+          {/* Playlist grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 w-full pt-2">
             {playlists.map((playlist) => (
               <PlaylistCarousel
                 key={playlist.id}
@@ -396,10 +402,10 @@ export default function MatchPage() {
               />
             ))}
           </div>
-        </div>
-      </div>
+        </AccordionContent>
+      </AccordionItem>
     );
-  }, [playlistTracks, handlePlayTrack, nowPlaying]);
+  }, [playlistTracks, handlePlayTrack, nowPlaying, autoAdvancePlaylists]);
 
   // Vis loading mens session sjekkes
   if (status === "loading") {
@@ -455,13 +461,15 @@ export default function MatchPage() {
 
       {/* Scrollable section for other playlist types */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
-        {renderPlaylistSection("🔥 HOT", hotspotPlaylists, "hotspot")}
-        {renderPlaylistSection("⚽ MATCH", matchPlaylists, "match")}
-        {renderPlaylistSection("🎉 FUN", funStuffPlaylists, "funStuff")}
-        {renderPlaylistSection("🏟️ PRE", preMatchPlaylists, "preMatch")}
-        
+        <Accordion type="multiple" defaultValue={["hotspot", "match", "funStuff", "preMatch"]} className="w-full">
+          {renderPlaylistSection("🔥 HOT", hotspotPlaylists, "hotspot")}
+          {renderPlaylistSection("⚽ MATCH", matchPlaylists, "match")}
+          {renderPlaylistSection("🎉 FUN", funStuffPlaylists, "funStuff")}
+          {renderPlaylistSection("🏟️ PRE", preMatchPlaylists, "preMatch")}
+        </Accordion>
+
         {/* Show message if no playlists found */}
-        {hotspotPlaylists.length === 0 && matchPlaylists.length === 0 && 
+        {hotspotPlaylists.length === 0 && matchPlaylists.length === 0 &&
          funStuffPlaylists.length === 0 && preMatchPlaylists.length === 0 && (
           <Card>
             <CardContent className="p-8 text-center">
