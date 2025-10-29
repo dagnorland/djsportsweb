@@ -2,9 +2,12 @@
  * Optimized track playback with pre-computed mappings and performance logging
  */
 
-import { startResumePlayback, getAvailableDevices } from "@/lib/spotify";
+import { startResumePlayback } from "@/lib/spotify";
 import { withTiming, logTrackStart, logTrackStartComplete, performanceMonitor } from "@/lib/utils/performance";
 import { SimplifiedPlaylist, PlaylistTrack } from "@/lib/types";
+
+// Environment flag for debug logging
+const DEBUG_MODE = process.env.NODE_ENV === 'development';
 
 interface TrackPlaybackOptions {
   trackUri: string;
@@ -74,76 +77,69 @@ const trackMappingCache = new TrackMappingCache();
 
 /**
  * Optimized track playback with pre-computed lookup
+ * SPEED OPTIMIZED: Minimal logging in production, performance monitoring only in debug mode
  */
-export const playTrackOptimized = withTiming(
-  'play_track_optimized',
-  async (token: string, options: TrackPlaybackOptions) => {
-    const { trackUri, startTime } = options;
-    
-    // Start detailed performance logging
-    const trackStartId = performanceMonitor.startTiming('track_start', {
+export const playTrackOptimized = async (token: string, options: TrackPlaybackOptions) => {
+  const { trackUri, startTime } = options;
+
+  // Performance monitoring only in debug mode
+  const trackStartId = DEBUG_MODE ? performanceMonitor.startTiming('track_start', {
+    trackUri,
+    startTime,
+    playlistId: options.playlistId,
+    timestamp: new Date().toISOString()
+  }) : null;
+
+  try {
+    if (DEBUG_MODE) {
+      console.log(`🎵 Starting track: ${trackUri}${startTime ? ` at ${startTime}ms` : ''}`);
+    }
+
+    // Get track info from pre-computed mapping
+    const trackInfo = trackMappingCache.getTrackInfo(trackUri);
+
+    if (!trackInfo) {
+      throw new Error(`Track not found in mapping: ${trackUri}`);
+    }
+
+    if (DEBUG_MODE) {
+      console.log(`📍 Found track in playlist: ${trackInfo.playlistId} at position ${trackInfo.position}`);
+    }
+
+    // Use custom start time if provided, otherwise start from beginning
+    const positionMs = startTime && startTime > 0 ? startTime : 0;
+
+    // Start timing Spotify API call specifically (debug only)
+    const spotifyApiId = DEBUG_MODE ? performanceMonitor.startTiming('spotify_api_call', {
       trackUri,
-      startTime,
-      playlistId: options.playlistId,
-      timestamp: new Date().toISOString()
+      playlistId: trackInfo.playlistId,
+      position: trackInfo.position
+    }) : null;
+
+    if (DEBUG_MODE) {
+      console.log(`🚀 Sending request to Spotify API...`);
+    }
+
+    // Start playback with optimized parameters
+    await startResumePlayback(token, undefined, {
+      context_uri: trackInfo.playlistUri,
+      offset: { position: trackInfo.position },
+      position_ms: positionMs,
     });
 
-    try {
-      console.log(`🎵 Starting track: ${trackUri}${startTime ? ` at ${startTime}ms` : ''}`);
-      
-      // Check for available devices first
-      console.log(`🔍 Checking for available Spotify devices...`);
-      const devices = await getAvailableDevices(token);
-      
-      if (!devices || devices.length === 0) {
-        throw new Error("Ingen Spotify-enheter tilgjengelig. Vennligst åpne Spotify på en enhet og prøv igjen.");
-      }
-      
-      const activeDevice = devices.find(device => device.is_active);
-      if (!activeDevice) {
-        console.log(`⚠️ Ingen aktiv enhet funnet. Tilgjengelige enheter: ${devices.map(d => d.name).join(', ')}`);
-        throw new Error("Ingen aktiv Spotify-enhet. Vennligst åpne Spotify på en enhet og prøv igjen.");
-      }
-      
-      console.log(`✅ Aktiv enhet funnet: ${activeDevice.name} (${activeDevice.type})`);
-      
-      // Get track info from pre-computed mapping
-      const trackInfo = trackMappingCache.getTrackInfo(trackUri);
-      
-      if (!trackInfo) {
-        throw new Error(`Track not found in mapping: ${trackUri}`);
-      }
+    // Calculate Spotify API response time (debug only)
+    const spotifyApiDuration = DEBUG_MODE && spotifyApiId ? performanceMonitor.endTiming(spotifyApiId) : 0;
 
-      console.log(`📍 Found track in playlist: ${trackInfo.playlistId} at position ${trackInfo.position}`);
-
-      // Use custom start time if provided, otherwise start from beginning
-      const positionMs = startTime && startTime > 0 ? startTime : 0;
-
-      // Start timing Spotify API call specifically
-      const spotifyApiId = performanceMonitor.startTiming('spotify_api_call', {
-        trackUri,
-        playlistId: trackInfo.playlistId,
-        position: trackInfo.position
-      });
-      
-      console.log(`🚀 Sending request to Spotify API...`);
-      
-      // Start playback with optimized parameters
-      await startResumePlayback(token, activeDevice.id || undefined, {
-        context_uri: trackInfo.playlistUri,
-        offset: { position: trackInfo.position },
-        position_ms: positionMs,
-      });
-
-      // Calculate Spotify API response time
-      const spotifyApiDuration = performanceMonitor.endTiming(spotifyApiId);
-      
+    if (DEBUG_MODE) {
       console.log(`⚡ Spotify API responded in ${spotifyApiDuration?.toFixed(2)}ms`);
+    }
 
-      // Log successful completion with Spotify API timing in metadata
-      const totalDuration = performanceMonitor.endTiming(trackStartId);
+    // Log successful completion with Spotify API timing in metadata (debug only)
+    const totalDuration = DEBUG_MODE && trackStartId ? performanceMonitor.endTiming(trackStartId) : 0;
+
+    if (DEBUG_MODE) {
       console.log(`✅ Track started successfully in ${totalDuration?.toFixed(2)}ms (Spotify API: ${spotifyApiDuration?.toFixed(2)}ms)`);
-      
+
       // Update the log with Spotify API timing
       const recentLogs = performanceMonitor.getLogs();
       const lastLog = recentLogs[recentLogs.length - 1];
@@ -153,20 +149,22 @@ export const playTrackOptimized = withTiming(
           spotifyApiDuration
         };
       }
-      
-      return { 
-        success: true, 
-        trackInfo, 
-        duration: totalDuration,
-        spotifyApiDuration 
-      };
-    } catch (error) {
-      performanceMonitor.endTiming(trackStartId);
-      console.error(`❌ Failed to play track: ${trackUri}`, error);
-      throw error;
     }
+
+    return {
+      success: true,
+      trackInfo,
+      duration: totalDuration,
+      spotifyApiDuration
+    };
+  } catch (error) {
+    if (DEBUG_MODE && trackStartId) {
+      performanceMonitor.endTiming(trackStartId);
+    }
+    console.error(`❌ Failed to play track: ${trackUri}`, error);
+    throw error;
   }
-);
+};
 
 /**
  * Update track mapping when playlists or tracks change
@@ -176,7 +174,9 @@ export const updateTrackMapping = (
   playlistTracks: Record<string, PlaylistTrack[]>
 ) => {
   trackMappingCache.updateMapping(playlists, playlistTracks);
-  console.log(`🗺️ Updated track mapping for ${playlists.length} playlists`);
+  if (DEBUG_MODE) {
+    console.log(`🗺️ Updated track mapping for ${playlists.length} playlists`);
+  }
 };
 
 /**
