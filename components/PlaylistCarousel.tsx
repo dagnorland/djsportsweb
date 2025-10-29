@@ -180,23 +180,27 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
 
             {/* Track image with play button overlay */}
             <div className="relative aspect-square w-full max-w-48 group">
-              {isTrack && track.album?.images && track.album.images.length > 0 ? (
-                <Image
-                  src={track.album.images[0].url}
-                  alt={track?.name || "Ukjent spor"}
-                  fill
-                  className="object-cover rounded-lg"
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
-                  <Music2 className="h-6 w-6 text-muted-foreground" />
-                </div>
-              )}
+              <div className={`w-full h-full rounded-lg overflow-hidden ${
+                isCurrentTrackPlaying ? 'animate-pulse-scale ring-2 ring-primary/50 shadow-lg shadow-primary/30' : ''
+              }`}>
+                {isTrack && track.album?.images && track.album.images.length > 0 ? (
+                  <Image
+                    src={track.album.images[0].url}
+                    alt={track?.name || "Ukjent spor"}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    priority
+                  />
+                ) : (
+                  <div className="w-full h-full bg-muted rounded-lg flex items-center justify-center">
+                    <Music2 className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
 
               {/* Start time chip */}
-              <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
+              <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm z-10 ${
                 startTime > 0
                   ? 'bg-primary text-primary-foreground shadow-lg border-2 border-primary-foreground/20'
                   : 'bg-black/30 text-white/60'
@@ -205,7 +209,7 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
               </div>
 
               {/* Play button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                 <Button
                   size="lg"
                   onClick={handlePlay}

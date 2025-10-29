@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-10-29
+
+### Added
+- **Playlist Type Accordions**: Collapsible sections for better organization in match page
+  - Each playlist type (🔥 HOT, ⚽ MATCH, 🎉 FUN, 🏟️ PRE) now in accordion format
+  - Multiple sections can be open simultaneously
+  - All sections open by default for immediate access
+  - Reduces visual clutter while maintaining accessibility
+  - Allows users to focus on specific playlist types
+
+### Enhanced
+- **Playing Track Animation**: Dynamic visual feedback for currently playing tracks
+  - Fast pulse-scale animation (0.4s cycle) on album images
+  - Glowing primary-colored ring with shadow effect
+  - Purely CSS-based animation with zero performance impact
+  - Only animates when track is actively playing
+
+- **Match Page Layout**: Improved visual hierarchy for playlist sections
+  - Playlist type labels now horizontal instead of rotated
+  - Type label and colored line appear on same row
+  - Colored line extends to fill available space
+  - Cleaner, more modern appearance
+  - Better readability and navigation
+
+### Technical Details
+- Accordion component with `type="multiple"` for simultaneous open sections
+- Custom CSS keyframe animation with cubic-bezier easing
+- Flexbox layout for horizontal label/line alignment
+- Z-index management for proper overlay stacking
+
 ## [0.10.0] - 2025-10-29
 
 ### Added

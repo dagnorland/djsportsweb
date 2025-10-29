@@ -79,3 +79,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom animation for playing track */
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@layer utilities {
+  .animate-pulse-scale {
+    animation: pulse-scale 0.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
