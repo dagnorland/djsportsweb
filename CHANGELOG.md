@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.2] - 2025-10-29
+
+### Added
+- **Interactive User Guide Access**: Click version number to view user documentation
+  - Version display now clickable in navigation bar
+  - Opens modal dialog with complete user guide
+  - Language toggle between Norwegian (🇳🇴) and English (🇬🇧)
+  - Tabbed interface for easy language switching
+  - Scrollable content for easy reading
+  - Hover effect on version number indicates clickability
+  - Tooltip shows "Klikk for brukerveiledning / Click for user guide"
+
+### Enhanced
+- **VersionDisplay Component**: Transformed from static to interactive
+  - Added click handler to open user guide dialog
+  - Added hover state with color transition
+  - Added cursor pointer for better UX
+  - Maintains existing styling and placement
+
+- **UserGuideDialog Component**: New modal for displaying documentation
+  - Tabbed interface with Norwegian and English versions
+  - Scrollable area for long content
+  - Responsive max-width and max-height
+  - Close button with bilingual label
+  - Embedded guide content for instant access
+
+### Technical Details
+- Dialog component with tabs for language selection
+- State management for dialog open/close and language preference
+- Scroll area for comfortable reading of long documentation
+- Monospace font for consistent markdown-style display
+
+## [0.11.1] - 2025-10-29
+
+### Added
+- **Comprehensive User Documentation**: Complete guides for using DJ Sports
+  - **BRUKERVEILEDNING.md**: Full Norwegian user guide
+  - **USER_GUIDE.md**: Full English user guide
+  - Step-by-step instructions for all features
+  - Getting started guide with first-time login
+  - Detailed explanations for setting up playlists and types
+  - Complete guide for setting track start times
+  - In-depth Match page usage instructions
+  - djCloud synchronization documentation
+  - Settings, keyboard shortcuts, and troubleshooting
+  - Tips and tricks for optimal usage
+  - Support and feedback information
+
+### Documentation Coverage
+- Setting up and navigating playlists
+- Playlist type categorization (Hotspot, Match, Fun Stuff, Pre Match)
+- Track start times with slider controls
+- Match page carousels and accordions
+- Auto-advance functionality
+- Polling interval management
+- Theme switching
+- Cloud backup and restore with djCloud
+- Volume and playback controls
+- Token expiry handling
+
 ## [0.11.0] - 2025-10-29
 
 ### Added
