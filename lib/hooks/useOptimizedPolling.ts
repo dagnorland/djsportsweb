@@ -2,7 +2,7 @@
  * Optimized polling hook with adaptive intervals and performance monitoring
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { logger } from '@/lib/utils/logger';
 
 interface UseOptimizedPollingOptions {
@@ -28,37 +28,17 @@ export function useOptimizedPolling({
   const currentIntervalRef = useRef(interval);
   const consecutiveErrorsRef = useRef(0);
   const isPollingRef = useRef(false);
+  const onPollRef = useRef(onPoll);
+  const onErrorRef = useRef(onError);
 
-  const poll = useCallback(async () => {
-    if (isPollingRef.current) return;
-    
-    isPollingRef.current = true;
-    const startTime = Date.now();
-    
-    try {
-      await onPoll();
-      consecutiveErrorsRef.current = 0;
-      currentIntervalRef.current = interval; // Reset to base interval on success
-    } catch (error) {
-      consecutiveErrorsRef.current++;
-      const duration = Date.now() - startTime;
-      
-      logger.error(`${name} polling failed (attempt ${consecutiveErrorsRef.current}):`, error);
-      
-      // Exponential backoff on errors
-      if (consecutiveErrorsRef.current > 1) {
-        currentIntervalRef.current = Math.min(
-          currentIntervalRef.current * backoffMultiplier,
-          maxInterval
-        );
-        logger.warn(`${name} backing off to ${currentIntervalRef.current}ms interval`);
-      }
-      
-      onError?.(error as Error);
-    } finally {
-      isPollingRef.current = false;
-    }
-  }, [onPoll, onError, name, interval, backoffMultiplier, maxInterval]);
+  // Keep refs up to date without triggering effects
+  useEffect(() => {
+    onPollRef.current = onPoll;
+  }, [onPoll]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     if (!enabled) {
@@ -69,11 +49,47 @@ export function useOptimizedPolling({
       return;
     }
 
+    // Update current interval ref
+    currentIntervalRef.current = interval;
+
+    const poll = async () => {
+      if (isPollingRef.current) return;
+
+      isPollingRef.current = true;
+
+      try {
+        await onPollRef.current();
+        consecutiveErrorsRef.current = 0;
+        currentIntervalRef.current = interval; // Reset to base interval on success
+      } catch (error) {
+        consecutiveErrorsRef.current++;
+
+        if (process.env.NODE_ENV === 'development') {
+          logger.error(`${name} polling failed (attempt ${consecutiveErrorsRef.current}):`, error);
+        }
+
+        // Exponential backoff on errors
+        if (consecutiveErrorsRef.current > 1) {
+          currentIntervalRef.current = Math.min(
+            currentIntervalRef.current * backoffMultiplier,
+            maxInterval
+          );
+          if (process.env.NODE_ENV === 'development') {
+            logger.warn(`${name} backing off to ${currentIntervalRef.current}ms interval`);
+          }
+        }
+
+        onErrorRef.current?.(error as Error);
+      } finally {
+        isPollingRef.current = false;
+      }
+    };
+
     // Initial poll
     poll();
 
     // Set up interval
-    intervalRef.current = setInterval(poll, currentIntervalRef.current);
+    intervalRef.current = setInterval(poll, interval);
 
     return () => {
       if (intervalRef.current) {
@@ -81,15 +97,7 @@ export function useOptimizedPolling({
         intervalRef.current = undefined;
       }
     };
-  }, [enabled, poll]);
-
-  // Update interval when it changes
-  useEffect(() => {
-    if (enabled && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(poll, currentIntervalRef.current);
-    }
-  }, [enabled, poll]);
+  }, [enabled, interval, name, backoffMultiplier, maxInterval]);
 
   return {
     currentInterval: currentIntervalRef.current,

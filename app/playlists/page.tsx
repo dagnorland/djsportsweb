@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -27,10 +27,14 @@ import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { RouteGuard } from "@/components/RouteGuard";
+import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
+import { TokenExpiredDialog } from "@/components/TokenExpiredDialog";
+import { isTokenExpiredError } from "@/lib/utils/tokenExpiry";
 
 export default function PlaylistsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { interval: pollingInterval, setInterval: setPollingInterval } = usePollingSettings();
 
   const [playlists, setPlaylists] = useState<SimplifiedPlaylist[]>([]);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
@@ -46,6 +50,8 @@ export default function PlaylistsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [showTokenExpiredDialog, setShowTokenExpiredDialog] = useState(false);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Define callbacks before useEffects
   const loadPlaylists = useCallback(async () => {
@@ -63,7 +69,11 @@ export default function PlaylistsPage() {
         setSelectedPlaylistName(firstPlaylist.name);
       }
     } catch (error) {
-      logger.error("Feil ved henting av spillelister:", error);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        logger.error("Feil ved henting av spillelister:", error);
+      }
     } finally {
       setLoadingPlaylists(false);
     }
@@ -77,7 +87,11 @@ export default function PlaylistsPage() {
       const data = await getPlaylistItems(session.accessToken, playlistId, 0, 100);
       setTracks(data.items);
     } catch (error) {
-      logger.error("Feil ved henting av spor:", error);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        logger.error("Feil ved henting av spor:", error);
+      }
     } finally {
       setLoadingTracks(false);
     }
@@ -90,8 +104,12 @@ export default function PlaylistsPage() {
       const data = await getCurrentlyPlayingTrack(session.accessToken);
       setNowPlaying(data);
     } catch (error) {
-      // Ikke logg feil her - det er normalt at ingen sang spilles
-      setNowPlaying(null);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        // Ikke logg feil her - det er normalt at ingen sang spilles
+        setNowPlaying(null);
+      }
     }
   }, [session?.accessToken]);
 
@@ -115,12 +133,16 @@ export default function PlaylistsPage() {
     if (session?.accessToken) {
       loadPlaylists();
 
-      // Start polling for now playing hver 5. sekund
+      // Start polling for now playing with user-configured interval
       updateNowPlaying();
-      const interval = setInterval(updateNowPlaying, 5000);
-      return () => clearInterval(interval);
+
+      // Only set up polling if interval > 0 (not "Off")
+      if (pollingInterval > 0) {
+        const intervalId = setInterval(updateNowPlaying, pollingInterval);
+        return () => clearInterval(intervalId);
+      }
     }
-  }, [session?.accessToken, loadPlaylists, updateNowPlaying]);
+  }, [session?.accessToken, loadPlaylists, updateNowPlaying, pollingInterval]);
 
   // Hent spor når spilleliste velges
   useEffect(() => {
@@ -128,6 +150,48 @@ export default function PlaylistsPage() {
       loadTracks(selectedPlaylistId);
     }
   }, [selectedPlaylistId, session?.accessToken, loadTracks]);
+
+  // Automatically manage polling interval based on playback state
+  useEffect(() => {
+    if (nowPlaying?.is_playing && nowPlaying.item) {
+      // Clear any existing idle timer when playback resumes
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Cleared idle timer - playback resumed');
+        }
+      }
+
+      // Song is playing and interval is off → set to 5 seconds
+      if (pollingInterval === 0) {
+        setPollingInterval(5000);
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Auto-starting polling (5s) - playback detected');
+        }
+      }
+    } else if (!nowPlaying?.is_playing && pollingInterval > 0 && !idleTimerRef.current) {
+      // No song playing and no idle timer running → start 60 second idle timer
+      if (process.env.NODE_ENV === 'development') {
+        logger.spotify('Starting 60s idle timer - no playback');
+      }
+      idleTimerRef.current = setTimeout(() => {
+        setPollingInterval(0);
+        idleTimerRef.current = null;
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Auto-stopping polling after 60s idle');
+        }
+      }, 60000); // 60 seconds
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    };
+  }, [nowPlaying, pollingInterval, setPollingInterval]);
 
   const handleSelectPlaylist = (playlistId: string) => {
     setSelectedPlaylistId(playlistId);
@@ -266,6 +330,10 @@ export default function PlaylistsPage() {
 
 return (
   <RouteGuard requireAuth={true}>
+    <TokenExpiredDialog
+      open={showTokenExpiredDialog}
+      onOpenChange={setShowTokenExpiredDialog}
+    />
     <div className="flex h-[calc(100vh-6rem)] flex-col">
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">

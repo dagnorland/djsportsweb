@@ -1,7 +1,7 @@
 // app/match/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -15,9 +15,13 @@ import { playTrackOptimized, updateTrackMapping, getTrackPlaybackMetrics } from 
 import { performanceMonitor } from "@/lib/utils/performance";
 import { logger } from "@/lib/utils/logger";
 import { RouteGuard } from "@/components/RouteGuard";
+import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
+import { TokenExpiredDialog } from "@/components/TokenExpiredDialog";
+import { isTokenExpiredError } from "@/lib/utils/tokenExpiry";
 
 export default function MatchPage() {
   const { data: session, status } = useSession();
+  const { interval: pollingInterval, setInterval: setPollingInterval } = usePollingSettings();
   const router = useRouter();
 
   const [playlists, setPlaylists] = useState<SimplifiedPlaylist[]>([]);
@@ -33,6 +37,8 @@ export default function MatchPage() {
   const [autoAdvancePlaylists, setAutoAdvancePlaylists] = useState<Set<string>>(new Set());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastPlayedTrackUri, setLastPlayedTrackUri] = useState<string | null>(null);
+  const [showTokenExpiredDialog, setShowTokenExpiredDialog] = useState(false);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Define callbacks before useEffects
   const loadPlaylistsOptimized = useCallback(async () => {
@@ -40,7 +46,9 @@ export default function MatchPage() {
 
     try {
       setLoading(true);
-      logger.spotify("Loading playlists with caching...");
+      if (process.env.NODE_ENV === 'development') {
+        logger.spotify("Loading playlists with caching...");
+      }
 
       const data = await loadPlaylistsCached(session.accessToken, 0, 50);
       setPlaylists(data);
@@ -70,7 +78,11 @@ export default function MatchPage() {
       await preloadCriticalPlaylists(session.accessToken, allPlaylists);
 
     } catch (error) {
-      logger.error("Feil ved henting av spillelister:", error);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        logger.error("Feil ved henting av spillelister:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -80,7 +92,9 @@ export default function MatchPage() {
     if (!session?.accessToken) return;
 
     try {
-      logger.spotify(`Loading tracks for ${allPlaylists.length} playlists with batching...`);
+      if (process.env.NODE_ENV === 'development') {
+        logger.spotify(`Loading tracks for ${allPlaylists.length} playlists with batching...`);
+      }
 
       const tracksMap = await loadMultiplePlaylistTracks(session.accessToken, allPlaylists, 3);
       setPlaylistTracks(tracksMap);
@@ -93,7 +107,11 @@ export default function MatchPage() {
       setPerformanceMetrics(metrics);
 
     } catch (error) {
-      logger.error("Feil ved henting av alle spilleliste-spor:", error);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        logger.error("Feil ved henting av alle spilleliste-spor:", error);
+      }
     }
   }, [session?.accessToken]);
 
@@ -104,7 +122,11 @@ export default function MatchPage() {
       const data = await getCurrentlyPlayingTrack(session.accessToken);
       setNowPlaying(data);
     } catch (error) {
-      setNowPlaying(null);
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        setNowPlaying(null);
+      }
     }
   }, [session?.accessToken]);
 
@@ -118,15 +140,61 @@ export default function MatchPage() {
     return () => window.removeEventListener('togglePerformanceMetrics', handleToggle);
   }, []);
 
+  // Automatically manage polling interval based on playback state
+  useEffect(() => {
+    if (nowPlaying?.is_playing && nowPlaying.item) {
+      // Clear any existing idle timer when playback resumes
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Cleared idle timer - playback resumed');
+        }
+      }
+
+      // Song is playing and interval is off → set to 5 seconds
+      if (pollingInterval === 0) {
+        setPollingInterval(5000);
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Auto-starting polling (5s) - playback detected');
+        }
+      }
+    } else if (!nowPlaying?.is_playing && pollingInterval > 0 && !idleTimerRef.current) {
+      // No song playing and no idle timer running → start 60 second idle timer
+      if (process.env.NODE_ENV === 'development') {
+        logger.spotify('Starting 60s idle timer - no playback');
+      }
+      idleTimerRef.current = setTimeout(() => {
+        setPollingInterval(0);
+        idleTimerRef.current = null;
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify('Auto-stopping polling after 60s idle');
+        }
+      }, 60000); // 60 seconds
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
+    };
+  }, [nowPlaying, pollingInterval, setPollingInterval]);
+
   // Load playlists and filter by type
   useEffect(() => {
     if (session?.accessToken) {
       loadPlaylistsOptimized();
       updateNowPlaying();
-      const interval = setInterval(updateNowPlaying, 2000); // Increased frequency for better responsiveness
-      return () => clearInterval(interval);
+
+      // Only set up polling if interval > 0 (not "Off")
+      if (pollingInterval > 0) {
+        const intervalId = setInterval(updateNowPlaying, pollingInterval); // Use user-configured interval
+        return () => clearInterval(intervalId);
+      }
     }
-  }, [session?.accessToken, loadPlaylistsOptimized, updateNowPlaying]);
+  }, [session?.accessToken, loadPlaylistsOptimized, updateNowPlaying, pollingInterval]);
 
   // Load tracks for all playlists with optimized batching
   useEffect(() => {
@@ -143,9 +211,11 @@ export default function MatchPage() {
       
       // Only trigger auto-advance if this is a new track (not the same as last played)
       if (currentTrackUri !== lastPlayedTrackUri) {
-        logger.spotify(`New track started playing: ${currentTrackUri}`);
+        if (process.env.NODE_ENV === 'development') {
+          logger.spotify(`New track started playing: ${currentTrackUri}`);
+        }
         setLastPlayedTrackUri(currentTrackUri);
-        
+
         // Find which playlist contains the currently playing track
         const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
         const playingPlaylist = allPlaylists.find(playlist => {
@@ -154,7 +224,9 @@ export default function MatchPage() {
         });
 
         if (playingPlaylist) {
-          logger.spotify(`Setting auto-advance for playlist: ${playingPlaylist.name}`);
+          if (process.env.NODE_ENV === 'development') {
+            logger.spotify(`Setting auto-advance for playlist: ${playingPlaylist.name}`);
+          }
           // Always set auto-advance for the playing playlist
           setAutoAdvancePlaylists(prev => new Set([...Array.from(prev), playingPlaylist.id]));
         }
@@ -162,40 +234,51 @@ export default function MatchPage() {
     }
   }, [nowPlaying, hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, playlistTracks, lastPlayedTrackUri]);
 
-  const handlePlayTrack = useCallback(async (trackUri: string, position: number, startTime?: number) => {
+  const handlePlayTrack = useCallback((trackUri: string, position: number, startTime?: number) => {
     if (!session?.accessToken) return;
 
-    try {
-      // Clear any previous error messages
-      setErrorMessage(null);
-      
-      logger.spotify(`Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
-      
-      // Use optimized track playback
-      await playTrackOptimized(session.accessToken, {
-        trackUri,
-        position,
-        startTime,
-        playlistId: undefined // Will be resolved by the optimized function
-      });
+    // Clear any previous error messages
+    setErrorMessage(null);
 
-      // Update now playing after a short delay
-      setTimeout(updateNowPlaying, 500);
-      
-      // Update performance metrics
-      const metrics = getTrackPlaybackMetrics();
-      setPerformanceMetrics(metrics);
-      
-    } catch (error) {
-      logger.error("Feil ved start av spor:", error);
-      
-      // Set user-friendly error message
-      const errorMsg = error instanceof Error ? error.message : "Ukjent feil ved avspilling";
-      setErrorMessage(errorMsg);
-      
-      // Clear error message after 5 seconds
-      setTimeout(() => setErrorMessage(null), 5000);
+    if (process.env.NODE_ENV === 'development') {
+      logger.spotify(`Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
     }
+
+    // OPTIMISTIC UPDATE: Update UI immediately for instant feedback
+    updateNowPlaying();
+
+    // Fire-and-forget: Start playback without blocking UI
+    playTrackOptimized(session.accessToken, {
+      trackUri,
+      position,
+      startTime,
+      playlistId: undefined // Will be resolved by the optimized function
+    }).then(() => {
+      // Update again after playback starts to confirm
+      updateNowPlaying();
+
+      // Update performance metrics (dev only)
+      if (process.env.NODE_ENV === 'development') {
+        const metrics = getTrackPlaybackMetrics();
+        setPerformanceMetrics(metrics);
+      }
+    }).catch((error) => {
+      if (isTokenExpiredError(error)) {
+        setShowTokenExpiredDialog(true);
+      } else {
+        logger.error("Feil ved start av spor:", error);
+
+        // Set user-friendly error message
+        const errorMsg = error instanceof Error ? error.message : "Ukjent feil ved avspilling";
+        setErrorMessage(errorMsg);
+
+        // Clear error message after 5 seconds
+        setTimeout(() => setErrorMessage(null), 5000);
+      }
+
+      // Revert optimistic update on error
+      updateNowPlaying();
+    });
   }, [session?.accessToken, updateNowPlaying]);
 
   // Performance metrics display
@@ -350,6 +433,10 @@ export default function MatchPage() {
 
   return (
     <RouteGuard requireAuth={true}>
+      <TokenExpiredDialog
+        open={showTokenExpiredDialog}
+        onOpenChange={setShowTokenExpiredDialog}
+      />
       <div className="h-[calc(100vh-6rem)] flex flex-col">
       {/* Error message */}
       {errorMessage && (

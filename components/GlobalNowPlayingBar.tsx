@@ -7,15 +7,17 @@ import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
 import { logger } from "@/lib/utils/logger";
 import { useOptimizedPolling } from "@/lib/hooks/useOptimizedPolling";
+import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
 
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
+  const { interval } = usePollingSettings();
 
   // Optimized polling for now playing status
   const updateNowPlaying = async () => {
     if (!session?.accessToken) return;
-    
+
     try {
       const data = await getCurrentlyPlayingTrack(session.accessToken);
       setNowPlaying(data);
@@ -26,8 +28,8 @@ export default function GlobalNowPlayingBar() {
   };
 
   useOptimizedPolling({
-    enabled: !!session?.accessToken,
-    interval: 3000, // 3 seconds base interval
+    enabled: !!session?.accessToken && interval > 0, // Disable if interval is 0 (Off)
+    interval: interval > 0 ? interval : 3000, // Fallback to 3s if off
     maxInterval: 15000, // Max 15 seconds on errors
     onPoll: updateNowPlaying,
     onError: (error) => {

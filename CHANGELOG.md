@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-10-29
+
+### Added
+- **Token Expiry Management**: Automatic detection and user-friendly handling of expired Spotify tokens
+  - New TokenExpiredDialog component with Norwegian localization
+  - Dialog prompts user to re-authenticate when access token expires
+  - Automatic 401 error detection in all API calls
+  - Integrated into both match and playlists pages
+  - Returns user to current page after successful re-authentication
+
+- **Smart Polling Interval Management**: Intelligent automatic control of polling intervals
+  - Auto-starts polling at 5 seconds when playback begins (if currently off)
+  - Auto-stops polling after 60 seconds of idle time when no music is playing
+  - Prevents multiple idle timers with ref-based tracking
+  - Reduces unnecessary API calls while ensuring responsive UI updates
+  - Implemented in both match and playlists pages
+
+### Enhanced
+- **PlaylistCarousel UI Improvements**: Refined visual hierarchy and user experience
+  - Track counter moved to header with compact "1/5" format next to playlist name
+  - Start time chip now overlays album image at bottom center
+  - Start time always visible with conditional styling:
+    - Bright primary color with shadow and border when start time > 0
+    - Subtle transparent style when start time = 0
+  - Larger play button (80x80px) for easier interaction
+  - Previous/next buttons stretch full height of album image
+  - Grid layout ensures proper button sizing
+  - Removed duplicate start time display from track info
+
+### Fixed
+- **Idle Timer Loops**: Resolved issue where idle timer started on every poll
+  - Used ref to track active timer state
+  - Timer now only starts once when playback stops
+  - Timer properly cleared when playback resumes
+  - Eliminated console spam in development mode
+
+### Technical Details
+- Token expiry utility function for consistent error detection across app
+- Error status codes now properly propagated from API calls
+- useRef pattern for timer management prevents memory leaks
+- Grid layout with stretch alignment for consistent button sizing
+- Conditional styling with Tailwind for dynamic visual feedback
+
 ## [0.9.2] - 2025-10-27
 
 ### Added

@@ -48,7 +48,9 @@ export default async function startResumePlayback(
         // If we can't parse the error, use the status text
         errorMessage = `${res.status} ${res.statusText}`;
       }
-      throw new Error(errorMessage);
+      const error: any = new Error(errorMessage);
+      error.status = res.status;
+      throw error;
     }
 
     // Response is 204 No Content on success

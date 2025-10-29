@@ -31,8 +31,9 @@ export default async function getCurrentlyPlayingTrack(
 
     // Handle 401 Unauthorized (token expired or invalid)
     if (res.status === 401) {
-      console.warn("Spotify token expired or invalid");
-      return null;
+      const error: any = new Error("The access token expired");
+      error.status = 401;
+      throw error;
     }
 
     if (!res.ok) {

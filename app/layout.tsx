@@ -5,6 +5,7 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PollingSettingsProvider } from "@/contexts/PollingSettingsContext";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -55,15 +56,17 @@ export default async function RootLayout({
             <body className={inter.className}>
                 <ErrorBoundary>
                     <NextAuthProvider>
-                        <Navigation />
-                        <main className="pb-24">
-                            {children}
-                        </main>
-                        <GlobalNowPlayingBar />
-                        <Script
-                            src="https://sdk.scdn.co/spotify-player.js"
-                            strategy="afterInteractive"
-                        />
+                        <PollingSettingsProvider>
+                            <Navigation />
+                            <main className="pb-24">
+                                {children}
+                            </main>
+                            <GlobalNowPlayingBar />
+                            <Script
+                                src="https://sdk.scdn.co/spotify-player.js"
+                                strategy="afterInteractive"
+                            />
+                        </PollingSettingsProvider>
                     </NextAuthProvider>
                 </ErrorBoundary>
             </body>

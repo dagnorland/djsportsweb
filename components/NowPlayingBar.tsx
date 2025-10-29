@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { PollingIntervalSlider } from "./PollingIntervalSlider";
 
 interface NowPlayingBarProps {
   currentlyPlaying: CurrentlyPlaying | null;
@@ -54,10 +55,13 @@ export default function NowPlayingBar({
 
   if (!currentlyPlaying?.item) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center justify-center bg-muted/30 border-t z-[60]">
+      <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center justify-between bg-muted/30 border-t z-[60]">
         <p className="text-sm text-muted-foreground">
           Ingen sang spilles for øyeblikket
         </p>
+        <div className="hidden lg:flex flex-col gap-2 w-48">
+          <PollingIntervalSlider />
+        </div>
       </div>
     );
   }
@@ -140,16 +144,25 @@ export default function NowPlayingBar({
         </div>
       </div>
 
-      {/* Volume control */}
-      <div className="flex items-center gap-2 w-40">
-        <Volume2 className="h-4 w-4 text-muted-foreground" />
-        <Slider
-          value={[volume]}
-          onValueChange={handleVolumeChange}
-          max={100}
-          step={1}
-          className="flex-1"
-        />
+      {/* Right side controls - Stacked sliders */}
+      <div className="hidden lg:flex flex-col gap-6 w-48">
+        {/* Polling interval control */}
+        <PollingIntervalSlider />
+
+        {/* Volume control */}
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          <Slider
+            value={[volume]}
+            onValueChange={handleVolumeChange}
+            max={100}
+            step={1}
+            className="flex-1"
+          />
+          <span className="text-xs text-muted-foreground w-8 text-right">
+            {volume}%
+          </span>
+        </div>
       </div>
     </div>
   );
