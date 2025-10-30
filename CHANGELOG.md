@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2025-01-27
+
+### Enhanced
+- **NowPlayingBar Message**: Updated idle state message to be more sporty and engaging
+  - Changed from "Ingen sang spilles for øyeblikket" to "⚡ djSports venter på deg - få gang på musikken!"
+  - More energetic and brand-aligned messaging
+  - Better user engagement when no music is playing
+
 ## [0.11.2] - 2025-10-29
 
 ### Added

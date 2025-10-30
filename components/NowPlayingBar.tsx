@@ -21,6 +21,7 @@ interface NowPlayingBarProps {
   onNext: () => void;
   onPrevious: () => void;
   onVolumeChange: (volume: number) => void;
+  onStartSpotify?: () => void;
 }
 
 export default function NowPlayingBar({
@@ -29,6 +30,7 @@ export default function NowPlayingBar({
   onNext,
   onPrevious,
   onVolumeChange,
+  onStartSpotify,
 }: NowPlayingBarProps) {
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(50);
@@ -56,11 +58,26 @@ export default function NowPlayingBar({
   if (!currentlyPlaying?.item) {
     return (
       <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center justify-between bg-muted/30 border-t z-[60]">
-        <p className="text-sm text-muted-foreground">
-          Ingen sang spilles for øyeblikket
-        </p>
         <div className="hidden lg:flex flex-col gap-2 w-48">
           <PollingIntervalSlider />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-sm text-muted-foreground">
+            ⚡ djSports venter på deg - få gang på musikken!
+          </p>
+          {onStartSpotify && (
+            <Button
+              onClick={onStartSpotify}
+              size="sm"
+              className="h-8"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Start Spotify
+            </Button>
+          )}
+        </div>
+        <div className="hidden lg:flex flex-col gap-2 w-48">
+          {/* Empty div for balance */}
         </div>
       </div>
     );

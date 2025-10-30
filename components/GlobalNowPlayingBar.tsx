@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume } from "@/lib/spotify";
+import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume, getAvailableDevices } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
 import { logger } from "@/lib/utils/logger";
@@ -12,7 +12,7 @@ import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
-  const { interval } = usePollingSettings();
+  const { interval, setInterval } = usePollingSettings();
 
   // Optimized polling for now playing status
   const updateNowPlaying = async () => {
@@ -103,6 +103,56 @@ export default function GlobalNowPlayingBar() {
     }
   };
 
+  const handleStartSpotify = async () => {
+    if (!session?.accessToken) return;
+
+    try {
+      // Først prøv å starte avspilling på standard enhet
+      await startResumePlayback(session.accessToken);
+      
+      // Sett polling interval til 5 sekunder for bedre responsivitet
+      setInterval(5000);
+      
+      // Oppdater now playing status etter en kort delay
+      setTimeout(async () => {
+        try {
+          const data = await getCurrentlyPlayingTrack(session.accessToken!);
+          setNowPlaying(data);
+        } catch (error) {
+          logger.error("Feil ved oppdatering etter start av Spotify:", error);
+        }
+      }, 1000);
+    } catch (error) {
+      logger.error("Feil ved start av Spotify:", error);
+      
+      // Hvis det feiler, prøv å hente tilgjengelige enheter og start på første tilgjengelige
+      try {
+        const devices = await getAvailableDevices(session.accessToken);
+        if (devices.length > 0) {
+          const activeDevice = devices.find(device => device.is_active) || devices[0];
+          await startResumePlayback(session.accessToken, activeDevice.id);
+          
+          // Sett polling interval til 5 sekunder for bedre responsivitet
+          setInterval(5000);
+          
+          // Oppdater now playing status
+          setTimeout(async () => {
+            try {
+              const data = await getCurrentlyPlayingTrack(session.accessToken!);
+              setNowPlaying(data);
+            } catch (error) {
+              logger.error("Feil ved oppdatering etter start på spesifikk enhet:", error);
+            }
+          }, 1000);
+        } else {
+          logger.warn("Ingen tilgjengelige Spotify-enheter funnet");
+        }
+      } catch (deviceError) {
+        logger.error("Feil ved henting av enheter:", deviceError);
+      }
+    }
+  };
+
 
   return (
     <NowPlayingBar
@@ -111,6 +161,7 @@ export default function GlobalNowPlayingBar() {
       onNext={handleNext}
       onPrevious={handlePrevious}
       onVolumeChange={handleVolumeChange}
+      onStartSpotify={handleStartSpotify}
     />
   );
 }
