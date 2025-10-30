@@ -130,7 +130,12 @@ export default function GlobalNowPlayingBar() {
         const devices = await getAvailableDevices(session.accessToken);
         if (devices.length > 0) {
           const activeDevice = devices.find(device => device.is_active) || devices[0];
-          await startResumePlayback(session.accessToken, activeDevice.id);
+          if (activeDevice.id) {
+            await startResumePlayback(session.accessToken, activeDevice.id);
+          } else {
+            logger.warn("Aktiv enhet har ikke gyldig ID");
+            return;
+          }
           
           // Sett polling interval til 5 sekunder for bedre responsivitet
           setInterval(5000);
