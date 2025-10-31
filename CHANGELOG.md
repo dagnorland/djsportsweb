@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-01-30
+
+### Added
+- **Performance Feedback System**: Real-time feedback for track start performance
+  - Thumbs up (👍) when Spotify API response < 210ms
+  - OK hand (👌) when API response is 210-400ms
+  - Thumbs down (👎) when API response > 400ms
+  - Feedback displayed in performance monitor and console logs
+  - Based on actual API response time, not total playback time
+
+- **Enhanced Performance Monitoring**: Improved track start time measurement
+  - Measures time from user click to actual playback start (not just API response)
+  - Tracks Spotify API response time separately
+  - Polls for actual playback confirmation after API call
+  - Displays track names instead of track IDs in performance monitor
+  - Shows polling attempts and detailed timing breakdown
+
+### Enhanced
+- **Optimized Track Start Performance**: Faster track playback initiation
+  - Timing starts immediately when user clicks (not when API call begins)
+  - Removed unnecessary optimistic UI updates before API call
+  - API response handling optimized (immediate return for 204 responses)
+  - Better separation between API response time and actual playback start
+
+- **Performance Monitor Display**: Improved visibility and readability
+  - Track names displayed instead of track URIs/IDs
+  - Truncated track names with full name on hover
+  - Shows both API response time and total playback start time
+  - Displays number of polling attempts needed to confirm playback
+  - Feedback emoji prominently displayed next to track name
+
+### Technical Details
+- Performance timing now tracks user click time vs API response time
+- Polling mechanism (max 20 attempts, 100ms intervals) to detect actual playback
+- Metadata updated with track names, API duration, and playback confirmation time
+- Performance logs enhanced with detailed timing breakdown and feedback indicators
+
 ## [0.12.0] - 2025-01-30
 
 ### Enhanced

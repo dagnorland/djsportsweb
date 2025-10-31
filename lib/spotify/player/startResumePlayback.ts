@@ -36,6 +36,11 @@ export default async function startResumePlayback(
       }
     );
 
+    // Response is 204 No Content on success - return immediately
+    if (res.status === 204) {
+      return;
+    }
+
     if (!res.ok) {
       // Get more detailed error information
       let errorMessage = "Failed to fetch data";
@@ -53,12 +58,7 @@ export default async function startResumePlayback(
       throw error;
     }
 
-    // Response is 204 No Content on success
-    if (res.status === 204) {
-      return;
-    }
-
-    // Only try to parse JSON if there's content
+    // Only try to parse JSON if there's content (unlikely for 204, but handle gracefully)
     const text = await res.text();
     if (!text.trim()) {
       return;
