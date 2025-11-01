@@ -78,24 +78,34 @@ const trackMappingCache = new TrackMappingCache();
 /**
  * Optimized track playback with pre-computed lookup
  * SPEED OPTIMIZED: Minimal logging in production, performance monitoring only in debug mode
+ * 
+ * @param startTimeMs Optional timestamp when the user clicked (from performance.now())
  */
-export const playTrackOptimized = async (token: string, options: TrackPlaybackOptions) => {
+export const playTrackOptimized = async (
+  token: string, 
+  options: TrackPlaybackOptions,
+  startTimeMs?: number
+) => {
   const { trackUri, startTime } = options;
+  
+  // If startTimeMs is provided, use it; otherwise start timing now
+  const actualStartTime = startTimeMs ?? performance.now();
 
-  // Performance monitoring only in debug mode
-  const trackStartId = DEBUG_MODE ? performanceMonitor.startTiming('track_start', {
+  // Always track performance (for feedback system)
+  const trackStartId = performanceMonitor.startTiming('track_start', {
     trackUri,
     startTime,
     playlistId: options.playlistId,
-    timestamp: new Date().toISOString()
-  }) : null;
+    timestamp: new Date().toISOString(),
+    userClickTime: startTimeMs
+  });
 
   try {
     if (DEBUG_MODE) {
       console.log(`🎵 Starting track: ${trackUri}${startTime ? ` at ${startTime}ms` : ''}`);
     }
 
-    // Get track info from pre-computed mapping
+    // Get track info from pre-computed mapping (optimized lookup)
     const trackInfo = trackMappingCache.getTrackInfo(trackUri);
 
     if (!trackInfo) {
@@ -109,58 +119,56 @@ export const playTrackOptimized = async (token: string, options: TrackPlaybackOp
     // Use custom start time if provided, otherwise start from beginning
     const positionMs = startTime && startTime > 0 ? startTime : 0;
 
-    // Start timing Spotify API call specifically (debug only)
-    const spotifyApiId = DEBUG_MODE ? performanceMonitor.startTiming('spotify_api_call', {
+    // Start timing Spotify API call specifically
+    const spotifyApiId = performanceMonitor.startTiming('spotify_api_call', {
       trackUri,
       playlistId: trackInfo.playlistId,
       position: trackInfo.position
-    }) : null;
+    });
 
     if (DEBUG_MODE) {
       console.log(`🚀 Sending request to Spotify API...`);
     }
 
-    // Start playback with optimized parameters
-    await startResumePlayback(token, undefined, {
+    // Start playback with optimized parameters - don't await unnecessarily
+    const playbackPromise = startResumePlayback(token, undefined, {
       context_uri: trackInfo.playlistUri,
       offset: { position: trackInfo.position },
       position_ms: positionMs,
     });
 
-    // Calculate Spotify API response time (debug only)
-    const spotifyApiDuration = DEBUG_MODE && spotifyApiId ? performanceMonitor.endTiming(spotifyApiId) : 0;
+    // Fire and forget - don't wait for response parsing
+    await playbackPromise;
+
+    // Calculate Spotify API response time
+    const spotifyApiDuration = performanceMonitor.endTiming(spotifyApiId) ?? 0;
 
     if (DEBUG_MODE) {
-      console.log(`⚡ Spotify API responded in ${spotifyApiDuration?.toFixed(2)}ms`);
+      console.log(`⚡ Spotify API responded in ${spotifyApiDuration.toFixed(2)}ms`);
     }
 
-    // Log successful completion with Spotify API timing in metadata (debug only)
-    const totalDuration = DEBUG_MODE && trackStartId ? performanceMonitor.endTiming(trackStartId) : 0;
+    // Don't end timing here - wait for actual playback to start
+    // Just update metadata with API response time
+    performanceMonitor.updateMetadata(trackStartId, {
+      spotifyApiDuration,
+      apiResponseTime: performance.now() - actualStartTime
+    });
 
     if (DEBUG_MODE) {
-      console.log(`✅ Track started successfully in ${totalDuration?.toFixed(2)}ms (Spotify API: ${spotifyApiDuration?.toFixed(2)}ms)`);
-
-      // Update the log with Spotify API timing
-      const recentLogs = performanceMonitor.getLogs();
-      const lastLog = recentLogs[recentLogs.length - 1];
-      if (lastLog && lastLog.operation === 'track_start') {
-        lastLog.metadata = {
-          ...lastLog.metadata,
-          spotifyApiDuration
-        };
-      }
+      const apiResponseTime = performance.now() - actualStartTime;
+      console.log(`✅ Track API call completed in ${apiResponseTime.toFixed(2)}ms (Spotify API: ${spotifyApiDuration.toFixed(2)}ms)`);
     }
 
     return {
       success: true,
       trackInfo,
-      duration: totalDuration,
-      spotifyApiDuration
+      duration: 0, // Will be updated when playback actually starts
+      spotifyApiDuration,
+      // Return the trackStartId so caller can track when playback actually starts
+      trackStartId
     };
   } catch (error) {
-    if (DEBUG_MODE && trackStartId) {
-      performanceMonitor.endTiming(trackStartId);
-    }
+    performanceMonitor.endTiming(trackStartId);
     console.error(`❌ Failed to play track: ${trackUri}`, error);
     throw error;
   }

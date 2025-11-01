@@ -243,6 +243,9 @@ export default function MatchPage() {
   const handlePlayTrack = useCallback((trackUri: string, position: number, startTime?: number) => {
     if (!session?.accessToken) return;
 
+    // Start timing IMMEDIATELY when user clicks (critical for performance measurement)
+    const userClickTime = performance.now();
+
     // Clear any previous error messages
     setErrorMessage(null);
 
@@ -250,24 +253,157 @@ export default function MatchPage() {
       logger.spotify(`Starting track: ${trackUri} at position ${position}${startTime ? ` with start time ${startTime}ms` : ''}`);
     }
 
-    // OPTIMISTIC UPDATE: Update UI immediately for instant feedback
-    updateNowPlaying();
-
     // Fire-and-forget: Start playback without blocking UI
+    // Pass userClickTime for accurate measurement
     playTrackOptimized(session.accessToken, {
       trackUri,
       position,
       startTime,
       playlistId: undefined // Will be resolved by the optimized function
-    }).then(() => {
-      // Update again after playback starts to confirm
-      updateNowPlaying();
-
-      // Update performance metrics (dev only)
-      if (process.env.NODE_ENV === 'development') {
-        const metrics = getTrackPlaybackMetrics();
-        setPerformanceMetrics(metrics);
-      }
+    }, userClickTime).then(async (result) => {
+      // Start polling to detect when track actually starts playing
+      const startPollingTime = performance.now();
+      let attempts = 0;
+      const maxAttempts = 20; // Max 2 seconds (20 * 100ms)
+      
+      const checkPlaybackStarted = async (): Promise<void> => {
+        attempts++;
+        
+        try {
+          if (!session?.accessToken) return;
+          const currentPlaying = await getCurrentlyPlayingTrack(session.accessToken);
+          
+          // Check if the track we requested is now playing
+          if (currentPlaying?.is_playing && currentPlaying.item?.uri === trackUri) {
+            const actualStartTime = performance.now();
+            const timeToStart = actualStartTime - userClickTime;
+            
+            // Find and complete the performance log for this track start
+            const activeLogs = performanceMonitor.getActiveLogsForOperation('track_start');
+            const trackStartLogEntry = activeLogs.find(({ log }) => 
+              log.metadata?.trackUri === trackUri
+            );
+            
+            if (trackStartLogEntry) {
+              const logId = trackStartLogEntry.id;
+              
+              // Find track name for logging
+              const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
+              let trackName = '';
+              for (const playlist of allPlaylists) {
+                const tracks = playlistTracks[playlist.id] || [];
+                const track = tracks.find(pt => pt.track?.uri === trackUri);
+                if (track?.track?.name) {
+                  trackName = track.track.name;
+                  break;
+                }
+              }
+              
+              // Get Spotify API duration from metadata
+              const apiDuration = trackStartLogEntry.log.metadata?.spotifyApiDuration;
+              
+              // Add feedback emoji based on API response time
+              let feedback = '';
+              if (apiDuration && apiDuration < 210) {
+                feedback = '👍';
+              } else if (apiDuration && apiDuration <= 400) {
+                feedback = '👌';
+              } else if (apiDuration) {
+                feedback = '👎';
+              } else {
+                // Fallback to playback time if API duration not available
+                if (timeToStart < 210) {
+                  feedback = '👍';
+                } else if (timeToStart <= 400) {
+                  feedback = '👌';
+                } else {
+                  feedback = '👎';
+                }
+              }
+              
+              // Update metadata before ending timing
+              performanceMonitor.updateMetadata(logId, {
+                actualPlaybackStartTime: timeToStart,
+                pollingAttempts: attempts,
+                feedback,
+                trackName
+              });
+              
+              // End timing with actual playback start time
+              performanceMonitor.endTiming(logId);
+              
+              if (process.env.NODE_ENV === 'development') {
+                console.log(`🎵 Track started playing after ${timeToStart.toFixed(2)}ms ${feedback}`);
+              }
+            } else {
+              // Fallback: update completed log if it exists
+              const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
+              let trackName = '';
+              for (const playlist of allPlaylists) {
+                const tracks = playlistTracks[playlist.id] || [];
+                const track = tracks.find(pt => pt.track?.uri === trackUri);
+                if (track?.track?.name) {
+                  trackName = track.track.name;
+                  break;
+                }
+              }
+              
+              // Find completed log to get API duration
+              const completedLogs = performanceMonitor.getLogsForOperation('track_start');
+              const recentLog = completedLogs
+                .filter(log => log.metadata?.trackUri === trackUri)
+                .sort((a, b) => (b.endTime || 0) - (a.endTime || 0))[0];
+              
+              const apiDuration = recentLog?.metadata?.spotifyApiDuration;
+              
+              // Add feedback based on API response time
+              let feedback = '';
+              if (apiDuration && apiDuration < 210) {
+                feedback = '👍';
+              } else if (apiDuration && apiDuration <= 400) {
+                feedback = '👌';
+              } else if (apiDuration) {
+                feedback = '👎';
+              } else {
+                // Fallback to playback time
+                feedback = timeToStart < 210 ? '👍' : timeToStart <= 400 ? '👌' : '👎';
+              }
+              
+              performanceMonitor.updateCompletedLogMetadata('track_start', trackUri, {
+                actualPlaybackStartTime: timeToStart,
+                pollingAttempts: attempts,
+                feedback,
+                trackName
+              });
+            }
+            
+            // Update performance metrics
+            const metrics = getTrackPlaybackMetrics();
+            setPerformanceMetrics(metrics);
+            
+            // Update now playing UI
+            setNowPlaying(currentPlaying);
+            return;
+          }
+          
+          // If not started yet and we haven't exceeded max attempts, try again
+          if (attempts < maxAttempts && (performance.now() - startPollingTime) < 2000) {
+            setTimeout(checkPlaybackStarted, 100);
+          } else {
+            // Timeout - update anyway
+            updateNowPlaying();
+            const metrics = getTrackPlaybackMetrics();
+            setPerformanceMetrics(metrics);
+          }
+        } catch (error) {
+          // On error, just update normally
+          updateNowPlaying();
+        }
+      };
+      
+      // Start checking after a short delay (50ms) to give Spotify time
+      setTimeout(checkPlaybackStarted, 50);
+      
     }).catch((error) => {
       if (isTokenExpiredError(error)) {
         setShowTokenExpiredDialog(true);
@@ -282,10 +418,26 @@ export default function MatchPage() {
         setTimeout(() => setErrorMessage(null), 5000);
       }
 
-      // Revert optimistic update on error
+      // Revert on error
       updateNowPlaying();
     });
   }, [session?.accessToken, updateNowPlaying]);
+
+  // Helper function to get track name from URI
+  const getTrackName = useCallback((trackUri: string): string => {
+    const allPlaylists = [...hotspotPlaylists, ...matchPlaylists, ...funStuffPlaylists, ...preMatchPlaylists];
+    
+    for (const playlist of allPlaylists) {
+      const tracks = playlistTracks[playlist.id] || [];
+      const track = tracks.find(pt => pt.track?.uri === trackUri);
+      if (track?.track?.name) {
+        return track.track.name;
+      }
+    }
+    
+    // Fallback to track ID if name not found
+    return trackUri?.split(':').pop()?.substring(0, 20) || 'Unknown';
+  }, [hotspotPlaylists, matchPlaylists, funStuffPlaylists, preMatchPlaylists, playlistTracks]);
 
   // Performance metrics display
   const renderPerformanceMetrics = useMemo(() => {
@@ -326,19 +478,39 @@ export default function MatchPage() {
             <div className="font-semibold mb-1">Recent Track Starts:</div>
             {allLogs
               .filter(log => log.operation === 'track_start')
-              .slice(-3)
-              .map((log, index) => (
-                <div key={index} className="text-xs mb-1">
-                  {log.metadata?.trackUri?.split(':').pop()?.substring(0, 15)}... 
-                  <br />
-                  <span className="text-gray-300">
-                    Total: {log.duration?.toFixed(2)}ms
-                    {log.metadata?.spotifyApiDuration && (
-                      <span> | Spotify: {log.metadata.spotifyApiDuration.toFixed(2)}ms</span>
-                    )}
-                  </span>
-                </div>
-              ))}
+              .slice(-5)
+              .reverse()
+              .map((log, index) => {
+                const playbackTime = log.metadata?.actualPlaybackStartTime || log.duration;
+                const feedback = log.metadata?.feedback || '';
+                const trackName = log.metadata?.trackName || getTrackName(log.metadata?.trackUri || '');
+                
+                return (
+                  <div key={index} className="text-xs mb-1 border-b border-gray-700 pb-1">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate max-w-[200px]" title={trackName}>
+                        {trackName}
+                      </span>
+                      <span className="text-lg">{feedback}</span>
+                    </div>
+                    <span className="text-gray-300">
+                      {playbackTime ? (
+                        <>
+                          Playback: {playbackTime.toFixed(2)}ms
+                          {log.metadata?.spotifyApiDuration && (
+                            <span> | API: {log.metadata.spotifyApiDuration.toFixed(2)}ms</span>
+                          )}
+                          {log.metadata?.pollingAttempts && (
+                            <span> | Attempts: {log.metadata.pollingAttempts}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span>Total: {log.duration?.toFixed(2)}ms</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         )}
         
@@ -358,7 +530,7 @@ export default function MatchPage() {
         </button>
       </div>
     );
-  }, [performanceMetrics, showPerformanceMetrics]);
+  }, [performanceMetrics, showPerformanceMetrics, getTrackName]);
 
   const renderPlaylistSection = useCallback((title: string, playlists: SimplifiedPlaylist[], type: string) => {
     if (playlists.length === 0) return null;

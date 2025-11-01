@@ -53,10 +53,41 @@ class PerformanceMonitor {
 
     // Log to console for development
     if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'production') {
-      console.log(`⏱️ ${log.operation}: ${duration.toFixed(2)}ms`, log.metadata);
+      const feedback = completedLog.metadata?.feedback ? ` ${completedLog.metadata.feedback}` : '';
+      console.log(`⏱️ ${log.operation}: ${duration.toFixed(2)}ms${feedback}`, log.metadata);
     }
 
     return duration;
+  }
+
+  /**
+   * Update metadata for an active log (before it's completed)
+   */
+  updateMetadata(id: string, metadata: Record<string, any>): void {
+    const log = this.logs.get(id);
+    if (log) {
+      log.metadata = {
+        ...log.metadata,
+        ...metadata
+      };
+    }
+  }
+
+  /**
+   * Update metadata for a completed log
+   */
+  updateCompletedLogMetadata(operation: string, trackUri: string, metadata: Record<string, any>): void {
+    // Find the most recent completed log matching criteria
+    const matchingLogs = this.completedLogs
+      .filter(log => log.operation === operation && log.metadata?.trackUri === trackUri)
+      .sort((a, b) => (b.endTime || 0) - (a.endTime || 0));
+    
+    if (matchingLogs.length > 0) {
+      matchingLogs[0].metadata = {
+        ...matchingLogs[0].metadata,
+        ...metadata
+      };
+    }
   }
 
   /**
@@ -71,6 +102,19 @@ class PerformanceMonitor {
    */
   getLogsForOperation(operation: string): PerformanceLog[] {
     return this.completedLogs.filter(log => log.operation === operation);
+  }
+
+  /**
+   * Get active (not yet completed) logs for a specific operation
+   */
+  getActiveLogsForOperation(operation: string): Array<{ id: string; log: PerformanceLog }> {
+    const result: Array<{ id: string; log: PerformanceLog }> = [];
+    this.logs.forEach((log, id) => {
+      if (log.operation === operation) {
+        result.push({ id, log });
+      }
+    });
+    return result;
   }
 
   /**
