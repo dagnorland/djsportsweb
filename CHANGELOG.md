@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2025-11-02
+
+### Added
+- **Currently Playing Display for Raspberry Pi**: Tekstbasert display for å vise nåværende Spotify-spor
+  - Ny `currently-playing/` modul med standalone display-funksjonalitet
+  - ASCII banner-format for visning av artist og sangtittel
+  - Automatisk polling med konfigurerbart intervall (standard 3 sekunder)
+  - Automatisk token refresh ved behov
+  - Animert oppdatering ved sangskifte med musikksymboler
+  - Perfekt for headless Raspberry Pi med liten skjerm
+  - Nytt npm script: `npm run currently-playing [interval]`
+  - Støtte for `SPOTIFY_REFRESH_TOKEN` miljøvariabel
+  - Komplett installasjonsguide for Raspberry Pi (RASPBERRY_PI_INSTALL.md)
+  - Verktøy for å hente refresh token (get-auth-code.html, get-refresh-token.sh)
+  - Systemd service-støtte for auto-start ved oppstart
+  - Headless/framebuffer-støtte for små skjermer
+
+### Technical Details
+- Token manager (`tokenManager.ts`) for refresh token-håndtering
+- Display formatering (`display.ts`) med ASCII banner og animasjoner
+- TypeScript-basert med full type safety
+- Bruker eksisterende Spotify API-typer og funksjoner
+- `tsx` pakke lagt til som dev dependency for kjøring av TypeScript
+
 ## [0.13.0] - 2025-01-30
 
 ### Added

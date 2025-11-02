@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Authorization Code Fanger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1DB954;
+        }
+        .code-display {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .error {
+            color: red;
+            background: #ffe0e0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success {
+            color: green;
+            background: #e0ffe0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        button {
+            background: #1DB954;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #1ed760;
+        }
+        .instructions {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Spotify Authorization Code Fanger</h1>
+        
+        <div class="instructions" id="instructions">
+            <strong>Instruksjoner:</strong>
+            <ol>
+                <li><strong>Viktig:</strong> Først må du legge til Redirect URI i Spotify Developer Dashboard:
+                    <ul>
+                        <li>Gå til <a href="https://developer.spotify.com/dashboard" target="_blank">Spotify Developer Dashboard</a></li>
+                        <li>Velg din app → Settings</li>
+                        <li>Under "Redirect URIs", legg til: <code id="redirectUriDisplay"></code></li>
+                        <li>Klikk "Add" og "Save"</li>
+                    </ul>
+                </li>
+                <li>Skriv inn din SPOTIFY_CLIENT_ID under og klikk "Start Spotify Autorisasjon"</li>
+                <li>Logg inn på Spotify og godta tilgang</li>
+                <li><strong>Etter redirect vil authorization code vises her!</strong></li>
+            </ol>
+        </div>
+
+        <div id="status"></div>
+        <div id="codeDisplay"></div>
+        
+        <div id="authForm" style="display: block;">
+            <label for="clientIdInput" style="display: block; margin: 10px 0;">
+                <strong>SPOTIFY_CLIENT_ID:</strong>
+            </label>
+            <input 
+                type="text" 
+                id="clientIdInput" 
+                placeholder="Skriv inn din CLIENT_ID"
+                style="width: 100%; padding: 10px; font-size: 14px; border: 1px solid #ccc; border-radius: 5px;"
+            >
+            <button onclick="startAuth()" style="width: 100%;">Start Spotify Autorisasjon</button>
+        </div>
+    </div>
+
+    <script>
+        // Vis redirect URI som skal brukes
+        const currentUrl = window.location.href.split('?')[0].split('#')[0];
+        document.getElementById('redirectUriDisplay').textContent = currentUrl;
+
+        // Sjekk om vi har fått en code i URL-en (callback fra Spotify)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (error) {
+            document.getElementById('authForm').style.display = 'none';
+            document.getElementById('status').innerHTML = 
+                `<div class="error"><strong>❌ Feil:</strong> ${error}</div>` +
+                `<p>Prøv å starte på nytt: <a href="${currentUrl}">Klikk her</a></p>`;
+        } else if (code) {
+            // Vi har fått authorization code!
+            document.getElementById('authForm').style.display = 'none';
+            document.getElementById('instructions').style.display = 'none';
+            document.getElementById('status').innerHTML = 
+                '<div class="success"><strong>✅ Success!</strong> Authorization code er mottatt:</div>';
+            document.getElementById('codeDisplay').innerHTML = 
+                `<div class="code-display"><strong>AUTHORIZATION_CODE:</strong><br><br>${code}</div>` +
+                `<p style="margin-top: 20px;"><strong>Kopier denne koden!</strong></p>` +
+                `<p>Kjør deretter:</p>` +
+                `<div class="code-display">./currently-playing/get-refresh-token.sh ${code}</div>`;
+            
+            // Select all text for easy copying
+            const codeElement = document.querySelector('.code-display');
+            if (codeElement) {
+                const range = document.createRange();
+                range.selectNodeContents(codeElement);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        } else {
+            // Vi er på startsiden, vis skjema
+            function startAuth() {
+                const clientId = document.getElementById('clientIdInput').value.trim();
+                
+                if (!clientId) {
+                    alert('Vennligst skriv inn din SPOTIFY_CLIENT_ID');
+                    return;
+                }
+
+                const scope = 'user-read-currently-playing';
+                const authUrl = `https://accounts.spotify.com/authorize?` +
+                    `client_id=${encodeURIComponent(clientId)}&` +
+                    `response_type=code&` +
+                    `redirect_uri=${encodeURIComponent(currentUrl)}&` +
+                    `scope=${encodeURIComponent(scope)}`;
+                
+                window.location.href = authUrl;
+            }
+        }
+    </script>
+</body>
+</html>
+
