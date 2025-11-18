@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Music2, Clock, Edit3, Check, X } from "lucide-react";
+import { Music2, Clock, Edit3, Check, X, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { 
@@ -17,8 +17,10 @@ import {
   getTrackStartTime, 
   loadTrackStartTimes 
 } from "@/lib/utils/trackStartTimes";
+import { isTrackUnavailable } from "@/lib/utils/trackAvailability";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { logger } from "@/lib/utils/logger";
 
 interface TrackListProps {
   tracks: PlaylistTrack[];
@@ -226,6 +228,11 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
       </TableHeader>
       <TableBody>
         {tracksWithStartTimes.map((item, index) => {
+          // Logger i dev-mode (bruker logger.debug som er aktivert i dev)
+          if (index == 0) {
+            logger.debug('TrackList: item', JSON.stringify(item, null, 2));
+          }
+    
           const track = item.track;
           if (!track) return null;
 
@@ -233,14 +240,15 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
           const isTrack = "album" in track;
           const trackId = track.id;
           const startTime = item.start_time_ms || 0;
+          const isUnavailable = isTrackUnavailable(track);
 
           return (
             <TableRow 
               key={track.id || index} 
               className={`hover:bg-accent/50 cursor-pointer group ${
                 focusedTrackIndex === index ? 'bg-accent/30' : ''
-              }`}
-              onClick={() => onPlayTrack?.(track.uri, index, startTime > 0 ? startTime : undefined)}
+              } ${isUnavailable ? 'opacity-60' : ''}`}
+              onClick={() => !isUnavailable && onPlayTrack?.(track.uri, index, startTime > 0 ? startTime : undefined)}
               onKeyDown={(e) => handleKeyDown(e, index)}
               tabIndex={0}
             >
@@ -262,8 +270,14 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
                       <Music2 className="h-4 w-4 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex items-center gap-2">
                     <p className="font-medium truncate">{track.name}</p>
+                    {isUnavailable && (
+                      <AlertTriangle 
+                        className="h-4 w-4 text-yellow-500 flex-shrink-0" 
+                        aria-label="Spor er ikke tilgjengelig"
+                      />
+                    )}
                     {track.explicit && (
                       <span className="text-xs bg-muted px-1 rounded text-muted-foreground">
                         E

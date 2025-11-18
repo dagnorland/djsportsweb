@@ -5,6 +5,78 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2025-01-30
+
+### Added
+- **Settings Page**: Centralized settings page for all app configuration
+  - New `/settings` route with organized settings sections
+  - User information display with logout functionality
+  - Theme switcher integration
+  - Spotify device selection
+  - Polling interval configuration
+  - djCloud sync panel integration
+  - Clean card-based layout with icons and descriptions
+
+- **Device Selector Component**: Spotify device selection with intelligent caching
+  - Dropdown selector for available Spotify devices
+  - Automatic Mac device detection and caching
+  - Device status indicators (🟢 active, ⚠️ restricted)
+  - Refresh button to update device list
+  - Cached device persistence for faster playback start
+  - Visual feedback for selected device
+
+- **Floating Pause Button**: Draggable pause button for quick access
+  - Floating button that can be positioned anywhere on screen
+  - Draggable interface with position persistence in localStorage
+  - Only visible when music is playing
+  - ESC key reminder tooltip
+  - Smooth animations and hover effects
+  - Position constraints to keep button within viewport
+
+- **Device Cache Utility**: Performance optimization for device selection
+  - Caches selected Spotify device ID in localStorage
+  - 5-minute cache duration for optimal performance
+  - Automatic Mac device detection and prioritization
+  - Fallback logic for device selection (active Mac → any Mac → active device → first device)
+  - Prevents unnecessary device API calls during playback
+
+- **Track Availability Utility**: Smart track availability checking
+  - Checks if tracks are playable before attempting playback
+  - Handles both Track and Episode objects
+  - Validates `is_playable`, `available_markets`, and `restrictions`
+  - Prevents playback errors for unavailable content
+  - Integrated into TrackList, PlaylistCarousel, and TrackListSetStartTime components
+
+### Enhanced
+- **Track Playback**: Improved device handling and availability checks
+  - Uses cached device ID for faster playback start
+  - Pre-fetches and caches devices on match page load
+  - Checks track availability before attempting playback
+  - Better error handling for unavailable tracks
+  - Visual indicators for unavailable tracks in UI
+
+- **Global Now Playing Bar**: Enhanced with floating pause button
+  - Integrated FloatingPauseButton component
+  - Better device caching integration
+  - Improved playback control accessibility
+
+- **Navigation**: Added Settings link
+  - Settings menu item in navigation bar
+  - Direct access to centralized settings page
+
+- **User Documentation**: Updated guides with new features
+  - Added Settings page documentation
+  - Device selection instructions
+  - Floating pause button usage
+  - Track availability information
+
+### Technical Details
+- Device caching reduces API calls and improves playback start time
+- Track availability checks prevent errors and improve user experience
+- Floating pause button uses localStorage for position persistence
+- Settings page consolidates all configuration in one location
+- Improved TypeScript types for device and track availability
+
 ## [0.13.0] - 2025-01-30
 
 ### Added

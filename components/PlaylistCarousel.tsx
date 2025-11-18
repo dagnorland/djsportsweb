@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, memo, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, memo, useMemo, useCallback } from "react";
 import { PlaylistTrack, SimplifiedPlaylist } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, Pause, SkipForward, SkipBack } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { Music2 } from "lucide-react";
 import { getPlaylistType } from "@/lib/utils/playlistTypes";
 import { loadTrackStartTimes } from "@/lib/utils/trackStartTimes";
 import { logger } from "@/lib/utils/logger";
+import { isTrackUnavailable } from "@/lib/utils/trackAvailability";
 
 interface PlaylistCarouselProps {
   playlist: SimplifiedPlaylist;
@@ -33,7 +34,6 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [playlistType, setPlaylistType] = useState<string>("none");
   const [tracksWithStartTimes, setTracksWithStartTimes] = useState<PlaylistTrack[]>([]);
-  const hasAutoAdvancedRef = useRef(false);
 
 
   // Load playlist type from localStorage
@@ -52,30 +52,8 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
     }
   }, [tracks]);
 
-  // Handle automatic advancement when track starts playing
-  useEffect(() => {
-    if (shouldAutoAdvance && onAutoAdvance && !hasAutoAdvancedRef.current) {
-      if (process.env.NODE_ENV === 'development') {
-        logger.spotify(`Auto-advancing playlist: ${playlist.name}`);
-      }
-
-      // Move to next track after a short delay to allow the current track to start playing
-      const timeoutId = setTimeout(() => {
-        setCurrentTrackIndex((prev) => (prev + 1) % tracks.length);
-        hasAutoAdvancedRef.current = true; // Mark that we've auto-advanced
-        onAutoAdvance(); // Notify parent that auto-advancement is complete
-      }, 1500); // Increased delay to ensure track has started playing
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [shouldAutoAdvance, onAutoAdvance, tracks.length, playlist.name]);
-
-  // Reset auto-advance flag when shouldAutoAdvance becomes false
-  useEffect(() => {
-    if (!shouldAutoAdvance) {
-      hasAutoAdvancedRef.current = false;
-    }
-  }, [shouldAutoAdvance]);
+  // Note: Auto-advancement is now handled directly in handlePlay after animation
+  // The shouldAutoAdvance prop is kept for backwards compatibility but not used here
 
   const formatStartTime = useCallback((ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -110,8 +88,21 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
     const track = currentTrack.track;
     const startTime = currentTrack.start_time_ms || 0;
     
+    // Don't play if track is unavailable
+    if (isTrackUnavailable(track)) return;
+    
     if (onPlayTrack && track) {
       onPlayTrack(track.uri, currentTrackIndex, startTime > 0 ? startTime : undefined);
+      
+      // Auto-advance to next track after animation completes (animation is 1.2s, wait 1400ms to be safe)
+      const availableTracks = tracksWithStartTimes.length > 0 ? tracksWithStartTimes : tracks;
+      const trackCount = availableTracks.length;
+      
+      if (trackCount > 1) {
+        setTimeout(() => {
+          setCurrentTrackIndex((prev) => (prev + 1) % trackCount);
+        }, 1400); // Wait for animation to complete (1.2s animation + buffer)
+      }
     }
   }, [onPlayTrack, currentTrackIndex, tracksWithStartTimes, tracks]);
 
@@ -141,6 +132,7 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   const track = currentTrack?.track;
   const isTrack = track && "album" in track;
   const startTime = currentTrack?.start_time_ms || 0;
+  const isUnavailable = useMemo(() => isTrackUnavailable(track), [track]);
   
   const formattedStartTime = useMemo(() => formatStartTime(startTime), [startTime, formatStartTime]);
   const isCurrentTrackPlaying = useMemo(() => isPlaying && currentTrackUri === track?.uri, [isPlaying, currentTrackUri, track?.uri]);
@@ -213,7 +205,8 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
                 <Button
                   size="lg"
                   onClick={handlePlay}
-                  className="rounded-full h-20 w-20 p-0 bg-black/50 hover:bg-black/70 border-0 shadow-lg pointer-events-auto"
+                  disabled={isUnavailable}
+                  className="rounded-full h-20 w-20 p-0 bg-black/50 hover:bg-black/70 border-0 shadow-lg pointer-events-auto disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isCurrentTrackPlaying ? (
                     <Pause className="h-10 w-10 text-white" />
@@ -238,7 +231,16 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
 
           {/* Track info */}
           <div className="text-center space-y-0.5">
-            <h4 className="font-medium truncate text-sm">{track?.name || "Ukjent spor"}</h4>
+            <div className="flex items-center justify-center gap-2">
+              <h4 className="font-medium truncate text-sm">{track?.name || "Ukjent spor"}</h4>
+              {isUnavailable && (
+                <span title="Spor er ikke tilgjengelig">
+                  <AlertTriangle 
+                    className="h-4 w-4 text-yellow-500 flex-shrink-0" 
+                  />
+                </span>
+              )}
+            </div>
             {isTrack && track?.artists && (
               <p className="text-sm text-muted-foreground truncate">
                 {track?.artists?.map(artist => artist.name).join(", ") || "Ukjent artist"}

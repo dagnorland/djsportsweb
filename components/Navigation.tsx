@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
-import { CloudSyncPanel } from "@/components/CloudSyncPanel";
-import { ThemeSwitcherTransition } from "@/components/ui/theme-switcher-transition";
+import { Settings } from "lucide-react";
 
 const navigationItems = [
   { name: "Spillelister", href: "/playlists" },
   { name: "Kamp", href: "/match" },
+  { name: "Innstillinger", href: "/settings", icon: Settings },
 ];
 
 export function Navigation() {
@@ -47,20 +47,24 @@ export function Navigation() {
             {/* Navigasjonsmeny - kun synlig hvis innlogget */}
             {session && (
               <div className="hidden md:flex space-x-6 items-center">
-                {navigationItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "text-sm font-medium transition-colors hover:text-primary",
-                      pathname === item.href
-                        ? "text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+                {navigationItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "text-sm font-medium transition-colors hover:text-primary flex items-center gap-2",
+                        pathname === item.href
+                          ? "text-foreground"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {Icon && <Icon className="h-4 w-4" />}
+                      {item.name}
+                    </Link>
+                  );
+                })}
                 {pathname === '/match' && (
                   <Button
                     variant="outline"
@@ -75,23 +79,12 @@ export function Navigation() {
             )}
           </div>
 
-          {/* Brukerinfo og logg ut */}
+          {/* Brukerinfo */}
           {session && (
             <div className="flex items-center space-x-4">
-              <ThemeSwitcherTransition />
-              <div className="hidden lg:block">
-                <CloudSyncPanel />
-              </div>
               <span className="text-sm text-muted-foreground">
                 {session.user?.name || session.user?.email}
               </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => signOut()}
-              >
-                Logg ut
-              </Button>
             </div>
           )}
         </div>
@@ -100,20 +93,24 @@ export function Navigation() {
         {session && (
           <div className="md:hidden border-t py-2">
             <div className="flex space-x-4 overflow-x-auto">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-sm font-medium whitespace-nowrap transition-colors hover:text-primary",
-                    pathname === item.href
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "text-sm font-medium whitespace-nowrap transition-colors hover:text-primary flex items-center gap-2",
+                      pathname === item.href
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.name}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

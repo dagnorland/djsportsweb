@@ -33,15 +33,57 @@ export default function NowPlayingBar({
   onStartSpotify,
 }: NowPlayingBarProps) {
   const [progress, setProgress] = useState(0);
+  const [currentProgressMs, setCurrentProgressMs] = useState(0);
   const [volume, setVolume] = useState(50);
 
+  // Update progress from API data
   useEffect(() => {
     if (currentlyPlaying?.progress_ms && currentlyPlaying?.item?.duration_ms) {
       const percentage =
         (currentlyPlaying.progress_ms / currentlyPlaying.item.duration_ms) * 100;
       setProgress(percentage);
+      setCurrentProgressMs(currentlyPlaying.progress_ms);
     }
   }, [currentlyPlaying]);
+
+  // Continuously update progress while playing
+  useEffect(() => {
+    if (!currentlyPlaying?.is_playing || !currentlyPlaying?.progress_ms || !currentlyPlaying?.item?.duration_ms) {
+      return;
+    }
+
+    // Store initial values
+    const initialProgress = currentlyPlaying.progress_ms;
+    const duration = currentlyPlaying.item.duration_ms;
+    const initialTimestamp = currentlyPlaying.timestamp;
+
+    const updateProgress = () => {
+      // Calculate elapsed time since last API update
+      const now = Date.now();
+      const elapsed = Math.floor((now - initialTimestamp) / 1000); // seconds
+      
+      // Update progress_ms based on elapsed time
+      const newProgressMs = initialProgress + (elapsed * 1000);
+      const percentage = (newProgressMs / duration) * 100;
+      
+      // Only update if not past duration
+      if (percentage <= 100) {
+        setProgress(percentage);
+        setCurrentProgressMs(newProgressMs);
+      } else {
+        setProgress(100);
+        setCurrentProgressMs(duration);
+      }
+    };
+
+    // Update immediately
+    updateProgress();
+
+    // Update every second while playing
+    const interval = setInterval(updateProgress, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentlyPlaying?.is_playing, currentlyPlaying?.progress_ms, currentlyPlaying?.item?.duration_ms]);
 
   const formatTime = (ms: number) => {
     const minutes = Math.floor(ms / 60000);
@@ -147,7 +189,7 @@ export default function NowPlayingBar({
         {/* Progress bar */}
         <div className="w-full flex items-center gap-2">
           <span className="text-xs text-muted-foreground w-10 text-right">
-            {formatTime(currentlyPlaying.progress_ms || 0)}
+            {formatTime(currentProgressMs || currentlyPlaying.progress_ms || 0)}
           </span>
           <div className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
             <div
