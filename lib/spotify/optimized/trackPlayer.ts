@@ -5,6 +5,7 @@
 import { startResumePlayback } from "@/lib/spotify";
 import { withTiming, logTrackStart, logTrackStartComplete, performanceMonitor } from "@/lib/utils/performance";
 import { SimplifiedPlaylist, PlaylistTrack } from "@/lib/types";
+import { getCachedDevice } from "@/lib/utils/deviceCache";
 
 // Environment flag for debug logging
 const DEBUG_MODE = process.env.NODE_ENV === 'development';
@@ -108,34 +109,64 @@ export const playTrackOptimized = async (
     // Get track info from pre-computed mapping (optimized lookup)
     const trackInfo = trackMappingCache.getTrackInfo(trackUri);
 
-    if (!trackInfo) {
-      throw new Error(`Track not found in mapping: ${trackUri}`);
-    }
-
-    if (DEBUG_MODE) {
-      console.log(`📍 Found track in playlist: ${trackInfo.playlistId} at position ${trackInfo.position}`);
-    }
-
     // Use custom start time if provided, otherwise start from beginning
     const positionMs = startTime && startTime > 0 ? startTime : 0;
 
-    // Start timing Spotify API call specifically
-    const spotifyApiId = performanceMonitor.startTiming('spotify_api_call', {
-      trackUri,
-      playlistId: trackInfo.playlistId,
-      position: trackInfo.position
-    });
+    // Get cached device ID for faster playback (avoids device lookup delay)
+    const cachedDevice = getCachedDevice();
+    const deviceId = cachedDevice?.id;
 
-    if (DEBUG_MODE) {
-      console.log(`🚀 Sending request to Spotify API...`);
+    let playbackPromise: Promise<void>;
+    let spotifyApiId: string;
+
+    if (trackInfo) {
+      // Track found in mapping - use playlist context (faster, better for queue)
+      if (DEBUG_MODE) {
+        console.log(`📍 Found track in playlist: ${trackInfo.playlistId} at position ${trackInfo.position}`);
+      }
+
+      // Start timing Spotify API call specifically
+      spotifyApiId = performanceMonitor.startTiming('spotify_api_call', {
+        trackUri,
+        playlistId: trackInfo.playlistId,
+        position: trackInfo.position,
+        deviceId: deviceId || 'default',
+        method: 'playlist_context'
+      });
+
+      if (DEBUG_MODE) {
+        console.log(`🚀 Sending request to Spotify API${deviceId ? ` (device: ${cachedDevice?.name})` : ''}...`);
+      }
+
+      // Start playback with optimized parameters - use cached device ID for faster start
+      playbackPromise = startResumePlayback(token, deviceId, {
+        context_uri: trackInfo.playlistUri,
+        offset: { position: trackInfo.position },
+        position_ms: positionMs,
+      });
+    } else {
+      // Track not in mapping - fallback to direct track playback
+      if (DEBUG_MODE) {
+        console.warn(`⚠️ Track not found in mapping: ${trackUri}, using direct playback fallback`);
+      }
+
+      // Start timing Spotify API call specifically
+      spotifyApiId = performanceMonitor.startTiming('spotify_api_call', {
+        trackUri,
+        deviceId: deviceId || 'default',
+        method: 'direct_uri'
+      });
+
+      if (DEBUG_MODE) {
+        console.log(`🚀 Sending direct playback request to Spotify API${deviceId ? ` (device: ${cachedDevice?.name})` : ''}...`);
+      }
+
+      // Fallback: Play track directly by URI (no playlist context)
+      playbackPromise = startResumePlayback(token, deviceId, {
+        uris: [trackUri],
+        position_ms: positionMs,
+      });
     }
-
-    // Start playback with optimized parameters - don't await unnecessarily
-    const playbackPromise = startResumePlayback(token, undefined, {
-      context_uri: trackInfo.playlistUri,
-      offset: { position: trackInfo.position },
-      position_ms: positionMs,
-    });
 
     // Fire and forget - don't wait for response parsing
     await playbackPromise;
@@ -161,7 +192,7 @@ export const playTrackOptimized = async (
 
     return {
       success: true,
-      trackInfo,
+      trackInfo: trackInfo || null, // May be null if using fallback
       duration: 0, // Will be updated when playback actually starts
       spotifyApiDuration,
       // Return the trackStartId so caller can track when playback actually starts

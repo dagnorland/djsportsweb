@@ -1,13 +1,14 @@
 "use client";
 
 import { PlaylistTrack } from "@/lib/types";
-import { Music2, Clock } from "lucide-react";
+import { Music2, Clock, AlertTriangle } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { 
   saveTrackStartTime, 
   loadTrackStartTimes 
 } from "@/lib/utils/trackStartTimes";
+import { isTrackUnavailable } from "@/lib/utils/trackAvailability";
 import { Slider } from "@/components/ui/slider";
 
 interface TrackListSetStartTimeProps {
@@ -77,8 +78,11 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
     // Auto-play the track from the new start time if it's the currently focused track
     const currentTrack = tracksWithStartTimes[focusedTrackIndex];
     if (currentTrack?.track?.id === trackId && currentTrack.track.uri) {
-      onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, newStartTime > 0 ? newStartTime : undefined);
-      setIsPlaying(true);
+      // Don't auto-play if track is unavailable
+      if (!isTrackUnavailable(currentTrack.track)) {
+        onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, newStartTime > 0 ? newStartTime : undefined);
+        setIsPlaying(true);
+      }
     }
   };
 
@@ -116,6 +120,9 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
       }
     } else if (e.key === 'Enter') {
       e.preventDefault();
+      // Don't play if track is unavailable
+      if (isTrackUnavailable(currentTrack.track)) return;
+      
       // Toggle play/pause
       if (isPlaying) {
         // Pause if currently playing
@@ -131,6 +138,9 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
       }
     } else if (e.key === ' ') {
       e.preventDefault();
+      // Don't play if track is unavailable
+      if (isTrackUnavailable(currentTrack.track)) return;
+      
       if (currentTrack.track.uri) {
         const startTime = currentTrack.start_time_ms || 0;
         onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, startTime > 0 ? startTime : undefined);
@@ -203,6 +213,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
         const trackId = track.id;
         const startTime = item.start_time_ms || 0;
         const isFocused = focusedTrackIndex === index;
+        const isUnavailable = isTrackUnavailable(track);
 
         return (
           <div
@@ -211,11 +222,11 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
               isFocused 
                 ? 'bg-accent border-primary/50 shadow-lg ring-1 ring-primary/20' 
                 : 'hover:bg-accent/50 border-transparent'
-            }`}
+            } ${isUnavailable ? 'opacity-60' : ''}`}
             onClick={() => {
               setFocusedTrackIndex(index);
               setIsSliderFocused(true); // Auto-focus slider when clicking track
-              if (track.uri) {
+              if (!isUnavailable && track.uri) {
                 onPlayTrack?.(track.uri, index, startTime > 0 ? startTime : undefined);
                 // Toggle play state when clicking
                 setIsPlaying(!isPlaying);
@@ -245,8 +256,14 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
             </div>
 
             {/* Track Title */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 flex items-center gap-2">
               <p className="font-medium truncate text-sm">{track.name}</p>
+              {isUnavailable && (
+                <AlertTriangle 
+                  className="h-4 w-4 text-yellow-500 flex-shrink-0" 
+                  aria-label="Spor er ikke tilgjengelig"
+                />
+              )}
               {track.explicit && (
                 <span className="text-xs bg-muted px-1 rounded text-muted-foreground">
                   E

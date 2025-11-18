@@ -8,8 +8,7 @@ A complete guide for using the DJ Sports application.
 3. [Setting Playlist Types](#setting-playlist-types)
 4. [Setting Track Start Times](#setting-track-start-times)
 5. [Using the Match Page](#using-the-match-page)
-6. [djCloud - Cloud Synchronization](#djcloud---cloud-synchronization)
-7. [Settings and Features](#settings-and-features)
+6. [Settings and Features](#settings-and-features)
 
 ---
 
@@ -24,6 +23,7 @@ A complete guide for using the DJ Sports application.
 ### Basic Navigation
 - **Playlists**: Main page for managing playlists, types, and start times
 - **Match**: Live DJ view for match situations with carousels per type
+- **Settings**: Centralized page for all app settings
 - **Theme Switcher** (☀️/🌙/⚡): Switch between Light, Dark, and SPORTS themes
 - **djCloud** (☁️): Synchronize data between devices
 - **Log**: Show performance statistics (only visible on Match page)
@@ -155,45 +155,87 @@ When a track starts playing:
 - **Polling interval slider**: Control how often the app checks Spotify
 - **Volume control**: Adjust Spotify volume
 
+### Floating Pause Button
+- A **floating pause button** appears when music is playing
+- **Drag and drop**: Move the button to your desired position on screen
+- **Click to pause**: Click the button to pause music
+- **Position saved**: Button position is remembered between sessions
+- **ESC key**: Press ESC to pause music (works even without the button)
+
 ---
 
-## djCloud - Cloud Synchronization
+## Settings and Features
 
+### Settings Page
+A centralized page for managing all app settings.
+
+**How to open:**
+- Click **"Settings"** in the navigation
+- Or go directly to `/settings`
+
+**Available settings:**
+
+1. **Appearance**
+   - Choose between Light, Dark, and SPORTS themes
+   - Changes are saved automatically
+
+2. **Spotify Device**
+   - Select which device should be used for playback
+   - Shows all available Spotify devices
+   - 🟢 indicates active device
+   - ⚠️ indicates restricted device
+   - Automatic selection of Mac device if available
+   - Device selection is cached for faster startup
+
+3. **Update Frequency**
+   - Adjust polling interval for playback status
+   - Same functionality as on Now Playing Bar
+
+4. **DJ Cloud Sync**
+   - Complete synchronization of start times and types
+   - See [djCloud section](#djcloud---cloud-synchronization) below for details
+
+5. **Account**
+   - Log out from your Spotify account
+   - Ends current session
+
+### djCloud - Cloud Synchronization
 djCloud synchronizes playlist types and start times between your devices via the cloud.
 
-### First Time Setup
-1. Click the **djCloud icon** (☁️) in the navigation
-2. Enter a **device name** (e.g., "MacBook Pro" or "iPad")
-3. Click **Save Device Name**
+**Access:**
+- From the **Settings page** under "DJ Cloud Sync" section
+- Or via the djCloud icon (☁️) in the navigation
 
-### Backup (Upload to Cloud)
-1. Open the djCloud panel
+**First Time Setup:**
+1. Go to **Settings**
+2. Find the **"DJ Cloud Sync"** section
+3. Enter a **device name** (e.g., "MacBook Pro" or "iPad")
+4. Click **Save Device Name**
+
+**Backup (Upload to Cloud):**
+1. Open the djCloud panel from Settings page
 2. Check the status under "Sync Status":
    - **Orange up arrow (↑)**: You have local changes that should be backed up
 3. Click the **Backup** button (highlighted if you have new changes)
 4. Your types and start times are uploaded to the cloud
 
-### Restore (Download from Cloud)
-1. Open the djCloud panel
+**Restore (Download from Cloud):**
+1. Open the djCloud panel from Settings page
 2. Check the status under "Sync Status":
    - **Blue down arrow (↓)**: The cloud has newer data than your device
 3. Click the **Restore** button (highlighted if cloud has newer data)
 4. Data from the cloud is downloaded and replaces your local data
 
-### Sync Status Explanation
+**Sync Status Explanation:**
 - **Green checkmark (✓)**: Everything is synchronized
 - **Orange up arrow (↑)**: Upload your changes
 - **Blue down arrow (↓)**: Download from cloud
 - **Timestamp**: When the last backup/change occurred
 
-### Best Practice
+**Best Practice:**
 - **Backup** after making changes to start times or types
 - **Restore** when switching to a new device
 - Use unique device names to keep track
-
----
-
-## Settings and Features
 
 ### Polling Interval
 Controls how often the app checks Spotify for updates.
@@ -231,11 +273,34 @@ Click the theme buttons in the navigation to switch. Your choice is saved automa
 - Drag the slider to adjust Spotify volume (0-100%)
 - Percentage shown on the right
 
+### Spotify Device Selection
+Choose which device should be used for playback:
+
+**From Settings page:**
+1. Go to **Settings**
+2. Find the **"Spotify Device"** section
+3. Select device from dropdown menu
+4. Click the refresh icon (🔄) to update the list
+5. Selection is saved automatically
+
+**Automatic selection:**
+- App automatically selects Mac device if available
+- Active devices are prioritized
+- Device selection is cached for faster startup
+
+**Device indicators:**
+- **🟢**: Device is active and ready for playback
+- **⚠️**: Device has restrictions
+- **No indicator**: Device is available but not active
+
 ### Keyboard Navigation
 On the Playlists page:
 - **Arrow up/down**: Switch playlist (when search is not active)
 - **Tab**: Move between playlist and track list
 - **Enter**: Play selected track
+
+**Global:**
+- **ESC**: Pause music (works when music is playing)
 
 ### Token Expired
 If you receive a message that "The access token expired":

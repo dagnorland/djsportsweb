@@ -11,7 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { getCurrentlyPlayingTrack } from "@/lib/spotify";
+import { getCurrentlyPlayingTrack, getAvailableDevices } from "@/lib/spotify";
 import { SimplifiedPlaylist, PlaylistTrack, CurrentlyPlaying } from "@/lib/types";
 import { getAllPlaylistTypes } from "@/lib/utils/playlistTypes";
 import PlaylistCarousel from "@/components/PlaylistCarousel";
@@ -24,6 +24,7 @@ import { RouteGuard } from "@/components/RouteGuard";
 import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
 import { TokenExpiredDialog } from "@/components/TokenExpiredDialog";
 import { isTokenExpiredError } from "@/lib/utils/tokenExpiry";
+import { findAndCacheMacDevice } from "@/lib/utils/deviceCache";
 
 export default function MatchPage() {
   const { data: session, status } = useSession();
@@ -160,7 +161,7 @@ export default function MatchPage() {
 
       // Song is playing and interval is off → set to 5 seconds
       if (pollingInterval === 0) {
-        setPollingInterval(5000);
+        setPollingInterval(2000);
         if (process.env.NODE_ENV === 'development') {
           logger.spotify('Auto-starting polling (5s) - playback detected');
         }
@@ -187,6 +188,28 @@ export default function MatchPage() {
       }
     };
   }, [nowPlaying, pollingInterval, setPollingInterval]);
+
+  // Pre-fetch and cache devices for faster playback start
+  useEffect(() => {
+    if (session?.accessToken) {
+      // Pre-fetch devices in background to cache Mac device ID
+      getAvailableDevices(session.accessToken)
+        .then(devices => {
+          if (devices && devices.length > 0) {
+            const deviceId = findAndCacheMacDevice(devices);
+            if (deviceId && process.env.NODE_ENV === 'development') {
+              logger.spotify(`Cached device ID: ${deviceId}`);
+            }
+          }
+        })
+        .catch(error => {
+          // Silently fail - device lookup is optional for playback
+          if (process.env.NODE_ENV === 'development') {
+            logger.warn('Failed to pre-fetch devices:', error);
+          }
+        });
+    }
+  }, [session?.accessToken]);
 
   // Load playlists and filter by type
   useEffect(() => {
@@ -401,8 +424,8 @@ export default function MatchPage() {
         }
       };
       
-      // Start checking after a short delay (50ms) to give Spotify time
-      setTimeout(checkPlaybackStarted, 50);
+      // Start checking immediately for faster detection (no delay)
+      checkPlaybackStarted();
       
     }).catch((error) => {
       if (isTokenExpiredError(error)) {

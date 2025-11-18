@@ -52,6 +52,19 @@ export default async function RootLayout({
                         `,
                     }}
                 />
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: `
+                            (function() {
+                                // Definer callback før SDK-en lastes for å unngå feil
+                                window.onSpotifyWebPlaybackSDKReady = function() {
+                                    // Callback vil bli overskrevet av PlayerProvider hvis den brukes
+                                    console.log('Spotify Web Playback SDK loaded');
+                                };
+                            })();
+                        `,
+                    }}
+                />
             </head>
             <body className={inter.className}>
                 <ErrorBoundary>

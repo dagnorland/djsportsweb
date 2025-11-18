@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume, getAvailableDevices } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
+import FloatingPauseButton from "./FloatingPauseButton";
 import { logger } from "@/lib/utils/logger";
 import { useOptimizedPolling } from "@/lib/hooks/useOptimizedPolling";
 import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
+import { getCachedDevice, findAndCacheMacDevice } from "@/lib/utils/deviceCache";
 
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
@@ -27,9 +29,10 @@ export default function GlobalNowPlayingBar() {
     }
   };
 
+  // Always enable polling, but use minimum 3s interval if user set it to 0
   useOptimizedPolling({
-    enabled: !!session?.accessToken && interval > 0, // Disable if interval is 0 (Off)
-    interval: interval > 0 ? interval : 3000, // Fallback to 3s if off
+    enabled: !!session?.accessToken, // Always enabled if we have a session
+    interval: interval > 0 ? interval : 3000, // Minimum 3s if user set to 0
     maxInterval: 15000, // Max 15 seconds on errors
     onPoll: updateNowPlaying,
     onError: (error) => {
@@ -38,8 +41,14 @@ export default function GlobalNowPlayingBar() {
     name: "now-playing"
   });
 
+  // Also do an initial fetch when session becomes available
+  useEffect(() => {
+    if (session?.accessToken) {
+      updateNowPlaying();
+    }
+  }, [session?.accessToken]);
 
-  const handlePlayPause = async () => {
+  const handlePlayPause = useCallback(async () => {
     if (!session?.accessToken || !nowPlaying) return;
 
     try {
@@ -53,7 +62,32 @@ export default function GlobalNowPlayingBar() {
     } catch (error) {
       logger.error("Feil ved play/pause:", error);
     }
-  };
+  }, [session?.accessToken, nowPlaying]);
+
+  // ESC-tastatursnarvei for pause
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Pauser kun hvis ESC trykkes og musikk spiller
+      if (event.key === "Escape" && nowPlaying?.is_playing) {
+        // Unngå konflikt med eksisterende handlers (f.eks. i input-felter eller dialogs)
+        const target = event.target as HTMLElement;
+        if (
+          target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable ||
+          target.closest("[role='dialog']")
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        handlePlayPause();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nowPlaying?.is_playing, handlePlayPause]);
 
   const handleNext = async () => {
     if (!session?.accessToken) return;
@@ -107,8 +141,12 @@ export default function GlobalNowPlayingBar() {
     if (!session?.accessToken) return;
 
     try {
-      // Først prøv å starte avspilling på standard enhet
-      await startResumePlayback(session.accessToken);
+      // Use cached device ID for faster start
+      const cachedDevice = getCachedDevice();
+      const deviceId = cachedDevice?.id;
+      
+      // Start playback on cached device (or default if no cache)
+      await startResumePlayback(session.accessToken, deviceId);
       
       // Sett polling interval til 5 sekunder for bedre responsivitet
       setInterval(5000);
@@ -129,6 +167,8 @@ export default function GlobalNowPlayingBar() {
       try {
         const devices = await getAvailableDevices(session.accessToken);
         if (devices.length > 0) {
+          // Cache the device for next time
+          const deviceId = findAndCacheMacDevice(devices);
           const activeDevice = devices.find(device => device.is_active) || devices[0];
           if (activeDevice.id) {
             await startResumePlayback(session.accessToken, activeDevice.id);
@@ -160,13 +200,19 @@ export default function GlobalNowPlayingBar() {
 
 
   return (
-    <NowPlayingBar
-      currentlyPlaying={nowPlaying}
-      onPlayPause={handlePlayPause}
-      onNext={handleNext}
-      onPrevious={handlePrevious}
-      onVolumeChange={handleVolumeChange}
-      onStartSpotify={handleStartSpotify}
-    />
+    <>
+      <NowPlayingBar
+        currentlyPlaying={nowPlaying}
+        onPlayPause={handlePlayPause}
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        onVolumeChange={handleVolumeChange}
+        onStartSpotify={handleStartSpotify}
+      />
+      <FloatingPauseButton
+        currentlyPlaying={nowPlaying}
+        onPlayPause={handlePlayPause}
+      />
+    </>
   );
 }

@@ -8,8 +8,7 @@ En komplett guide for å bruke DJ Sports applikasjonen.
 3. [Sette spilleliste-typer](#sette-spilleliste-typer)
 4. [Sette starttider på spor](#sette-starttider-på-spor)
 5. [Bruke Kamp-siden](#bruke-kamp-siden)
-6. [djCloud - Sky-synkronisering](#djcloud---sky-synkronisering)
-7. [Innstillinger og funksjoner](#innstillinger-og-funksjoner)
+6. [Innstillinger og funksjoner](#innstillinger-og-funksjoner)
 
 ---
 
@@ -24,6 +23,7 @@ En komplett guide for å bruke DJ Sports applikasjonen.
 ### Grunnleggende navigasjon
 - **Spillelister**: Hovedsiden for å administrere spillelister, typer og starttider
 - **Kamp**: Live DJ-visning for kamp-situasjoner med karuseller per type
+- **Innstillinger**: Sentralisert side for alle app-innstillinger
 - **Temavelger** (☀️/🌙/⚡): Bytt mellom Light, Dark og SPORTS-tema
 - **djCloud** (☁️): Synkroniser data mellom enheter
 - **Log**: Vis ytelsesstatistikk (kun synlig på Kamp-siden)
@@ -155,45 +155,87 @@ Når et spor starter å spille:
 - **Polling-intervall slider**: Kontroller hvor ofte app'en sjekker Spotify
 - **Volumkontroll**: Juster volumet på Spotify
 
+### Flytende Pause-knapp
+- En **flytende pause-knapp** vises når musikk spiller
+- **Dra og slipp**: Flytt knappen til ønsket posisjon på skjermen
+- **Klikk for pause**: Klikk på knappen for å pause musikken
+- **Posisjon lagres**: Knappens posisjon huskes mellom sesjoner
+- **ESC-tast**: Trykk ESC for å pause musikken (fungerer også uten knappen)
+
 ---
 
-## djCloud - Sky-synkronisering
+## Innstillinger og funksjoner
 
+### Innstillinger-siden
+En sentralisert side for å administrere alle app-innstillinger.
+
+**Hvordan åpne:**
+- Klikk på **"Innstillinger"** i navigasjonen
+- Eller gå direkte til `/settings`
+
+**Tilgjengelige innstillinger:**
+
+1. **Utseende**
+   - Velg mellom Light, Dark og SPORTS-tema
+   - Endringer lagres automatisk
+
+2. **Spotify Enhet**
+   - Velg hvilken enhet som skal brukes for avspilling
+   - Viser alle tilgjengelige Spotify-enheter
+   - 🟢 indikerer aktiv enhet
+   - ⚠️ indikerer begrenset enhet
+   - Automatisk valg av Mac-enhet hvis tilgjengelig
+   - Enhetsvalg lagres for raskere oppstart
+
+3. **Oppdateringsfrekvens**
+   - Juster polling-intervall for avspillingsstatus
+   - Samme funksjonalitet som på Now Playing Bar
+
+4. **DJ Cloud Sync**
+   - Fullstendig synkronisering av starttider og typer
+   - Se [djCloud-seksjonen](#djcloud---sky-synkronisering) nedenfor for detaljer
+
+5. **Konto**
+   - Logg ut fra Spotify-kontoen din
+   - Avslutter gjeldende sesjon
+
+### djCloud - Sky-synkronisering
 djCloud synkroniserer spilleliste-typer og starttider mellom dine enheter via skyen.
 
-### Første gangs oppsett
-1. Klikk på **djCloud-ikonet** (☁️) i navigasjonen
-2. Skriv inn et **enhetsnavn** (f.eks. "MacBook Pro" eller "iPad")
-3. Klikk **Lagre enhetsnavn**
+**Tilgang:**
+- Fra **Innstillinger-siden** under "DJ Cloud Sync"-seksjonen
+- Eller via djCloud-ikonet (☁️) i navigasjonen
 
-### Backup (Last opp til skyen)
-1. Åpne djCloud-panelet
+**Første gangs oppsett:**
+1. Gå til **Innstillinger**
+2. Finn **"DJ Cloud Sync"**-seksjonen
+3. Skriv inn et **enhetsnavn** (f.eks. "MacBook Pro" eller "iPad")
+4. Klikk **Lagre enhetsnavn**
+
+**Backup (Last opp til skyen):**
+1. Åpne djCloud-panelet fra Innstillinger-siden
 2. Se statusen under "Sync Status":
    - **Oransje pil opp (↑)**: Du har lokale endringer som bør backes opp
 3. Klikk på **Backup**-knappen (blir fremhevet hvis du har nye endringer)
 4. Dine typer og starttider lastes opp til skyen
 
-### Restore (Last ned fra skyen)
-1. Åpne djCloud-panelet
+**Restore (Last ned fra skyen):**
+1. Åpne djCloud-panelet fra Innstillinger-siden
 2. Se statusen under "Sync Status":
    - **Blå pil ned (↓)**: Skyen har nyere data enn din enhet
 3. Klikk på **Restore**-knappen (blir fremhevet hvis skyen har nyere data)
 4. Data fra skyen lastes ned og erstatter dine lokale data
 
-### Sync Status forklaring
+**Sync Status forklaring:**
 - **Grønn hake (✓)**: Alt er synkronisert
 - **Oransje pil opp (↑)**: Last opp dine endringer
 - **Blå pil ned (↓)**: Last ned fra skyen
 - **Tidspunkt**: Når siste backup/endring skjedde
 
-### Best practice
+**Best practice:**
 - **Backup** etter å ha gjort endringer på starttider eller typer
 - **Restore** når du bytter til en ny enhet
 - Bruk unike enhetsnavn for å holde oversikt
-
----
-
-## Innstillinger og funksjoner
 
 ### Polling-intervall
 Kontrollerer hvor ofte app'en sjekker Spotify for oppdateringer.
@@ -231,11 +273,34 @@ Klikk på temaknappene i navigasjonen for å bytte. Valget lagres automatisk.
 - Dra slideren for å justere Spotify-volumet (0-100%)
 - Prosent vises til høyre
 
+### Spotify Enhet-valg
+Velg hvilken enhet som skal brukes for avspilling:
+
+**Fra Innstillinger-siden:**
+1. Gå til **Innstillinger**
+2. Finn **"Spotify Enhet"**-seksjonen
+3. Velg enhet fra rullegardinmenyen
+4. Klikk på oppdateringsikonet (🔄) for å oppdatere listen
+5. Valget lagres automatisk
+
+**Automatisk valg:**
+- Appen velger automatisk Mac-enhet hvis tilgjengelig
+- Aktive enheter prioriteres
+- Enhetsvalg caches for raskere oppstart
+
+**Enhet-indikatorer:**
+- **🟢**: Enheten er aktiv og klar for avspilling
+- **⚠️**: Enheten har begrensninger
+- **Ingen indikator**: Enheten er tilgjengelig men ikke aktiv
+
 ### Tastaturnavigasjon
 På Spillelister-siden:
 - **Pil opp/ned**: Bytt spilleliste (når søk ikke er aktivt)
 - **Tab**: Flytt mellom spilleliste og sporliste
 - **Enter**: Spill valgt spor
+
+**Globalt:**
+- **ESC**: Pause musikken (fungerer når musikk spiller)
 
 ### Token utløpt
 Hvis du får melding om at "Tilgangstokenet har utløpt":
