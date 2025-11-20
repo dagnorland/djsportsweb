@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2025-01-30
+
+### Added
+- **Spilleliste-filtrering**: Avansert filtreringssystem for spillelister
+  - Søkefunksjonalitet for å finne spillelister raskt
+  - Filter-dialog med checkbox-basert filtrering
+  - Filtrering basert på playlist type (Hotspot, Match, Fun Stuff, Pre Match)
+  - "Kun med type satt" filter for å vise kun kategoriserte spillelister
+  - Kombinert søk og filter for presis filtrering
+  - Visuell tilbakemelding med antall funnede spillelister
+  - Responsivt design med mobile-støtte
+
+### Enhanced
+- **Playlists Page**: Forbedret brukeropplevelse for spilleliste-navigasjon
+  - Søkeknapp i sidebar for rask tilgang
+  - Filter-knapp for avansert filtrering
+  - Bedre organisering av spillelister med filtrering
+  - Forbedret navigasjon mellom filtrerte spillelister
+
+### Technical Details
+- State management for søk og filter med React hooks
+- Dialog-komponent for filter-innstillinger
+- Integrert med eksisterende playlist type system
+- Optimalisert filtrering med Set-basert state management
+
 ## [0.15.0] - 2025-01-30
 
 ### Added

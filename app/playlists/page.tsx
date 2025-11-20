@@ -24,12 +24,17 @@ import TrackListSwitcher from "@/components/TrackListSwitcher";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, X } from "lucide-react";
+import { Search, X, Filter } from "lucide-react";
 import { logger } from "@/lib/utils/logger";
 import { RouteGuard } from "@/components/RouteGuard";
 import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
 import { TokenExpiredDialog } from "@/components/TokenExpiredDialog";
 import { isTokenExpiredError } from "@/lib/utils/tokenExpiry";
+import { getAllPlaylistTypes, getPlaylistType } from "@/lib/utils/playlistTypes";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import type { DJPlaylistType } from "@/lib/types";
 
 export default function PlaylistsPage() {
   const { data: session, status } = useSession();
@@ -51,6 +56,8 @@ export default function PlaylistsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [showTokenExpiredDialog, setShowTokenExpiredDialog] = useState(false);
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<Set<DJPlaylistType | "withType">>(new Set());
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Define callbacks before useEffects
@@ -304,10 +311,33 @@ export default function PlaylistsPage() {
     );
   }
 
-  // Filter playlists based on search query
-  const filteredPlaylists = playlists.filter(playlist =>
-    playlist.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter playlists based on search query and playlist type
+  const filteredPlaylists = playlists.filter(playlist => {
+    // First filter by search query
+    const matchesSearch = playlist.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    // If no filters are selected, show all
+    if (selectedTypes.size === 0) {
+      return true;
+    }
+
+    const playlistType = getPlaylistType(playlist.id);
+
+    // If "withType" is selected (and no specific types), show all with any type
+    if (selectedTypes.has("withType") && selectedTypes.size === 1) {
+      return playlistType !== null;
+    }
+
+    // If specific types are selected, show only those types
+    // Remove "withType" from the set for type checking
+    const typeFilters = Array.from(selectedTypes).filter(type => type !== "withType") as DJPlaylistType[];
+    if (typeFilters.length > 0) {
+      return playlistType !== null && typeFilters.includes(playlistType);
+    }
+
+    return true;
+  });
 
   const clearSearch = () => {
     setSearchQuery("");
@@ -350,6 +380,15 @@ return (
           >
             <Search className="h-4 w-4" />
           </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowFilterDialog(true)}
+            className="h-8 w-8 p-0"
+            title="Filtrer spillelister"
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
         
         {isSearchVisible && (
@@ -383,6 +422,110 @@ return (
           loading={loadingPlaylists}
         />
       </aside>
+
+      {/* Filter Dialog */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Filtrer spillelister</DialogTitle>
+            <DialogDescription>
+              Velg hvilke typer spillelister du vil vise. Hvis ingen er valgt, vises alle.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="withType"
+                checked={selectedTypes.has("withType")}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selectedTypes);
+                  if (checked) {
+                    newSet.add("withType");
+                  } else {
+                    newSet.delete("withType");
+                  }
+                  setSelectedTypes(newSet);
+                }}
+              />
+              <Label htmlFor="withType" className="cursor-pointer">
+                Kun med type satt
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="hotspot"
+                checked={selectedTypes.has("hotspot")}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selectedTypes);
+                  if (checked) {
+                    newSet.add("hotspot");
+                  } else {
+                    newSet.delete("hotspot");
+                  }
+                  setSelectedTypes(newSet);
+                }}
+              />
+              <Label htmlFor="hotspot" className="cursor-pointer">
+                Hotspot
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="match"
+                checked={selectedTypes.has("match")}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selectedTypes);
+                  if (checked) {
+                    newSet.add("match");
+                  } else {
+                    newSet.delete("match");
+                  }
+                  setSelectedTypes(newSet);
+                }}
+              />
+              <Label htmlFor="match" className="cursor-pointer">
+                Match
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="funStuff"
+                checked={selectedTypes.has("funStuff")}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selectedTypes);
+                  if (checked) {
+                    newSet.add("funStuff");
+                  } else {
+                    newSet.delete("funStuff");
+                  }
+                  setSelectedTypes(newSet);
+                }}
+              />
+              <Label htmlFor="funStuff" className="cursor-pointer">
+                Fun Stuff
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2 py-2">
+              <Checkbox
+                id="preMatch"
+                checked={selectedTypes.has("preMatch")}
+                onCheckedChange={(checked) => {
+                  const newSet = new Set(selectedTypes);
+                  if (checked) {
+                    newSet.add("preMatch");
+                  } else {
+                    newSet.delete("preMatch");
+                  }
+                  setSelectedTypes(newSet);
+                }}
+              />
+              <Label htmlFor="preMatch" className="cursor-pointer">
+                Pre Match
+              </Label>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Right panel - Tracks */}
       <main className="flex-1 overflow-y-auto">
