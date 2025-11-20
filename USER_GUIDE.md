@@ -349,9 +349,9 @@ Only visible on Match page:
 ## Support and Feedback
 
 Found bugs or have suggestions for improvements?
-Report issues at: https://github.com/anthropics/claude-code/issues
+Report issues at: https://github.com/dagnorland/djsportsweb
 
-**Version**: See version number at bottom left in navigation (e.g., "v0.11.0")
+**Version**: See version number at bottom left in navigation (e.g., "v0.14.0")
 
 ---
 

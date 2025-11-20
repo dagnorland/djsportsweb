@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume, getAvailableDevices } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
@@ -13,8 +14,12 @@ import { getCachedDevice, findAndCacheMacDevice } from "@/lib/utils/deviceCache"
 
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const { interval, setInterval } = usePollingSettings();
+  
+  // Only show floating pause button on match page
+  const isMatchPage = pathname === "/match";
 
   // Optimized polling for now playing status
   const updateNowPlaying = async () => {
@@ -209,10 +214,12 @@ export default function GlobalNowPlayingBar() {
         onVolumeChange={handleVolumeChange}
         onStartSpotify={handleStartSpotify}
       />
-      <FloatingPauseButton
-        currentlyPlaying={nowPlaying}
-        onPlayPause={handlePlayPause}
-      />
+      {isMatchPage && (
+        <FloatingPauseButton
+          currentlyPlaying={nowPlaying}
+          onPlayPause={handlePlayPause}
+        />
+      )}
     </>
   );
 }

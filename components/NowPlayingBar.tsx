@@ -129,7 +129,7 @@ export default function NowPlayingBar({
   const isPlaying = currentlyPlaying.is_playing;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center gap-4 bg-background border-t z-[60]">
+    <div className="fixed bottom-0 left-0 right-0 h-24 px-4 flex items-center gap-4 bg-background border-t z-[60]" data-now-playing-bar>
       {/* Track info */}
       <div className="flex items-center gap-3 w-80 min-w-0">
         {"album" in track && track.album?.images && track.album.images.length > 0 ? (

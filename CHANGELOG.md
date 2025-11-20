@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2025-01-30
+
+### Added
+- **Floating Album Cover Animation**: Visuell animasjon når spor spilles av
+  - Albumcoveret flyter fra spilleliste-karusellen til Now Playing Bar
+  - Smooth animasjon med scale og opacity-effekter
+  - Dynamisk beregning av animasjonsbane basert på posisjon
+  - 1.2 sekunders animasjon med easing for naturlig bevegelse
+  - Forbedret visuell tilbakemelding når avspilling starter
+
+### Enhanced
+- **TrackListSetStartTime Component**: Forbedret redigering av starttider
+  - Refaktorert komponent for bedre ytelse og vedlikeholdbarhet
+  - Forbedret fokus-håndtering og tastaturnavigasjon
+  - Bedre visuell tilbakemelding for fokuserte spor
+  - Optimalisert state management og re-rendering
+
+- **PlaylistCarousel Component**: Forbedret brukeropplevelse
+  - Integrert floating image animasjon ved avspilling
+  - Bedre visuell tilbakemelding når spor spilles av
+  - Forbedret interaksjon mellom karusell og Now Playing Bar
+
+### Technical Details
+- Ny CSS-animasjon `float-to-now-playing` med CSS-variabler for dynamisk posisjonering
+- React Portal brukes for floating image overlay
+- Forbedret ref-håndtering for bedre ytelse
+- Oppdatert dokumentasjon med nye funksjoner
+
 ## [0.14.0] - 2025-01-30
 
 ### Added

@@ -75,14 +75,10 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
       )
     );
 
-    // Auto-play the track from the new start time if it's the currently focused track
-    const currentTrack = tracksWithStartTimes[focusedTrackIndex];
-    if (currentTrack?.track?.id === trackId && currentTrack.track.uri) {
-      // Don't auto-play if track is unavailable
-      if (!isTrackUnavailable(currentTrack.track)) {
-        onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, newStartTime > 0 ? newStartTime : undefined);
-        setIsPlaying(true);
-      }
+    // Stop playback when changing start time to allow user to test manually
+    if (isPlaying) {
+      onPauseTrack?.();
+      setIsPlaying(false);
     }
   };
 
@@ -118,12 +114,12 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
         const newStartTime = Math.min(trackDuration, currentStartTime + stepSize);
         handleStartTimeChange(currentTrack.track.id, newStartTime);
       }
-    } else if (e.key === 'Enter') {
+    } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       // Don't play if track is unavailable
       if (isTrackUnavailable(currentTrack.track)) return;
       
-      // Toggle play/pause
+      // Toggle play/pause with Enter or Space
       if (isPlaying) {
         // Pause if currently playing
         onPauseTrack?.();
@@ -135,16 +131,6 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
           onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, startTime > 0 ? startTime : undefined);
           setIsPlaying(true);
         }
-      }
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      // Don't play if track is unavailable
-      if (isTrackUnavailable(currentTrack.track)) return;
-      
-      if (currentTrack.track.uri) {
-        const startTime = currentTrack.start_time_ms || 0;
-        onPlayTrack?.(currentTrack.track.uri, focusedTrackIndex, startTime > 0 ? startTime : undefined);
-        setIsPlaying(true);
       }
     } else if (e.key === 'Tab') {
       e.preventDefault();
@@ -218,7 +204,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
         return (
           <div
             key={track.id || index}
-            className={`flex items-center gap-4 p-4 rounded-lg border transition-all cursor-pointer group ${
+            className={`flex items-center gap-2 p-4 rounded-lg border transition-all cursor-pointer group ${
               isFocused 
                 ? 'bg-accent border-primary/50 shadow-lg ring-1 ring-primary/20' 
                 : 'hover:bg-accent/50 border-transparent'
@@ -256,7 +242,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
             </div>
 
             {/* Track Title */}
-            <div className="flex-1 min-w-0 flex items-center gap-2">
+            <div className="min-w-0 flex items-center gap-2 max-w-xs">
               <p className="font-medium truncate text-sm">{track.name}</p>
               {isUnavailable && (
                 <AlertTriangle 
@@ -272,13 +258,17 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
             </div>
 
             {/* Start Time Slider */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="text-xs text-muted-foreground min-w-0">
-                {formatStartTime(startTime)}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className={`text-xs min-w-0 flex-shrink-0 px-2 py-1 rounded ${
+                startTime > 0 
+                  ? "bg-foreground text-background" 
+                  : "text-muted-foreground"
+              }`}>
+                {startTime > 0 ? formatStartTime(startTime) : "0:00"}
               </div>
               <div 
                 ref={isFocused ? sliderRef : null}
-                className={`w-80 ${isFocused && isSliderFocused ? 'ring-2 ring-primary ring-offset-2 rounded' : ''}`}
+                className={`flex-1 min-w-0 ${isFocused && isSliderFocused ? 'ring-2 ring-primary ring-offset-2 rounded' : ''}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsSliderFocused(true);
@@ -292,7 +282,7 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
                   className="w-full"
                 />
               </div>
-              <div className="text-xs text-muted-foreground min-w-0">
+              <div className="text-xs text-muted-foreground min-w-0 flex-shrink-0 w-12">
                 {formatDuration(track.duration_ms)}
               </div>
             </div>
@@ -303,8 +293,8 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
       {/* Instructions */}
       <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
         <p><strong>Navigasjon:</strong> Piltaster opp/ned for å velge spor (stopper avspilling og fokuserer slider)</p>
-        <p><strong>Starttid:</strong> Venstre/høyre piltaster for å justere starttid og spille automatisk</p>
-        <p><strong>Avspilling:</strong> Enter for å spille/stoppe (toggle), Space for å spille</p>
+        <p><strong>Starttid:</strong> Venstre/høyre piltaster for å justere starttid (stopper avspilling)</p>
+        <p><strong>Avspilling:</strong> Enter eller Space for å spille/stoppe (toggle) - test starttid etter justering</p>
         <p><strong>Slider:</strong> Tab for å bytte slider-fokus</p>
         <p><strong>Spillelister:</strong> PageDown/Ctrl+→ for neste, PageUp/Ctrl+← for forrige</p>
       </div>
