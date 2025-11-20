@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, memo, useMemo, useCallback } from "react";
+import { useState, useEffect, memo, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { PlaylistTrack, SimplifiedPlaylist } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [playlistType, setPlaylistType] = useState<string>("none");
   const [tracksWithStartTimes, setTracksWithStartTimes] = useState<PlaylistTrack[]>([]);
+  const [floatingImage, setFloatingImage] = useState<{ src: string; alt: string; startX: number; startY: number } | null>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
 
 
   // Load playlist type from localStorage
@@ -87,9 +90,60 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
     
     const track = currentTrack.track;
     const startTime = currentTrack.start_time_ms || 0;
+    const isTrackType = track && "album" in track;
     
     // Don't play if track is unavailable
     if (isTrackUnavailable(track)) return;
+    
+    // Start floating animation
+    if (imageRef.current && isTrackType && track.album?.images && track.album.images.length > 0) {
+      const rect = imageRef.current.getBoundingClientRect();
+      const nowPlayingBar = document.querySelector('[data-now-playing-bar]') as HTMLElement;
+      
+      if (nowPlayingBar) {
+        const targetRect = nowPlayingBar.getBoundingClientRect();
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+        const targetX = targetRect.left + 28 - startX; // 28px is half of 56px image width
+        const targetY = targetRect.top + 28 - startY; // 28px is half of 56px image height
+        
+        setFloatingImage({
+          src: track.album.images[0].url,
+          alt: track.name || "Ukjent spor",
+          startX: startX,
+          startY: startY,
+        });
+        
+        // Set CSS variables for animation
+        document.documentElement.style.setProperty('--target-x', `${targetX}px`);
+        document.documentElement.style.setProperty('--target-y', `${targetY}px`);
+        
+        // Remove floating image after animation
+        setTimeout(() => {
+          setFloatingImage(null);
+        }, 1200);
+      } else {
+        // Fallback: animate to bottom left corner
+        const startX = rect.left + rect.width / 2;
+        const startY = rect.top + rect.height / 2;
+        const targetX = 28 - startX; // Bottom left corner
+        const targetY = window.innerHeight - 28 - startY;
+        
+        setFloatingImage({
+          src: track.album.images[0].url,
+          alt: track.name || "Ukjent spor",
+          startX: startX,
+          startY: startY,
+        });
+        
+        document.documentElement.style.setProperty('--target-x', `${targetX}px`);
+        document.documentElement.style.setProperty('--target-y', `${targetY}px`);
+        
+        setTimeout(() => {
+          setFloatingImage(null);
+        }, 1200);
+      }
+    }
     
     if (onPlayTrack && track) {
       onPlayTrack(track.uri, currentTrackIndex, startTime > 0 ? startTime : undefined);
@@ -172,9 +226,12 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
 
             {/* Track image with play button overlay */}
             <div className="relative aspect-square w-full max-w-48 group">
-              <div className={`w-full h-full rounded-lg overflow-hidden ${
-                isCurrentTrackPlaying ? 'animate-pulse-scale ring-2 ring-primary/50 shadow-lg shadow-primary/30' : ''
-              }`}>
+              <div 
+                ref={imageRef}
+                className={`w-full h-full rounded-lg overflow-hidden ${
+                  isCurrentTrackPlaying ? 'animate-pulse-scale ring-2 ring-primary/50 shadow-lg shadow-primary/30' : ''
+                }`}
+              >
                 {isTrack && track.album?.images && track.album.images.length > 0 ? (
                   <Image
                     src={track.album.images[0].url}
@@ -249,6 +306,28 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
           </div>
         </div>
       </CardContent>
+      
+      {/* Floating image animation */}
+      {floatingImage && typeof window !== 'undefined' && createPortal(
+        <div
+          className="fixed animate-float-to-now-playing rounded-lg overflow-hidden shadow-2xl ring-2 ring-primary/30"
+          style={{
+            left: `${floatingImage.startX}px`,
+            top: `${floatingImage.startY}px`,
+            width: '192px',
+            height: '192px',
+          }}
+        >
+          <Image
+            src={floatingImage.src}
+            alt={floatingImage.alt}
+            fill
+            className="object-cover"
+            sizes="192px"
+          />
+        </div>,
+        document.body
+      )}
     </Card>
   );
 });

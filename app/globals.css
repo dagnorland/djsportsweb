@@ -90,8 +90,28 @@
   }
 }
 
+@keyframes float-to-now-playing {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--target-x, -50vw)), calc(-50% + var(--target-y, 50vh))) scale(0.29);
+    opacity: 0.7;
+  }
+}
+
 @layer utilities {
   .animate-pulse-scale {
     animation: pulse-scale 1.0s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-float-to-now-playing {
+    animation: float-to-now-playing 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    z-index: 9999;
+    pointer-events: none;
   }
 }

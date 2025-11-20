@@ -349,9 +349,9 @@ Kun synlig på Kamp-siden:
 ## Support og tilbakemelding
 
 Finner du bugs eller har forslag til forbedringer?
-Rapporter issues på: https://github.com/anthropics/claude-code/issues
+Rapporter issues på: https://github.com/dagnorland/djsportsweb
 
-**Versjon**: Se versjonsnummer nederst til venstre i navigasjonen (f.eks. "v0.11.0")
+**Versjon**: Se versjonsnummer nederst til venstre i navigasjonen (f.eks. "v0.14.0")
 
 ---
 
