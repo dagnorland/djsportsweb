@@ -1,4 +1,4 @@
-" use server";
+"use server";
 
 import { CurrentlyPlayingContext } from "@/lib/types";
 

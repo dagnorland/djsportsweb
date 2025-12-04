@@ -32,7 +32,7 @@ const cx = (...args: string[]): string =>
 
 // 2. internalClassed
 const internalClassed = <
-  T extends keyof JSX.IntrinsicElements | AnyComponent,
+  T extends keyof React.JSX.IntrinsicElements | AnyComponent,
   V extends Variants = {},
 >(
   elementType: T,
