@@ -3,12 +3,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
-import { Settings, LogOut, Trash2 } from "lucide-react";
+import { Settings, LogOut, Trash2, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ const navigationItems = [
 export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [isCleaning, setIsCleaning] = useState(false);
 
   const handleToggleLog = () => {
     // Dispatch custom event for match page to listen to
@@ -33,19 +35,25 @@ export function Navigation() {
   };
 
   const handleClean = async () => {
-    clearLocalStorage();
-    // Use redirect: false to handle redirect manually after session is cleared
-    await signOut({ redirect: false });
-    // Force a hard redirect to ensure clean state
-    window.location.href = '/';
+    setIsCleaning(true);
+    try {
+      clearLocalStorage();
+      // Use redirect: false to handle redirect manually after session is cleared
+      await signOut({ redirect: false });
+      // Force a hard redirect to ensure clean state with query param to show message
+      window.location.href = '/?cleaned=true';
+    } catch (error) {
+      console.error('Error during clean:', error);
+      setIsCleaning(false);
+    }
   };
 
   const handleLogout = async () => {
     clearLocalStorage();
     // Use redirect: false to handle redirect manually after session is cleared
     await signOut({ redirect: false });
-    // Force a hard redirect to ensure clean state
-    window.location.href = '/';
+    // Force a hard redirect to ensure clean state with query param to show message
+    window.location.href = '/?cleaned=true';
   };
 
   return (
@@ -60,11 +68,21 @@ export function Navigation() {
               variant="ghost"
               size="sm"
               onClick={handleClean}
+              disabled={isCleaning}
               className="text-xs text-muted-foreground hover:text-destructive"
               title="Clean - Rydd localStorage og logg ut"
             >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clean
+              {isCleaning ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Rydder...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Clean
+                </>
+              )}
             </Button>
             <Link href="/playlists" className="flex items-center space-x-2">
               <VersionDisplay className="text-xs text-muted-foreground" />

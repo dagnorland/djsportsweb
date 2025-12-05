@@ -242,7 +242,7 @@ export default function SettingsPage() {
                         onClick={async () => {
                           clearLocalStorage();
                           await signOut({ redirect: false });
-                          window.location.href = '/';
+                          window.location.href = '/?cleaned=true';
                         }}
                         className="ml-4"
                       >
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                     onClick={async () => {
                       clearLocalStorage();
                       await signOut({ redirect: false });
-                      window.location.href = '/';
+                      window.location.href = '/?cleaned=true';
                     }}
                     className="mt-4"
                   >
