@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.2] - 2025-12-05
+
+### Added
+- **Clean Button in Navigation**: Quick access to clean logout functionality
+  - New "Clean" button in navigation bar, always visible on the left side before version
+  - One-click access to clear all localStorage data and logout
+  - Positioned prominently for easy access during development and troubleshooting
+  - Red hover color indicates destructive action
+  - Tooltip explains functionality: "Clean - Rydd localStorage og logg ut"
+
+### Enhanced
+- **Navigation User Menu**: Improved user dropdown menu
+  - Removed "Clean" option from user dropdown (now available as dedicated button)
+  - Simplified dropdown to only show "Logg ut" option
+  - Better separation of concerns between quick actions and user menu
+
+### Technical Details
+- Clean button uses ghost variant with destructive hover state
+- Always visible regardless of authentication status
+- Integrated with existing clearLocalStorage utility function
+
 ## [0.17.1] - 2025-12-05
 
 ### Fixed
