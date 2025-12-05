@@ -28,9 +28,17 @@ export default function Page() {
         );
     }
 
-    // Hvis bruker er innlogget - middleware will redirect
+    // Hvis bruker er innlogget - middleware will redirect, men vis noe mens vi venter
     if (session) {
-        return null;
+        return (
+            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
+                <Card className="w-full max-w-sm">
+                    <CardHeader>
+                        <CardTitle>Omdirigerer...</CardTitle>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
     }
 
     // Hvis bruker IKKE er innlogget

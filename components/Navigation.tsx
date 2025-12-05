@@ -32,14 +32,20 @@ export function Navigation() {
     window.dispatchEvent(new CustomEvent('togglePerformanceMetrics'));
   };
 
-  const handleClean = () => {
+  const handleClean = async () => {
     clearLocalStorage();
-    signOut({ callbackUrl: '/' });
+    // Use redirect: false to handle redirect manually after session is cleared
+    await signOut({ redirect: false });
+    // Force a hard redirect to ensure clean state
+    window.location.href = '/';
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     clearLocalStorage();
-    signOut({ callbackUrl: '/' });
+    // Use redirect: false to handle redirect manually after session is cleared
+    await signOut({ redirect: false });
+    // Force a hard redirect to ensure clean state
+    window.location.href = '/';
   };
 
   return (
