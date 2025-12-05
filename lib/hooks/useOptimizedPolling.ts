@@ -24,7 +24,7 @@ export function useOptimizedPolling({
   onError,
   name = 'polling'
 }: UseOptimizedPollingOptions) {
-  const intervalRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const currentIntervalRef = useRef(interval);
   const consecutiveErrorsRef = useRef(0);
   const isPollingRef = useRef(false);

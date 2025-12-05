@@ -63,6 +63,7 @@ export const authOptions ={
         }),
     ],
     secret: env.JWT_SECRET,
+    trustHost: true, // Required for Next.js 16+ to handle cookies correctly
     //pages: {
         //signIn: '/login',
     //},

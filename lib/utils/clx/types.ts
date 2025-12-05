@@ -53,7 +53,7 @@ export type PickRequiredVariants<T extends AnyClassedComponent & InferableClasse
  * Defines a Classed component.
  */
 export interface ClassedComponentType<
-  Type extends keyof JSX.IntrinsicElements | AnyComponent,
+  Type extends keyof React.JSX.IntrinsicElements | AnyComponent,
   Props extends {} = {},
   TComposedVariants extends {} = {},
 > extends Polymorphic.ForwardRefComponent<Type, Props> {
@@ -66,7 +66,7 @@ export interface ClassedComponentType<
  * Useful when you want to extend a classed component with additional props.
  */
 export type DerivedComponentType<
-  Type extends keyof JSX.IntrinsicElements | React.ComponentType<any>,
+  Type extends keyof React.JSX.IntrinsicElements | React.ComponentType<any>,
   Props extends {} = {},
   TComposedVariants extends {} = {},
 > = ClassedComponentType<Type, Omit<Props, "as">, TComposedVariants>;
@@ -93,7 +93,7 @@ export type ClassedComponentVariants<T extends any[]> =
  */
 export interface ClassedFunctionType {
   <
-    Type extends keyof JSX.IntrinsicElements | AnyComponent,
+    Type extends keyof React.JSX.IntrinsicElements | AnyComponent,
     Composers extends (
       | string
       | Util.Function
@@ -152,7 +152,7 @@ export interface ClassedFunctionType {
  * Defines the classed proxy function. Used to create classed components.
  */
 export interface ClassedProxyFunctionType<
-  Type extends keyof JSX.IntrinsicElements | AnyComponent,
+  Type extends keyof React.JSX.IntrinsicElements | AnyComponent,
 > {
   <
     Composers extends (
@@ -224,5 +224,5 @@ export interface ClassedProxyFunctionType<
  * })
  */
 export type ClassedFunctionProxy = ClassedFunctionType & {
-  [K in keyof JSX.IntrinsicElements]: ClassedProxyFunctionType<K>;
+  [K in keyof React.JSX.IntrinsicElements]: ClassedProxyFunctionType<K>;
 };

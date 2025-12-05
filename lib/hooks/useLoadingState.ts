@@ -14,7 +14,7 @@ interface UseLoadingStateOptions {
 export function useLoadingState(options: UseLoadingStateOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const { timeout = 30000, onTimeout, onError } = options;
 
   const startLoading = useCallback(() => {

@@ -28,9 +28,9 @@ export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
-}>): Promise<JSX.Element> {
+}>): Promise<React.ReactElement> {
     return (
-        <html lang="no">
+        <html lang="no" suppressHydrationWarning>
             <head>
                 <link rel="manifest" href="/manifest.json" />
                 <meta name="theme-color" content="#1db954" />
