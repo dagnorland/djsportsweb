@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-12-05
+
+### Fixed
+- **NextAuth State Cookie Error**: Resolved "State cookie was missing" error during Spotify login
+  - Added explicit cookie configuration in NextAuth options
+  - Configured sessionToken, callbackUrl, csrfToken, pkceCodeVerifier, and state cookies
+  - Set proper SameSite, Secure, and path attributes for all cookies
+  - Cookies now properly configured for both development and production environments
+  - Fixed OAuth callback flow for reliable Spotify authentication
+
+### Added
+- **Account Information Display**: Enhanced Konto section in Settings page
+  - Fetches and displays user profile information from Spotify API
+  - Shows user profile picture (or default icon if unavailable)
+  - Displays display name, email address, and subscription type (Premium/Free)
+  - Loading state with skeleton components while fetching data
+  - Error handling with fallback UI if information cannot be loaded
+  - Improved user experience with complete account information visibility
+
+### Enhanced
+- **Environment Configuration Documentation**: Improved documentation for production setup
+  - Updated env.example with detailed comments for NEXTAUTH_URL
+  - Added production URL format guidelines
+  - Documented requirements for Spotify Developer Dashboard redirect URI matching
+  - Better guidance for deployment configuration
+
+### Technical Details
+- NextAuth cookie configuration ensures proper OAuth state management
+- Client-side Spotify API integration for user profile fetching
+- Type-safe PrivateUser interface for complete user information
+- Responsive UI with proper loading and error states
+
 ## [0.16.0] - 2025-01-30
 
 ### Added
