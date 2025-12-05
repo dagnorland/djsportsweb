@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.3] - 2025-12-05
+
+### Fixed
+- **Logout Race Condition in Production**: Fixed blank page issue after logout/clean in production
+  - Changed logout flow to wait for `signOut` to complete before redirecting
+  - Uses `redirect: false` to manually handle redirect after session is cleared
+  - Forces hard redirect with `window.location.href` to ensure clean state
+  - Prevents race condition where redirect happened before session was cleared
+  - Now properly shows "Login med Spotify" page after logout instead of blank screen
+  - Applied to both "Clean" button and all logout buttons in settings page
+
+### Enhanced
+- **Home Page Loading States**: Improved user experience during redirects
+  - Home page now shows "Omdirigerer..." message when session exists (instead of blank)
+  - Better handling of edge cases during authentication state transitions
+  - Prevents confusing blank screen during logout redirect
+
+### Technical Details
+- Logout handlers now use `async/await` pattern with `signOut({ redirect: false })`
+- Hard redirect ensures full page reload and fresh session check
+- Fixes production-specific issue where middleware and client-side state were out of sync
+
 ## [0.17.2] - 2025-12-05
 
 ### Added

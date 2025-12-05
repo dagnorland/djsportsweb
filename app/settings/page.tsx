@@ -239,9 +239,10 @@ export default function SettingsPage() {
                       </div>
                       <Button
                         variant="outline"
-                        onClick={() => {
+                        onClick={async () => {
                           clearLocalStorage();
-                          signOut({ callbackUrl: '/' });
+                          await signOut({ redirect: false });
+                          window.location.href = '/';
                         }}
                         className="ml-4"
                       >
@@ -258,9 +259,10 @@ export default function SettingsPage() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => {
+                    onClick={async () => {
                       clearLocalStorage();
-                      signOut({ callbackUrl: '/' });
+                      await signOut({ redirect: false });
+                      window.location.href = '/';
                     }}
                     className="mt-4"
                   >
