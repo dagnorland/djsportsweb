@@ -15,12 +15,47 @@ import {
   Activity, 
   Smartphone, 
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  User
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { PrivateUser } from "@/lib/types";
+import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const [userInfo, setUserInfo] = useState<PrivateUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      if (!session?.accessToken) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${session.accessToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const data: PrivateUser = await response.json();
+          setUserInfo(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user info:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserInfo();
+  }, [session?.accessToken]);
 
   return (
     <RouteGuard>
@@ -141,34 +176,92 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Logout */}
+          {/* Account */}
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3">
-                <LogOut className="h-5 w-5 text-muted-foreground" />
+                <User className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <CardTitle>Konto</CardTitle>
-                  <CardDescription>Logg ut fra Spotify-kontoen din</CardDescription>
+                  <CardDescription>Din Spotify-kontoinformasjon</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-2">Logg ut</p>
-                  <p className="text-sm text-muted-foreground">
-                    Logg ut fra din Spotify-konto og avslutt sesjonen
-                  </p>
+              {loading ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-5 w-48" />
+                      <Skeleton className="h-4 w-64" />
+                    </div>
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => signOut()}
-                  className="ml-4"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logg ut
-                </Button>
-              </div>
+              ) : userInfo ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    {userInfo.images && userInfo.images.length > 0 ? (
+                      <Image
+                        src={userInfo.images[0].url}
+                        alt={userInfo.display_name || "Bruker"}
+                        width={64}
+                        height={64}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <p className="font-medium text-lg">
+                        {userInfo.display_name || "Ingen navn"}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {userInfo.email || "Ingen e-post"}
+                      </p>
+                      {userInfo.product && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {userInfo.product === "premium" ? "Spotify Premium" : "Spotify Free"}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium mb-2">Logg ut</p>
+                        <p className="text-sm text-muted-foreground">
+                          Logg ut fra din Spotify-konto og avslutt sesjonen
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => signOut()}
+                        className="ml-4"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logg ut
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">
+                    Kunne ikke laste kontoinformasjon
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => signOut()}
+                    className="mt-4"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logg ut
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
