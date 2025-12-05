@@ -72,7 +72,7 @@ export const authOptions ={
             name: `next-auth.session-token`,
             options: {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'Lax',
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
             },
@@ -81,7 +81,7 @@ export const authOptions ={
             name: `next-auth.callback-url`,
             options: {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'Lax',
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
             },
@@ -90,7 +90,7 @@ export const authOptions ={
             name: `next-auth.csrf-token`,
             options: {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'Lax',
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
             },
@@ -99,7 +99,7 @@ export const authOptions ={
             name: `next-auth.pkce.code_verifier`,
             options: {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'Lax',
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 60 * 15, // 15 minutter
@@ -109,7 +109,7 @@ export const authOptions ={
             name: `next-auth.state`,
             options: {
                 httpOnly: true,
-                sameSite: 'lax',
+                sameSite: 'Lax',
                 path: '/',
                 secure: process.env.NODE_ENV === 'production',
                 maxAge: 60 * 15, // 15 minutter
