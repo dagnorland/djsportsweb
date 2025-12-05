@@ -1,6 +1,7 @@
 // app/page.tsx
 "use client";
 
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -11,25 +12,25 @@ import {
 } from "@/components/ui/card";
 import { signIn, useSession } from "next-auth/react";
 import { SignInResponse } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState, Suspense } from "react";
 import { CheckCircle2 } from "lucide-react";
 
-function LoginContent() {
+export default function Page(): React.ReactElement {
     const { data: session, status } = useSession();
-    const searchParams = useSearchParams();
     const [showCleanedMessage, setShowCleanedMessage] = useState(false);
 
     useEffect(() => {
-        // Check if we just cleaned/logged out
-        if (searchParams?.get('cleaned') === 'true') {
-            setShowCleanedMessage(true);
-            // Remove query param from URL after showing message
-            const url = new URL(window.location.href);
-            url.searchParams.delete('cleaned');
-            window.history.replaceState({}, '', url.toString());
+        // Check if we just cleaned/logged out using window.location
+        if (typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('cleaned') === 'true') {
+                setShowCleanedMessage(true);
+                // Remove query param from URL after showing message
+                urlParams.delete('cleaned');
+                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+                window.history.replaceState({}, '', newUrl);
+            }
         }
-    }, [searchParams]);
+    }, []);
 
     // Viser loading mens session sjekkes
     if (status === "loading") {
@@ -91,21 +92,5 @@ function LoginContent() {
                 </CardContent>
             </Card>
         </div>
-    );
-}
-
-export default function Page() {
-    return (
-        <Suspense fallback={
-            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
-                <Card className="w-full max-w-sm">
-                    <CardHeader>
-                        <CardTitle>Laster...</CardTitle>
-                    </CardHeader>
-                </Card>
-            </div>
-        }>
-            <LoginContent />
-        </Suspense>
     );
 }
