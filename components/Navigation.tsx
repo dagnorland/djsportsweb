@@ -9,13 +9,23 @@ import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
-import { Settings, LogOut, Trash2, Loader2 } from "lucide-react";
+import { Settings, LogOut, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { clearLocalStorage } from "@/lib/utils/logout";
 
 const navigationItems = [
@@ -28,13 +38,19 @@ export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [isCleaning, setIsCleaning] = useState(false);
+  const [showCleanDialog, setShowCleanDialog] = useState(false);
 
   const handleToggleLog = () => {
     // Dispatch custom event for match page to listen to
     window.dispatchEvent(new CustomEvent('togglePerformanceMetrics'));
   };
 
-  const handleClean = async () => {
+  const handleCleanClick = () => {
+    setShowCleanDialog(true);
+  };
+
+  const handleCleanConfirm = async () => {
+    setShowCleanDialog(false);
     setIsCleaning(true);
     try {
       clearLocalStorage();
@@ -49,11 +65,10 @@ export function Navigation() {
   };
 
   const handleLogout = async () => {
-    clearLocalStorage();
     // Use redirect: false to handle redirect manually after session is cleared
     await signOut({ redirect: false });
-    // Force a hard redirect to ensure clean state with query param to show message
-    window.location.href = '/?cleaned=true';
+    // Force a hard redirect to ensure clean state
+    window.location.href = '/';
   };
 
   return (
@@ -67,10 +82,10 @@ export function Navigation() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleClean}
+              onClick={handleCleanClick}
               disabled={isCleaning}
               className="text-xs text-muted-foreground hover:text-destructive"
-              title="Clean - Rydd localStorage og logg ut"
+              title="Clean - Rydd localStorage og logg ut (Development testing only)"
             >
               {isCleaning ? (
                 <>
@@ -84,6 +99,47 @@ export function Navigation() {
                 </>
               )}
             </Button>
+            <AlertDialog open={showCleanDialog} onOpenChange={setShowCleanDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    <AlertDialogTitle className="text-destructive">
+                      Advarsel: Development Testing Only
+                    </AlertDialogTitle>
+                  </div>
+                  <AlertDialogDescription asChild>
+                    <div className="pt-4 space-y-2">
+                      <p className="font-semibold text-foreground">
+                        Dette vil slette all lokal lagring og logge deg ut.
+                      </p>
+                      <p>
+                        Denne funksjonen er kun ment for development testing. Alle lokale data inkludert:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 text-sm ml-2">
+                        <li>Sporenes starttider</li>
+                        <li>Spillelistetyper</li>
+                        <li>Enhetscache</li>
+                        <li>Polling-innstillinger</li>
+                        <li>Alle andre lokale preferanser</li>
+                      </ul>
+                      <p className="font-semibold text-destructive pt-2">
+                        Er du sikker på at du vil fortsette?
+                      </p>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleCleanConfirm}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    OK - Fortsett med cleanup
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <Link href="/playlists" className="flex items-center space-x-2">
               <VersionDisplay className="text-xs text-muted-foreground" />
               <Image
