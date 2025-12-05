@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { PrivateUser } from "@/lib/types";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { clearLocalStorage } from "@/lib/utils/logout";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -238,7 +239,10 @@ export default function SettingsPage() {
                       </div>
                       <Button
                         variant="outline"
-                        onClick={() => signOut()}
+                        onClick={() => {
+                          clearLocalStorage();
+                          signOut({ callbackUrl: '/' });
+                        }}
                         className="ml-4"
                       >
                         <LogOut className="h-4 w-4 mr-2" />
@@ -254,7 +258,10 @@ export default function SettingsPage() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => signOut()}
+                    onClick={() => {
+                      clearLocalStorage();
+                      signOut({ callbackUrl: '/' });
+                    }}
                     className="mt-4"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
