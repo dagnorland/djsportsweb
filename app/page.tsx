@@ -22,7 +22,7 @@ function LoginContent() {
 
     useEffect(() => {
         // Check if we just cleaned/logged out
-        if (searchParams.get('cleaned') === 'true') {
+        if (searchParams?.get('cleaned') === 'true') {
             setShowCleanedMessage(true);
             // Remove query param from URL after showing message
             const url = new URL(window.location.href);
