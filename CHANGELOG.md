@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.4] - 2025-12-05
+
+### Enhanced
+- **Clean Button Safety**: Added confirmation dialog for Clean button in navigation
+  - Warning dialog appears before executing cleanup operation
+  - Clear indication that function is for development testing only
+  - Lists all data that will be deleted (track start times, playlist types, device cache, polling settings, etc.)
+  - Prevents accidental data loss with explicit confirmation required
+  - Improved user experience with better visual warnings and destructive action styling
+
+### Technical Details
+- AlertDialog component integrated for confirmation flow
+- AlertTriangle icon with destructive styling for visual warning
+- Detailed description of what will be cleared before confirmation
+- Maintains existing cleanup functionality with added safety layer
+
 ## [0.17.3] - 2025-12-05
 
 ### Fixed
