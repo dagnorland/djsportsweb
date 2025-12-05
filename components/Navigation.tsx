@@ -37,6 +37,11 @@ export function Navigation() {
     signOut({ callbackUrl: '/' });
   };
 
+  const handleLogout = () => {
+    clearLocalStorage();
+    signOut({ callbackUrl: '/' });
+  };
+
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       {/* Versjon øverst til venstre */}
@@ -112,7 +117,7 @@ export function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })}>
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Logg ut
                   </DropdownMenuItem>
