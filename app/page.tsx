@@ -66,6 +66,7 @@ export default function Page(): React.ReactElement {
                     <CardTitle className="text-2xl">Login med Spotify</CardTitle>
                     <CardDescription>
                         Du vil bli omdirigert til Spotify. Skriv inn dine Spotify-innloggingsdetaljer for å logge inn på din Spotify-konto.
+                        HUSK : Din spotify email (til konto) må være registrert på forhånd - send din Spotify email som brukes for pålogging til Spotify til djsportsweb@gmail.com eller dag.norland@gmail.com
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
