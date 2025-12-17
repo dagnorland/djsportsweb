@@ -150,4 +150,44 @@ export const authOptions ={
     }
 };
 
-export default NextAuth(authOptions);
+export default async function auth(req, res) {
+    /**
+     * Dev-fiks: hvis man åpner appen på `127.0.0.1` men NEXTAUTH_URL (eller Spotify redirect URI)
+     * peker til `localhost` (eller omvendt), kan NextAuth feile med:
+     * "OAuthCallbackError: State cookie was missing."
+     *
+     * For å gjøre dette robust lokalt, setter vi NEXTAUTH_URL dynamisk per request basert på Host.
+     * (I produksjon bør NEXTAUTH_URL være statisk og riktig satt i miljøvariabler.)
+     */
+    const forwardedProto = req.headers["x-forwarded-proto"];
+    const proto = (Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || (process.env.NODE_ENV === "development" ? "http" : "https"))
+        .toString()
+        .split(",")[0]
+        .trim();
+    const forwardedHost = req.headers["x-forwarded-host"];
+    const host = (Array.isArray(forwardedHost) ? forwardedHost[0] : forwardedHost || req.headers.host || "")
+        .toString()
+        .split(",")[0]
+        .trim();
+
+    // Lokalt: tillat localhost/127.0.0.1
+    if (process.env.NODE_ENV === "development" && host && (host.startsWith("localhost") || host.startsWith("127.0.0.1"))) {
+        // Spotify krever eksakt match på redirect_uri. Hvis du ikke ønsker/kan bruke `localhost`
+        // som redirect URI i Spotify Dashboard, kanoniserer vi `localhost` -> `127.0.0.1` lokalt.
+        const canonicalHost = host.startsWith("localhost")
+            ? host.replace(/^localhost(?=[:$])/, "127.0.0.1")
+            : host;
+        process.env.NEXTAUTH_URL = `${proto}://${canonicalHost}`;
+    }
+
+    // Vercel (prod/preview): bruk request-host for å unngå mismatch mellom deploy-url og NEXTAUTH_URL.
+    // Dette er spesielt nyttig hvis NEXTAUTH_URL er satt feil, eller hvis du bruker preview deploys.
+    if (host && process.env.VERCEL_URL) {
+        const isVercelHost = host === process.env.VERCEL_URL || host.endsWith(".vercel.app");
+        if (isVercelHost) {
+            process.env.NEXTAUTH_URL = `https://${host}`;
+        }
+    }
+
+    return await NextAuth(req, res, authOptions);
+}

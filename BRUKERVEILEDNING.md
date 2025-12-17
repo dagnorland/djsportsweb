@@ -20,6 +20,8 @@ En komplett guide for å bruke DJ Sports applikasjonen.
 3. Godkjenn tilgang til din Spotify-konto
 4. Du blir automatisk sendt til Spillelister-siden
 
+**Tips (utvikling lokalt):** Hvis du kjører appen lokalt i nettleser, bruk `http://localhost:3000` som base-URL under innlogging. Å blande `localhost` og `127.0.0.1` kan gi NextAuth-feil som “OAuthCallback / State cookie was missing”.
+
 ### Grunnleggende navigasjon
 - **Spillelister**: Hovedsiden for å administrere spillelister, typer og starttider
 - **Kamp**: Live DJ-visning for kamp-situasjoner med karuseller per type

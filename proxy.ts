@@ -12,14 +12,17 @@ export async function proxy(
     return NextResponse.next();
   }
 
-  const token: JWT | null = await getToken({
-    req,
-    secret: process.env.JWT_SECRET,
-  });
+  // Behold tidligere oppførsel: vi gjør bare session-sjekk på "/" for redirect.
+  if (pathname === "/") {
+    const token: JWT | null = await getToken({
+      req,
+      secret: process.env.JWT_SECRET,
+    });
 
-  // Redirect authenticated users from home to playlists
-  if (token && pathname === "/") {
-    return NextResponse.redirect(new URL("/playlists", req.url));
+    // Redirect authenticated users from home to playlists
+    if (token) {
+      return NextResponse.redirect(new URL("/playlists", req.url));
+    }
   }
 
   return NextResponse.next();

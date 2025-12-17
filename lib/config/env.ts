@@ -32,13 +32,17 @@ let _env: EnvConfig | null = null;
 function getEnv(): EnvConfig {
   if (!_env) {
     const isBrowser = typeof window !== 'undefined';
+    const inferredNextAuthUrl =
+      process.env.NEXTAUTH_URL ||
+      (!isBrowser && process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined);
 
     _env = {
       // Server-only variables (not required in browser)
       SPOTIFY_CLIENT_ID: validateEnvVar('SPOTIFY_CLIENT_ID', process.env.SPOTIFY_CLIENT_ID, !isBrowser),
       SPOTIFY_CLIENT_SECRET: validateEnvVar('SPOTIFY_CLIENT_SECRET', process.env.SPOTIFY_CLIENT_SECRET, !isBrowser),
       JWT_SECRET: isBrowser ? '' : validateJwtSecret(validateEnvVar('JWT_SECRET', process.env.JWT_SECRET)),
-      NEXTAUTH_URL: validateEnvVar('NEXTAUTH_URL', process.env.NEXTAUTH_URL, !isBrowser),
+      // På Vercel er VERCEL_URL alltid tilgjengelig i runtime; bruk den som fallback hvis NEXTAUTH_URL mangler.
+      NEXTAUTH_URL: validateEnvVar('NEXTAUTH_URL', inferredNextAuthUrl, !isBrowser),
 
       // Client-safe variables (available everywhere)
       SUPABASE_URL: validateEnvVar('SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),

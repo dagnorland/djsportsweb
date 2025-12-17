@@ -84,6 +84,12 @@ JWT_SECRET=din_sikre_jwt_secret_minst_32_tegn
 NEXTAUTH_URL=http://localhost:3000
 ```
 
+**Viktig (lokal utvikling)**:
+- Hold deg til én base-URL under innlogging (anbefalt: `http://localhost:3000`).
+- I Spotify Developer Dashboard må Redirect URI matche nøyaktig. For lokal utvikling er det tryggest å legge inn begge:
+  - `http://localhost:3000/api/auth/callback/spotify`
+  - `http://127.0.0.1:3000/api/auth/callback/spotify`
+
 **Viktig**: JWT_SECRET må være minst 32 tegn lang for sikkerhet.
 
 ## Nye Forbedringer
