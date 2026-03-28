@@ -14,6 +14,7 @@ import {
 import { getCurrentlyPlayingTrack, getAvailableDevices } from "@/lib/spotify";
 import { SimplifiedPlaylist, PlaylistTrack, CurrentlyPlaying } from "@/lib/types";
 import { getAllPlaylistTypes } from "@/lib/utils/playlistTypes";
+import { getAllPlaylists } from "@/lib/db/playlist-store";
 import PlaylistCarousel from "@/components/PlaylistCarousel";
 import { getPlaylistTypeColor } from "@/lib/utils";
 import { loadPlaylistsCached, loadMultiplePlaylistTracks, preloadCriticalPlaylists } from "@/lib/spotify/optimized/playlistLoader";
@@ -57,21 +58,45 @@ export default function MatchPage() {
         logger.spotify("Loading playlists with caching...");
       }
 
-      const data = await loadPlaylistsCached(session.accessToken, 0, 50);
+      let data = await loadPlaylistsCached(session.accessToken, 0, 50);
+
+      // Merge in typed Dexie playlists not in Spotify result (e.g. restored from backup)
+      const spotifyIds = new Set(data.map((p: SimplifiedPlaylist) => p.id));
+      const dexiePlaylists = await getAllPlaylists();
+      const dexieOnly = dexiePlaylists.filter(p => p.type && p.type !== 'none' && !spotifyIds.has(p.id));
+      if (dexieOnly.length > 0) {
+        const extra: SimplifiedPlaylist[] = dexieOnly.map(p => ({
+          id: p.id,
+          name: p.name,
+          uri: `spotify:playlist:${p.id}`,
+          type: "playlist",
+          tracks: { href: "", total: p.trackIds?.length ?? 0 },
+          images: [],
+          owner: { display_name: "", id: "", type: "user", uri: "", href: "", external_urls: { spotify: "" } },
+          public: null,
+          collaborative: false,
+          description: null,
+          href: "",
+          snapshot_id: "",
+          external_urls: { spotify: "" },
+        } as SimplifiedPlaylist));
+        data = [...data, ...extra];
+      }
+
       setPlaylists(data);
 
       // Filter playlists by type
-      const playlistTypes = getAllPlaylistTypes();
-      const hotspot = data.filter(playlist =>
+      const playlistTypes = await getAllPlaylistTypes();
+      const hotspot = data.filter((playlist: SimplifiedPlaylist) =>
         playlistTypes[playlist.id] === "hotspot"
       );
-      const match = data.filter(playlist =>
+      const match = data.filter((playlist: SimplifiedPlaylist) =>
         playlistTypes[playlist.id] === "match"
       );
-      const funStuff = data.filter(playlist =>
+      const funStuff = data.filter((playlist: SimplifiedPlaylist) =>
         playlistTypes[playlist.id] === "funStuff"
       );
-      const preMatch = data.filter(playlist =>
+      const preMatch = data.filter((playlist: SimplifiedPlaylist) =>
         playlistTypes[playlist.id] === "preMatch"
       );
 

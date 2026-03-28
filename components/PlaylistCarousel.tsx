@@ -39,19 +39,21 @@ const PlaylistCarousel = memo(function PlaylistCarousel({
   const imageRef = useRef<HTMLDivElement>(null);
 
 
-  // Load playlist type from localStorage
+  // Load playlist type from Dexie
   useEffect(() => {
-    const type = getPlaylistType(playlist.id);
-    setPlaylistType(type || "none");
+    getPlaylistType(playlist.id).then(type => {
+      setPlaylistType(type || "none");
+    });
   }, [playlist.id]);
 
-  // Load start times from localStorage when tracks change
+  // Load start times from Dexie when tracks change
   useEffect(() => {
     if (tracks.length > 0) {
-      const tracksWithTimes = loadTrackStartTimes(tracks);
-      setTracksWithStartTimes(tracksWithTimes);
-      // Reset current track index when tracks change
-      setCurrentTrackIndex(0);
+      loadTrackStartTimes(tracks).then(tracksWithTimes => {
+        setTracksWithStartTimes(tracksWithTimes);
+        // Reset current track index when tracks change
+        setCurrentTrackIndex(0);
+      });
     }
   }, [tracks]);
 

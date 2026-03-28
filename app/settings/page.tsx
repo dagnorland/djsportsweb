@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherTransition } from "@/components/ui/theme-switcher-transition";
-import { CloudSyncPanel } from "@/components/CloudSyncPanel";
+import { FirestoreBackupPanel } from "@/components/FirestoreBackupPanel";
 import { DeviceSelector } from "@/components/DeviceSelector";
 import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -173,7 +173,7 @@ export default function SettingsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <CloudSyncPanel />
+              <FirestoreBackupPanel />
             </CardContent>
           </Card>
 
