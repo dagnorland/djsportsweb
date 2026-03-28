@@ -26,14 +26,15 @@ export default function TrackListSetStartTime({ tracks, loading = false, onPlayT
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  // Load start times from localStorage when tracks change
+  // Load start times from Dexie when tracks change
   useEffect(() => {
     if (tracks.length > 0) {
-      const tracksWithTimes = loadTrackStartTimes(tracks);
-      setTracksWithStartTimes(tracksWithTimes);
-      // Set focus on first track and slider when tracks load
-      setFocusedTrackIndex(0);
-      setIsSliderFocused(true);
+      loadTrackStartTimes(tracks).then(tracksWithTimes => {
+        setTracksWithStartTimes(tracksWithTimes);
+        // Set focus on first track and slider when tracks load
+        setFocusedTrackIndex(0);
+        setIsSliderFocused(true);
+      });
     }
   }, [tracks]);
 

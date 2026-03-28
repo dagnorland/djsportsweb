@@ -7,9 +7,10 @@ interface EnvConfig {
   SPOTIFY_CLIENT_SECRET: string;
   JWT_SECRET: string;
   NEXTAUTH_URL: string;
-  SUPABASE_URL: string;
-  SUPABASE_ANON_KEY: string;
   NODE_ENV: 'development' | 'production' | 'test';
+  // Firebase (client-side only — accessed directly via process.env in firebase-client.ts)
+  FIREBASE_API_KEY: string;
+  FIREBASE_PROJECT_ID: string;
 }
 
 function validateEnvVar(name: string, value: string | undefined, required: boolean = true): string {
@@ -44,10 +45,10 @@ function getEnv(): EnvConfig {
       // På Vercel er VERCEL_URL alltid tilgjengelig i runtime; bruk den som fallback hvis NEXTAUTH_URL mangler.
       NEXTAUTH_URL: validateEnvVar('NEXTAUTH_URL', inferredNextAuthUrl, !isBrowser),
 
-      // Client-safe variables (available everywhere)
-      SUPABASE_URL: validateEnvVar('SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL),
-      SUPABASE_ANON_KEY: validateEnvVar('SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY),
       NODE_ENV: (process.env.NODE_ENV as EnvConfig['NODE_ENV']) || 'development',
+      // Firebase — optional (not required; app works without it)
+      FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
+      FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
     };
   }
   return _env;

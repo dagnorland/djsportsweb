@@ -35,11 +35,10 @@ export default function TrackList({ tracks, loading = false, onPlayTrack }: Trac
   const [focusedTrackIndex, setFocusedTrackIndex] = useState<number>(-1);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Load start times from localStorage when tracks change
+  // Load start times from Dexie when tracks change
   useEffect(() => {
     if (tracks.length > 0) {
-      const tracksWithTimes = loadTrackStartTimes(tracks);
-      setTracksWithStartTimes(tracksWithTimes);
+      loadTrackStartTimes(tracks).then(setTracksWithStartTimes);
     }
   }, [tracks]);
 

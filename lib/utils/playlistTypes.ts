@@ -1,90 +1,69 @@
 /**
- * Utility functions for managing DJ playlist types with localStorage persistence
+ * Utility functions for managing DJ playlist types.
+ * Backed by Dexie (IndexedDB) with localStorage as SSR/migration fallback.
  */
 
 import { DJPlaylistType } from "@/lib/types";
-import { setLastModified } from '@/lib/supabase/syncService';
-
-const STORAGE_KEY = 'playlistTypes';
 
 /**
  * Save DJ playlist type for a specific playlist
- * @param playlistId - The Spotify playlist ID
- * @param playlistType - The DJ playlist type
  */
 export const savePlaylistType = (playlistId: string, playlistType: DJPlaylistType): void => {
-  if (typeof window === 'undefined') return; // SSR safety
+  if (typeof window === 'undefined') return;
 
-  try {
-    const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    existing[playlistId] = playlistType;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    setLastModified(); // Update sync timestamp
-  } catch (error) {
-    console.error('Failed to save playlist type:', error);
-  }
+  import('@/lib/db/playlist-store').then(({ setPlaylistType }) => {
+    setPlaylistType(playlistId, playlistType).catch(err =>
+      console.error('Failed to save playlist type:', err)
+    );
+  });
 };
 
 /**
- * Get DJ playlist type for a specific playlist
- * @param playlistId - The Spotify playlist ID
- * @returns DJ playlist type, or null if not found
+ * Get DJ playlist type for a specific playlist (async)
  */
-export const getPlaylistType = (playlistId: string): DJPlaylistType | null => {
-  if (typeof window === 'undefined') return null; // SSR safety
-  
-  try {
-    const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    return existing[playlistId] || null;
-  } catch (error) {
-    console.error('Failed to get playlist type:', error);
-    return null;
-  }
+export const getPlaylistType = async (playlistId: string): Promise<DJPlaylistType | null> => {
+  if (typeof window === 'undefined') return null;
+  const { getPlaylistType: dbGet } = await import('@/lib/db/playlist-store');
+  const type = await dbGet(playlistId);
+  return (type as DJPlaylistType) ?? null;
 };
 
 /**
  * Remove DJ playlist type for a specific playlist
- * @param playlistId - The Spotify playlist ID
  */
 export const removePlaylistType = (playlistId: string): void => {
-  if (typeof window === 'undefined') return; // SSR safety
+  if (typeof window === 'undefined') return;
 
-  try {
-    const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    delete existing[playlistId];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-    setLastModified(); // Update sync timestamp
-  } catch (error) {
-    console.error('Failed to remove playlist type:', error);
-  }
+  import('@/lib/db/playlist-store').then(({ setPlaylistType }) => {
+    setPlaylistType(playlistId, 'none').catch(err =>
+      console.error('Failed to remove playlist type:', err)
+    );
+  });
 };
 
 /**
- * Get all stored playlist types
- * @returns Object with playlist IDs as keys and DJ playlist types as values
+ * Get all stored playlist types (async)
  */
-export const getAllPlaylistTypes = (): Record<string, DJPlaylistType> => {
-  if (typeof window === 'undefined') return {}; // SSR safety
-  
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  } catch (error) {
-    console.error('Failed to get all playlist types:', error);
-    return {};
+export const getAllPlaylistTypes = async (): Promise<Record<string, DJPlaylistType>> => {
+  if (typeof window === 'undefined') return {};
+  const { getAllPlaylists } = await import('@/lib/db/playlist-store');
+  const playlists = await getAllPlaylists();
+  const result: Record<string, DJPlaylistType> = {};
+  for (const p of playlists) {
+    if (p.type && p.type !== 'none') {
+      result[p.id] = p.type as DJPlaylistType;
+    }
   }
+  return result;
 };
 
 /**
  * Clear all stored playlist types
  */
-export const clearAllPlaylistTypes = (): void => {
-  if (typeof window === 'undefined') return; // SSR safety
-  
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (error) {
-    console.error('Failed to clear playlist types:', error);
-  }
+export const clearAllPlaylistTypes = async (): Promise<void> => {
+  if (typeof window === 'undefined') return;
+  const { clearAllPlaylists } = await import('@/lib/db/playlist-store');
+  await clearAllPlaylists();
 };
 
 /**

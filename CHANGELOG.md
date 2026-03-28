@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-03-28
+
+### Major: Supabase removed — full Dexie + Firebase migration
+
+#### Data layer
+- Removed Supabase entirely (`@supabase/supabase-js`, `lib/supabase/`, `components/CloudSyncPanel.tsx`)
+- All local data now backed by **Dexie (IndexedDB)**: playlists, tracks, start times, playlist types
+- Cloud backup/restore via **Firebase Firestore**, interoperable with Flutter djsports app
+- Write-through on playlists page: Spotify fetches now persist to Dexie automatically
+- Offline fallback: playlists and tracks load from Dexie when Spotify is unavailable
+- `playlist-store.ts`: added `updatePlaylistTrackIds` to keep `trackIds` in sync after track load
+
+#### Firestore backup / restore fixes
+- Fixed restore of **track start times**: Flutter stores `startTime` in milliseconds (not seconds); `startTimeMS` is now correctly derived
+- Fixed restore of **playlist types**: Flutter uses UUID as playlist `id`; restore now remaps to Spotify ID extracted from `spotifyUri` (strips `?si=...` share params)
+- Fixed `upsertTrackFromSpotify`: now preserves existing `startTimeMS` from Dexie so Spotify write-through no longer overwrites restored start times
+- Fixed local tracks / podcast episodes with no Spotify `id` causing a Dexie crash on write-through
+- Playlists restored from backup that are no longer in the user's Spotify library are now merged into the playlist list (playlists page and match page)
+
+#### Playlist sidebar
+- Playlists with a type now appear first, sorted by: **Hotspot → Match → Fun Stuff → Pre Match**
+- Untyped playlists hidden in a collapsible "Uten type (N)" section
+- Colored left-border indicator per type (red / blue / green / yellow)
+- Selected playlist uses type color as background highlight instead of grey
+- Fixed playlist type dropdown showing blank: `getPlaylistType` was called without `await`
+
 ## [0.17.5] - 2025-12-17
 
 ### Technical Details

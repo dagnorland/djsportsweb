@@ -5,7 +5,30 @@
 import { getCurrentUserPlaylists, getPlaylistItems } from "@/lib/spotify";
 import { getCachedData, setCachedData, CACHE_KEYS } from "@/lib/utils/cache";
 import { withTiming, performanceMonitor } from "@/lib/utils/performance";
-import { SimplifiedPlaylist, PlaylistTrack } from "@/lib/types";
+import { SimplifiedPlaylist, PlaylistTrack, Track } from "@/lib/types";
+
+async function persistPlaylistsToDexie(playlists: SimplifiedPlaylist[]): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const { upsertPlaylistFromSpotify } = await import('@/lib/db/playlist-store');
+    await Promise.all(playlists.map((p, i) => upsertPlaylistFromSpotify(p, i)));
+  } catch (err) {
+    console.error('[dexie] Failed to persist playlists:', err);
+  }
+}
+
+async function persistTracksToDexie(tracks: PlaylistTrack[]): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const { upsertTrackFromSpotify } = await import('@/lib/db/track-store');
+    const realTracks = tracks
+      .map(pt => pt.track)
+      .filter((t): t is Track => !!t && 'duration_ms' in t);
+    await Promise.all(realTracks.map(t => upsertTrackFromSpotify(t)));
+  } catch (err) {
+    console.error('[dexie] Failed to persist tracks:', err);
+  }
+}
 
 interface PlaylistWithTracks {
   playlist: SimplifiedPlaylist;
@@ -29,11 +52,14 @@ export const loadPlaylistsCached = withTiming(
 
     console.log('🌐 Fetching playlists from API (cache miss)');
     const data = await getCurrentUserPlaylists(token, offset, limit);
-    
+
     // Cache the result
     setCachedData(cacheKey, data.items, 10 * 60 * 1000); // 10 minutes
     console.log(`💾 Cached ${data.items.length} playlists for 10 minutes`);
-    
+
+    // Write-through: persist to Dexie (fire and forget)
+    persistPlaylistsToDexie(data.items);
+
     return data.items;
   }
 );
@@ -54,10 +80,13 @@ export const loadPlaylistTracksCached = withTiming(
 
     console.log(`🌐 Fetching tracks for playlist ${playlistId}`);
     const data = await getPlaylistItems(token, playlistId, offset, limit);
-    
+
     // Cache the result
     setCachedData(cacheKey, data.items, 15 * 60 * 1000); // 15 minutes
-    
+
+    // Write-through: persist to Dexie (fire and forget)
+    persistTracksToDexie(data.items);
+
     return data.items;
   }
 );

@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
-  getCurrentUserPlaylists,
-  getPlaylistItems,
   getCurrentlyPlayingTrack,
   pausePlayback,
   startResumePlayback,
@@ -14,6 +12,12 @@ import {
   setPlaybackVolume,
   seekToPosition,
 } from "@/lib/spotify";
+import {
+  loadPlaylistsCached,
+  loadPlaylistTracksCached,
+} from "@/lib/spotify/optimized/playlistLoader";
+import { getAllPlaylists, updatePlaylistTrackIds } from "@/lib/db/playlist-store";
+import { getAllTracks } from "@/lib/db/track-store";
 import type {
   SimplifiedPlaylist,
   PlaylistTrack,
@@ -58,7 +62,15 @@ export default function PlaylistsPage() {
   const [showTokenExpiredDialog, setShowTokenExpiredDialog] = useState(false);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<Set<DJPlaylistType | "withType">>(new Set());
+  const [playlistTypesMap, setPlaylistTypesMap] = useState<Record<string, DJPlaylistType>>({});
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load playlist types from Dexie when playlists change
+  useEffect(() => {
+    if (playlists.length > 0) {
+      getAllPlaylistTypes().then(setPlaylistTypesMap);
+    }
+  }, [playlists]);
 
   // Define callbacks before useEffects
   const loadPlaylists = useCallback(async () => {
@@ -66,21 +78,66 @@ export default function PlaylistsPage() {
 
     try {
       setLoadingPlaylists(true);
-      const data = await getCurrentUserPlaylists(session.accessToken, 0, 50);
-      setPlaylists(data.items);
+      let items: SimplifiedPlaylist[];
+      try {
+        items = await loadPlaylistsCached(session.accessToken, 0, 50);
+      } catch (spotifyError) {
+        if (isTokenExpiredError(spotifyError)) {
+          setShowTokenExpiredDialog(true);
+          return;
+        }
+        // Offline fallback: load from Dexie
+        logger.error("Spotify utilgjengelig, laster fra lokal cache:", spotifyError);
+        const dexiePlaylists = await getAllPlaylists();
+        items = dexiePlaylists.map(p => ({
+          id: p.id,
+          name: p.name,
+          uri: p.spotifyUri,
+          type: "playlist",
+          tracks: { href: "", total: p.trackIds?.length ?? 0 },
+          images: [],
+          owner: { display_name: "", id: "", type: "user", uri: "", href: "", external_urls: { spotify: "" } },
+          public: null,
+          collaborative: false,
+          description: null,
+          href: "",
+          snapshot_id: "",
+          external_urls: { spotify: "" },
+        } as SimplifiedPlaylist));
+      }
+
+      // Merge in any typed Dexie playlists not present in Spotify result (e.g. restored from backup)
+      const spotifyIds = new Set(items.map(p => p.id));
+      const dexiePlaylists = await getAllPlaylists();
+      const dexieOnly = dexiePlaylists.filter(p => p.type && p.type !== 'none' && !spotifyIds.has(p.id));
+      if (dexieOnly.length > 0) {
+        const extra: SimplifiedPlaylist[] = dexieOnly.map(p => ({
+          id: p.id,
+          name: p.name,
+          uri: `spotify:playlist:${p.id}`,
+          type: "playlist",
+          tracks: { href: "", total: p.trackIds?.length ?? 0 },
+          images: [],
+          owner: { display_name: "", id: "", type: "user", uri: "", href: "", external_urls: { spotify: "" } },
+          public: null,
+          collaborative: false,
+          description: null,
+          href: "",
+          snapshot_id: "",
+          external_urls: { spotify: "" },
+        } as SimplifiedPlaylist));
+        items = [...items, ...extra];
+      }
+
+      setPlaylists(items);
 
       // Automatisk velg første playlist hvis ingen er valgt
-      if (data.items.length > 0 && !selectedPlaylistId) {
-        const firstPlaylist = data.items[0];
-        setSelectedPlaylistId(firstPlaylist.id);
-        setSelectedPlaylistName(firstPlaylist.name);
+      if (items.length > 0 && !selectedPlaylistId) {
+        setSelectedPlaylistId(items[0].id);
+        setSelectedPlaylistName(items[0].name);
       }
     } catch (error) {
-      if (isTokenExpiredError(error)) {
-        setShowTokenExpiredDialog(true);
-      } else {
-        logger.error("Feil ved henting av spillelister:", error);
-      }
+      logger.error("Feil ved henting av spillelister:", error);
     } finally {
       setLoadingPlaylists(false);
     }
@@ -91,14 +148,56 @@ export default function PlaylistsPage() {
 
     try {
       setLoadingTracks(true);
-      const data = await getPlaylistItems(session.accessToken, playlistId, 0, 100);
-      setTracks(data.items);
-    } catch (error) {
-      if (isTokenExpiredError(error)) {
-        setShowTokenExpiredDialog(true);
-      } else {
-        logger.error("Feil ved henting av spor:", error);
+      let items: PlaylistTrack[];
+      try {
+        items = await loadPlaylistTracksCached(session.accessToken, playlistId, 0, 100);
+        // Update trackIds in Dexie (fire and forget)
+        const trackIds = items.map(pt => pt.track?.id).filter((id): id is string => !!id);
+        updatePlaylistTrackIds(playlistId, trackIds).catch(err =>
+          logger.error("Feil ved oppdatering av trackIds:", err)
+        );
+      } catch (spotifyError) {
+        if (isTokenExpiredError(spotifyError)) {
+          setShowTokenExpiredDialog(true);
+          return;
+        }
+        // Offline fallback: load from Dexie
+        logger.error("Spotify utilgjengelig, laster spor fra lokal cache:", spotifyError);
+        const dexiePlaylists = await getAllPlaylists();
+        const playlist = dexiePlaylists.find(p => p.id === playlistId);
+        const trackIdSet = new Set(playlist?.trackIds ?? []);
+        const allTracks = await getAllTracks();
+        const filtered = allTracks.filter(t => trackIdSet.has(t.id));
+        items = filtered.map(t => ({
+          track: {
+            id: t.id,
+            name: t.name,
+            uri: t.spotifyUri,
+            duration_ms: t.duration,
+            artists: [{ name: t.artist, id: "", type: "artist", uri: "", href: "", external_urls: { spotify: "" } }],
+            album: { id: "", name: t.album, images: t.networkImageUri ? [{ url: t.networkImageUri, height: null, width: null }] : [], artists: [], release_date: "", release_date_precision: "year", total_tracks: 0, type: "album", uri: "", href: "", external_urls: { spotify: "" } },
+            explicit: false,
+            popularity: 0,
+            preview_url: null,
+            track_number: 0,
+            disc_number: 1,
+            is_local: false,
+            type: "track",
+            href: "",
+            external_ids: {},
+            external_urls: { spotify: "" },
+            available_markets: [],
+          },
+          added_at: "",
+          added_by: { id: "", display_name: "", type: "user", uri: "", href: "", external_urls: { spotify: "" } },
+          is_local: false,
+          start_time_ms: t.startTimeMS > 0 ? t.startTimeMS : undefined,
+        } as unknown as PlaylistTrack));
       }
+
+      setTracks(items);
+    } catch (error) {
+      logger.error("Feil ved henting av spor:", error);
     } finally {
       setLoadingTracks(false);
     }
@@ -322,7 +421,7 @@ export default function PlaylistsPage() {
       return true;
     }
 
-    const playlistType = getPlaylistType(playlist.id);
+    const playlistType = playlistTypesMap[playlist.id] ?? null;
 
     // If "withType" is selected (and no specific types), show all with any type
     if (selectedTypes.has("withType") && selectedTypes.size === 1) {
