@@ -67,7 +67,7 @@ export function LetsPlaySidebar({ axis, ...p }: ControlsProps & { axis: "vertica
         <FlashingLogo size={56} version={`v${packageJson.version}`} versionClassName="text-stage-text/70" />
         <Link href="/letsplay/help" className={cn(btn, "h-10 w-10 text-stage-text/60")} title="Help"><CircleHelp className="h-[22px] w-[22px]" /></Link>
       </div>
-      <div className="p-2"><ExitButton onClick={p.onExit} /></div>
+      <div className={cn("flex shrink-0 justify-center p-2", !v && "items-center")}><ExitButton onClick={p.onExit} /></div>
     </div>
   );
 }

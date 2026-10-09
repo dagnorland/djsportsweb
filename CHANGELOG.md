@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Token refresh dropped the user's name/email from the session
+- Let's Play: EXIT sat at the left edge of the sidebar (left and right
+  positions); now centred under the controls like in Flutter
 
 ### Added — Let's Play (step 5)
 - **Let's Play** `/letsplay` replaces `/match` (which now redirects) —
