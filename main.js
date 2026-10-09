@@ -1,3 +1,5 @@
+// DEPRECATED: the Electron build is kept only for comparison — use the
+// browser version (see README.md). No new work goes into this file.
 const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 

@@ -44,7 +44,7 @@ export function PlaybackOutputCard() {
   };
 
   return (
-    <div id="playback" className="space-y-3">
+    <div className="space-y-3">
       <div className="space-y-2" role="radiogroup" aria-label="This browser plays through">
         {OPTIONS.map(o => (
           <label key={o.value} className={cn("flex cursor-pointer gap-3 rounded-lg border p-3", mode === o.value ? "border-ring" : "border-border")}>

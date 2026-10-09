@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-09
+
+Feature parity with the djSports Flutter app 4.1.2 — same data model,
+cloud backups, look, Home, editors, Let's Play and djSports player.
+
+### Added — Settings, help and cleanup (step 6)
+- **Settings** rebuilt in the stage look (sections with jump chips):
+  Account (Premium status, log out), Spotify output + preferred device,
+  Let's Play settings, Appearance, **Manage track start time list**
+  (update from tracks, copy as JSON, paste to import, fill tracks with no
+  start time, delete empty entries / the list — `start_time_tab.dart`),
+  **Playlists** (copy / import as JSON — `playlists_tab.dart`), Cloud
+  Backup. Same JSON formats as the app. Works without Spotify login
+- **Playlist Help** `/help` (`playlist_help_screen.dart`), linked from Home
+- Login page in the stage look, with "Continue without Spotify"
+
+### Removed
+- Old `/playlists` page and its components (PlaylistSidebar,
+  PlaylistCarousel, TrackList*, FloatingPauseButton), the temporary
+  `legacy-bridge`, the old top `Navigation`, `VersionDisplay`,
+  `UserGuideDialog`, `RouteGuard`, `TokenExpiredDialog`, unused utils
+  and `lib/spotify/optimized/*`; `next-themes` dependency
+
+### Changed
+- README, USER_GUIDE.md and BRUKERVEILEDNING.md rewritten for 1.0
+- Electron build marked deprecated (kept for comparison)
+
 ### Changed — Flutter data model (step 1 of `docs/FLUTTER_PARITY_PLAN.md`)
 - **Data model = Flutter's** (`lib/types/djmodels.ts`, `lib/db/codec.ts`):
   `DJPlaylist` / `DJTrack` / `TrackTime` with the same fields and JSON as

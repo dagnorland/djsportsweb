@@ -1,5 +1,9 @@
 # djsportsweb → Flutter parity plan
 
+> **Status 2026-10-09: done — released as 1.0.0.** Steps 1–6 plus the
+> djSports player (Web Playback SDK) and its now-playing panel are in.
+> Next: Firestore security rules.
+
 Branch: `feature/flutter-parity`
 Reference app: `djsports` (Flutter) 4.1.2
 Goal: same data model, interoperable cloud backup/restore, and the same

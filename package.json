@@ -1,6 +1,6 @@
 {
   "name": "djsportsweb",
-  "version": "0.18.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,12 +8,12 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "test": "vitest run",
+    "fetch-backup": "node scripts/fetch-backup.mjs",
     "electron": "electron .",
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build-electron": "npm run build && electron-builder",
-    "dist": "npm run build && electron-builder --publish=never",
-    "test": "vitest run",
-    "fetch-backup": "node scripts/fetch-backup.mjs"
+    "dist": "npm run build && electron-builder --publish=never"
   },
   "build": {
     "appId": "com.djsports.app",
@@ -89,7 +89,6 @@
     "lucide-react": "^0.416.0",
     "next": "^16",
     "next-auth": "^4.24.7",
-    "next-themes": "^0.3.0",
     "node-fetch": "^3.3.2",
     "react": "^19.2",
     "react-day-picker": "^8.10.1",

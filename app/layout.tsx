@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { NextAuthProvider } from "../providers/NextAuthProvider";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PollingSettingsProvider } from "@/contexts/PollingSettingsContext";
@@ -51,7 +50,6 @@ export default async function RootLayout({
                     <NextAuthProvider>
                       <ThemeProvider>
                         <PollingSettingsProvider>
-                            <Navigation />
                             <main className="pb-24">
                                 {children}
                             </main>

@@ -1,20 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight, CirclePause, Keyboard, MousePointerClick, Pause, SkipForward, Volume1, Volume2, X } from "lucide-react";
 
+import { HelpCard as Card, HelpChip as Chip } from "@/components/stage/HelpCard";
+
 export const metadata = { title: "Let's Play Help – djSports" };
-
-function Card({ icon: Icon, title, children }: { icon: typeof Pause; title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl bg-stage-surface p-[18px]">
-      <h2 className="mb-2 flex items-center gap-2 text-base font-bold"><Icon className="h-5 w-5" /> {title}</h2>
-      <div className="space-y-2 text-sm text-stage-muted">{children}</div>
-    </section>
-  );
-}
-
-function Chip({ children }: { children: React.ReactNode }) {
-  return <span className="inline-flex items-center gap-1.5 rounded-full bg-stage-high px-3 py-1 text-xs font-semibold text-stage-text">{children}</span>;
-}
 
 /** Port of letsplay_help_screen.dart. */
 export default function LetsPlayHelpPage() {

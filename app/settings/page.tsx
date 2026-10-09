@@ -1,306 +1,131 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+/**
+ * Settings — the web version of Flutter's settings center
+ * (track_time/settings_center_screen.dart + its tabs), in the stage look.
+ */
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { signIn, signOut, useSession } from "next-auth/react";
+import { ArrowLeft, Cloud, LogOut, User } from "lucide-react";
+import { SectionHeader } from "@/components/stage/SectionHeader";
 import { ThemeToggle } from "@/components/stage/ThemeToggle";
 import { LetsPlaySettingsCard } from "@/components/letsplay/LetsPlaySettingsCard";
 import { PlaybackOutputCard } from "@/components/PlaybackOutputCard";
 import { DeviceSelector } from "@/components/DeviceSelector";
-import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
-import { RouteGuard } from "@/components/RouteGuard";
-import { 
-  Settings, 
-  Palette, 
-  Cloud, 
-  Activity, 
-  Smartphone, 
-  LogOut,
-  ArrowLeft,
-  User
-} from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { PrivateUser } from "@/lib/types";
-import Image from "next/image";
-import { Skeleton } from "@/components/ui/skeleton";
+import { StartTimesSection } from "@/components/settings/StartTimesSection";
+import { PlaylistShareSection } from "@/components/settings/PlaylistShareSection";
 import { clearLocalStorage } from "@/lib/utils/logout";
+import type { PrivateUser } from "@/lib/types";
+import packageJson from "@/package.json";
 
-export default function SettingsPage() {
-  const { data: session } = useSession();
-  const [userInfo, setUserInfo] = useState<PrivateUser | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      if (!session?.accessToken) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch("https://api.spotify.com/v1/me", {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const data: PrivateUser = await response.json();
-          setUserInfo(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserInfo();
-  }, [session?.accessToken]);
-
+function Section({ id, title, help, children }: { id?: string; title: string; help?: string; children: React.ReactNode }) {
   return (
-    <RouteGuard>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/match">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Tilbake
-            </Button>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Settings className="h-6 w-6" />
-            <h1 className="text-3xl font-bold">Innstillinger</h1>
-          </div>
-        </div>
-
-        {/* User info */}
-        {session && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg">Bruker</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{session.user?.name || session.user?.email}</p>
-                  <p className="text-sm text-muted-foreground">{session.user?.email}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="space-y-6">
-          {/* Appearance */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Palette className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle>Utseende</CardTitle>
-                  <CardDescription>Velg fargetema for applikasjonen</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium mb-2">Tema</p>
-                  <p className="text-sm text-muted-foreground">
-                    Mørk scene-look (standard) eller lyst tema
-                  </p>
-                </div>
-                <ThemeToggle />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Playback output */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Spotify output — this browser plays through</CardTitle>
-              <CardDescription>Same as &quot;This Mac plays through&quot; in the djSports app</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PlaybackOutputCard />
-            </CardContent>
-          </Card>
-
-          {/* Let's Play */}
-          <Card>
-            <CardHeader>
-              <CardTitle>LET&apos;S PLAY SETTINGS</CardTitle>
-              <CardDescription>Keyboard, info messages, fade pause and control bar</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LetsPlaySettingsCard />
-            </CardContent>
-          </Card>
-
-          {/* Spotify Device */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Smartphone className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle>Spotify Enhet</CardTitle>
-                  <CardDescription>Velg hvilken enhet som skal brukes for avspilling</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Enhet</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Velg hvilken Spotify-enhet som skal brukes når du starter avspilling
-                </p>
-                <DeviceSelector />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Polling Interval */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Activity className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle>Oppdateringsfrekvens</CardTitle>
-                  <CardDescription>Hvor ofte applikasjonen skal oppdatere nåværende avspilling</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="text-sm font-medium mb-2">Polling Intervall</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Juster hvor ofte systemet sjekker for endringer i avspilling. Lavere intervall gir bedre responsivitet, men bruker mer ressurser.
-                </p>
-                <PollingIntervalSlider />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cloud Sync */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <Cloud className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle>Cloud Backup</CardTitle>
-                  <CardDescription>Backup og gjenoppretting — delt med djSports-appen (profil + PIN)</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline">
-                <Link href="/backup">Åpne Cloud Backup</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Account */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                <User className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <CardTitle>Konto</CardTitle>
-                  <CardDescription>Din Spotify-kontoinformasjon</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-16 w-16 rounded-full" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-5 w-48" />
-                      <Skeleton className="h-4 w-64" />
-                    </div>
-                  </div>
-                </div>
-              ) : userInfo ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    {userInfo.images && userInfo.images.length > 0 ? (
-                      <Image
-                        src={userInfo.images[0].url}
-                        alt={userInfo.display_name || "Bruker"}
-                        width={64}
-                        height={64}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                        <User className="h-8 w-8 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="font-medium text-lg">
-                        {userInfo.display_name || "Ingen navn"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {userInfo.email || "Ingen e-post"}
-                      </p>
-                      {userInfo.product && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {userInfo.product === "premium" ? "Spotify Premium" : "Spotify Free"}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-sm font-medium mb-2">Logg ut</p>
-                        <p className="text-sm text-muted-foreground">
-                          Logg ut fra din Spotify-konto og avslutt sesjonen
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        onClick={async () => {
-                          clearLocalStorage();
-                          await signOut({ redirect: false });
-                          window.location.href = '/?cleaned=true';
-                        }}
-                        className="ml-4"
-                      >
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Logg ut
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Kunne ikke laste kontoinformasjon
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={async () => {
-                      clearLocalStorage();
-                      await signOut({ redirect: false });
-                      window.location.href = '/?cleaned=true';
-                    }}
-                    className="mt-4"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logg ut
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </RouteGuard>
+    <section id={id} className="scroll-mt-16 rounded-2xl bg-stage-surface p-5">
+      <SectionHeader label={title}>{help}</SectionHeader>
+      <div className="mt-3">{children}</div>
+    </section>
   );
 }
 
+const NAV = [
+  ["account", "Account"], ["playback", "Spotify output"], ["letsplay", "Let's Play"],
+  ["appearance", "Appearance"], ["starttimes", "Start times"], ["playlists", "Playlists"], ["backup", "Cloud Backup"],
+] as const;
+
+export default function SettingsPage() {
+  const { data: session } = useSession();
+  const [user, setUser] = useState<PrivateUser | null>(null);
+
+  useEffect(() => {
+    if (!session?.accessToken) return;
+    fetch("https://api.spotify.com/v1/me", { headers: { Authorization: `Bearer ${session.accessToken}` } })
+      .then(r => (r.ok ? r.json() : null)).then(setUser).catch(() => {});
+  }, [session?.accessToken]);
+
+  const logout = async () => {
+    clearLocalStorage();
+    await signOut({ redirect: false });
+    window.location.href = "/?cleaned=true";
+  };
+
+  return (
+    <div className="min-h-screen bg-stage-bg text-stage-text">
+      <header className="sticky top-0 z-30 bg-stage-bg">
+        <div className="mx-auto flex h-14 max-w-3xl items-center gap-2 px-2">
+          <Link href="/home" aria-label="Back" className="rounded-full p-2 hover:bg-stage-high"><ArrowLeft className="h-6 w-6" /></Link>
+          <h1 className="flex-1 text-xl font-semibold">Settings</h1>
+          <span className="pr-2 text-xs text-stage-muted">v{packageJson.version}</span>
+        </div>
+        <nav className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
+          {NAV.map(([id, label]) => (
+            <a key={id} href={`#${id}`} className="shrink-0 rounded-full bg-stage-high px-3 py-1 text-sm font-semibold hover:bg-stage-divider">{label}</a>
+          ))}
+        </nav>
+      </header>
+
+      <main className="mx-auto max-w-3xl space-y-4 px-4 pb-24 pt-2">
+        <Section id="account" title="Account" help="Your Spotify account">
+          {session ? (
+            <div className="flex flex-wrap items-center gap-4">
+              {user?.images?.[0]?.url
+                ? <img src={user.images[0].url} alt="" className="h-14 w-14 rounded-full object-cover" />
+                : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-stage-high"><User className="h-7 w-7" /></span>}
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">{user?.display_name ?? session.user?.name}</p>
+                <p className="text-sm text-stage-muted">{user?.email ?? session.user?.email}</p>
+                {user?.product && (
+                  <p className={`text-xs ${user.product === "premium" ? "text-green-500" : "text-orange-400"}`}>
+                    {user.product === "premium" ? "Spotify Premium" : "Spotify Free — the djSports player needs Premium"}
+                  </p>
+                )}
+              </div>
+              <button onClick={logout} className="inline-flex h-9 items-center gap-2 rounded-full bg-stage-high px-4 text-sm font-medium hover:bg-stage-divider">
+                <LogOut className="h-4 w-4" /> Log out
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => signIn("spotify", { callbackUrl: "/settings" })} className="inline-flex h-10 items-center rounded-full bg-[#1DB954] px-4 text-sm font-semibold text-black">
+              Login to Spotify
+            </button>
+          )}
+          <p className="mt-3 text-xs text-stage-muted">Logging out keeps your playlists, tracks and start times in this browser.</p>
+        </Section>
+
+        <Section id="playback" title="Spotify output — this browser plays through" help={'Same as "This Mac plays through" in the djSports app.'}>
+          <PlaybackOutputCard />
+          {session && (
+            <div className="mt-5 border-t border-stage-divider pt-4">
+              <p className="mb-1 text-sm font-medium">Preferred Spotify device</p>
+              <p className="mb-3 text-sm text-stage-muted">Used with &quot;Spotify device&quot;, and when the djSports player isn&apos;t available.</p>
+              <DeviceSelector />
+            </div>
+          )}
+        </Section>
+
+        <Section id="letsplay" title="Let's Play settings">
+          <LetsPlaySettingsCard />
+        </Section>
+
+        <Section id="appearance" title="Appearance" help="Dark stage look (default) or light theme. Let's Play is always dark.">
+          <ThemeToggle />
+        </Section>
+
+        <Section id="starttimes" title="Manage track start time list">
+          <StartTimesSection />
+        </Section>
+
+        <Section id="playlists" title="Playlists" help="Share playlists with other djSports users">
+          <PlaylistShareSection />
+        </Section>
+
+        <Section id="backup" title="Cloud Backup" help="Back up and restore all playlists, tracks and start times — shared with the djSports app (profile + PIN).">
+          <Link href="/backup" className="inline-flex h-9 items-center gap-2 rounded-full bg-stage-high px-4 text-sm font-medium hover:bg-stage-divider">
+            <Cloud className="h-4 w-4" /> Open Cloud Backup
+          </Link>
+        </Section>
+      </main>
+    </div>
+  );
+}

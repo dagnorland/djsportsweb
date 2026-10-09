@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { Cloud, HandMetal, ListPlus, MoreVertical, Plus, Settings } from "lucide-react";
+import { CircleHelp, Cloud, HandMetal, ListPlus, MoreVertical, Plus, Settings } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -78,6 +78,7 @@ export function HomeAppBar({ hasPlaylists }: { hasPlaylists: boolean }) {
         <div className="flex items-center gap-1">
           <Link href="/backup" className={iconBtn} title="Cloud Backup" aria-label="Cloud Backup"><Cloud className="h-5 w-5" /></Link>
           <Link href="/settings" className={iconBtn} title="Utilities" aria-label="Settings"><Settings className="h-5 w-5" /></Link>
+          <Link href="/help" className={cn(iconBtn, "text-stage-muted")} title="Playlist help" aria-label="Playlist help"><CircleHelp className="h-5 w-5" /></Link>
           <Link href={NEW_PLAYLIST_HREF} className={iconBtn} title="New playlist" aria-label="New playlist"><Plus className="h-5 w-5" /></Link>
           <SpotifyStatusChip />
           {hasPlaylists && <span className="ml-1 mr-2"><LetsPlayLogoButton showLabel /></span>}
@@ -107,6 +108,7 @@ export function HomeAppBar({ hasPlaylists }: { hasPlaylists: boolean }) {
               <DropdownMenuItem asChild><Link href={NEW_PLAYLIST_HREF}><ListPlus className="mr-2.5 h-4 w-4" /> New playlist</Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/settings"><Settings className="mr-2.5 h-4 w-4" /> Settings</Link></DropdownMenuItem>
               <DropdownMenuItem asChild><Link href="/backup"><Cloud className="mr-2.5 h-4 w-4" /> Cloud Backup</Link></DropdownMenuItem>
+              <DropdownMenuItem asChild><Link href="/help"><CircleHelp className="mr-2.5 h-4 w-4" /> Playlist Help</Link></DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
