@@ -8,9 +8,9 @@ import { SettingKeys, getSetting } from "@/lib/db/settings-repo";
 
 export type ToastLevel = "info" | "warning" | "error";
 
-let showInfo = true;
+let showInfo = false; // Flutter default: info toasts off
 if (typeof window !== "undefined") {
-  getSetting<boolean>(SettingKeys.showInfoToasts, true).then(v => { showInfo = v; }).catch(() => {});
+  getSetting<boolean>(SettingKeys.showInfoToasts, false).then(v => { showInfo = v; }).catch(() => {});
 }
 
 /** Call after changing the setting. */

@@ -31,13 +31,13 @@ import { clearLocalStorage } from "@/lib/utils/logout";
 const navigationItems = [
   { name: "Home", href: "/home" },
   { name: "Spillelister", href: "/playlists" },
-  { name: "Kamp", href: "/match" },
+  { name: "Let's Play", href: "/letsplay" },
   { name: "Cloud Backup", href: "/backup", icon: Cloud },
   { name: "Innstillinger", href: "/settings", icon: Settings },
 ];
 
 /** Stage pages (ported from Flutter) have their own app bar. */
-const STAGE_ROUTES = ["/home", "/backup", "/playlist"];
+const STAGE_ROUTES = ["/home", "/backup", "/playlist", "/letsplay"];
 
 export function Navigation() {
   const pathname = usePathname();

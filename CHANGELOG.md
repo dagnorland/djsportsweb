@@ -28,6 +28,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
   working on the new data until Home and Let's Play replace them
 
+### Added — Let's Play (step 5)
+- **Let's Play** `/letsplay` replaces `/match` (which now redirects) —
+  port of `djletsplay.dart`, always dark, full screen:
+  - Board: Hotspot, Match, Fun Stuff, Pre-Match sections; every section
+    gets as many columns as the largest one (tiles ≥ 180 px); tile height
+    18 % of the window (90–260 px)
+  - Tile (`letsplay_playlist_card.dart`): type-colour border, faint cover
+    background, shortcut key, name, ‹ #n/m › (arrows from 260 px, swipe on
+    touch), cover with round play button, title that never breaks inside a
+    word (shrinks or ends in "…"), artist, start time. Click plays from the
+    start position with a 700 ms flash; Auto Next moves on after 2 s; at
+    the end it starts over or shuffles (Shuffle at end). Play count, the
+    last played track and the current track per playlist are saved
+  - Controls: sidebar right/left or bottom bar on wide screens, compact bar
+    on phones — play, pause, **fade pause** (volume down over the set
+    time, pause, volume back), volume ±5 % (Spotify device volume), now
+    playing, Open Spotify, logo + version, help, always-visible **EXIT**
+  - Keyboard (when enabled): Hotspot 1–6, Match Q–Y, Fun A–H, P play,
+    Esc pause, +/− volume
+- **Let's Play Help** `/letsplay/help`
+- **LET'S PLAY SETTINGS** in Settings: keyboard shortcuts, show info
+  messages (default off, like Flutter), fade time (0–10 s), control bar
+  position
+
 ### Added — playlist & track editors (step 4b)
 - **Playlist editor** `/playlist/new` and `/playlist/<id>` — port of
   `djplaylist_edit_create.dart`: name + type, Show/Hide details, Spotify

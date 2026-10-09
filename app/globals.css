@@ -131,7 +131,15 @@
   100% { color: inherit; text-shadow: none; }
 }
 
+/* Let's Play tile flash (700 ms, 55 % type colour) and track slide */
+@keyframes tile-flash { from { opacity: 0.55; } to { opacity: 0; } }
+@keyframes slide-in-right { from { transform: translateX(50%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slide-in-left { from { transform: translateX(-50%); opacity: 0; } to { transform: none; opacity: 1; } }
+
 @layer utilities {
+  .animate-tile-flash { animation: tile-flash 700ms ease-out forwards; }
+  .animate-slide-in-right { animation: slide-in-right 280ms ease-out; }
+  .animate-slide-in-left { animation: slide-in-left 280ms ease-out; }
   .animate-logo-flash { animation: logo-flash 900ms linear; }
   .animate-logo-pulse { animation: logo-pulse 900ms ease-out; }
   .animate-version-glow { animation: version-glow 900ms linear; }

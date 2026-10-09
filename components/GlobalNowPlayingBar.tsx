@@ -204,6 +204,9 @@ export default function GlobalNowPlayingBar() {
   };
 
 
+  // Let's Play has its own controls and now-playing.
+  if (pathname?.startsWith("/letsplay")) return null;
+
   return (
     <>
       <NowPlayingBar

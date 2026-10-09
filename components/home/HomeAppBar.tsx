@@ -17,8 +17,7 @@ import { cn } from "@/lib/utils";
 import packageJson from "@/package.json";
 
 export const LETS_PLAY_LABEL = "Let's Play!";
-/** Until step 5 replaces /match with /letsplay. */
-export const LETS_PLAY_HREF = "/match";
+export const LETS_PLAY_HREF = "/letsplay";
 export const NEW_PLAYLIST_HREF = "/playlist/new";
 
 const version = `v${packageJson.version}`;

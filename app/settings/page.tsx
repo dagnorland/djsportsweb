@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/stage/ThemeToggle";
+import { LetsPlaySettingsCard } from "@/components/letsplay/LetsPlaySettingsCard";
 import { DeviceSelector } from "@/components/DeviceSelector";
 import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -113,6 +114,17 @@ export default function SettingsPage() {
                 </div>
                 <ThemeToggle />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Let's Play */}
+          <Card>
+            <CardHeader>
+              <CardTitle>LET&apos;S PLAY SETTINGS</CardTitle>
+              <CardDescription>Keyboard, info messages, fade pause and control bar</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LetsPlaySettingsCard />
             </CardContent>
           </Card>
 
