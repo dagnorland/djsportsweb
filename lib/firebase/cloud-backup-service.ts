@@ -14,6 +14,7 @@ import {
   type BackupMeta,
 } from '@/lib/backup/backup-core';
 import { applySyncPlan, readLocalData, replaceLocalData } from '@/lib/backup/local-store';
+import { notifyDataChanged } from '@/lib/db/events';
 
 const COLLECTION = 'backups';
 const TIMEOUT_MS = 15_000;
@@ -94,6 +95,7 @@ export async function restoreBackup(backupId: string, onProgress?: Progress): Pr
   onProgress?.(`Restoring ${data.playlists.length} playlists, ${data.tracks.length} tracks, ` +
     `${data.trackTimes.length} track timings…`);
   await replaceLocalData(data);
+  notifyDataChanged();
   onProgress?.(`Done — ${data.playlists.length} playlists, ${data.tracks.length} tracks.`);
   return [data.playlists.length, data.tracks.length];
 }
@@ -106,6 +108,7 @@ export async function syncBackup(backupId: string, onProgress?: Progress): Promi
   const plan = planSync(await readLocalData(), backup);
   plan.playlists.forEach(p => onProgress?.(`Adding playlist: ${p.name}…`));
   await applySyncPlan(plan);
+  notifyDataChanged();
   onProgress?.(`Sync done — added ${plan.added} playlist(s), skipped ${plan.skipped}.`);
   return { added: plan.added, skipped: plan.skipped };
 }

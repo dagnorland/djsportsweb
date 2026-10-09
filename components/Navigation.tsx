@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "next-auth/react";
 import VersionDisplay from "./VersionDisplay";
 import Image from "next/image";
-import { Settings, LogOut, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Settings, LogOut, Trash2, Loader2, AlertTriangle, Cloud } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +31,7 @@ import { clearLocalStorage } from "@/lib/utils/logout";
 const navigationItems = [
   { name: "Spillelister", href: "/playlists" },
   { name: "Kamp", href: "/match" },
+  { name: "Cloud Backup", href: "/backup", icon: Cloud },
   { name: "Innstillinger", href: "/settings", icon: Settings },
 ];
 

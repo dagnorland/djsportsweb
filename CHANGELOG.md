@@ -29,12 +29,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   working on the new data until Home and Let's Play replace them
 
 ### Added
+- **Cloud Backup page** `/backup` (step 2) — port of Flutter's
+  `cloud_backup_screen.dart` in the dark stage look: Profile + PIN (show/
+  hide), Device name, Backup Now (keeps last 5 per device), Existing
+  backups with Full restore / Sync (↓) / Delete and confirm dialogs,
+  progress and status messages. Works without Spotify login. Linked from
+  the navigation ("Cloud Backup") and Settings
+- Stage palette (`stage.*`) and playlist type colours (`djtype.*`) as
+  Tailwind colours; shared `SectionHeader` and `ConfirmDialog`
+- `djsports:data-changed` event after restore / sync
 - `npm test` (vitest + fake-indexeddb): contract test that a real Flutter
   backup survives restore → backup unchanged
 - `npm run fetch-backup -- "<profile>" <pin>` saves the latest backup to
   `test/fixtures/flutter-backup.json` (git-ignored)
 
 ### Removed
+- `FirestoreBackupPanel` (replaced by `/backup`)
 - `lib/db/migration.ts`, `MigrationRunner`, old `*-store.ts`, localStorage
   legacy tables, `firestore-backup-service.ts`
 

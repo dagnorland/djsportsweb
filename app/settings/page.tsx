@@ -4,7 +4,6 @@ import { useSession, signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcherTransition } from "@/components/ui/theme-switcher-transition";
-import { FirestoreBackupPanel } from "@/components/FirestoreBackupPanel";
 import { DeviceSelector } from "@/components/DeviceSelector";
 import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -167,13 +166,15 @@ export default function SettingsPage() {
               <div className="flex items-center gap-3">
                 <Cloud className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <CardTitle>DJ Cloud Sync</CardTitle>
-                  <CardDescription>Synkroniser starttider mellom enheter</CardDescription>
+                  <CardTitle>Cloud Backup</CardTitle>
+                  <CardDescription>Backup og gjenoppretting — delt med djSports-appen (profil + PIN)</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <FirestoreBackupPanel />
+              <Button asChild variant="outline">
+                <Link href="/backup">Åpne Cloud Backup</Link>
+              </Button>
             </CardContent>
           </Card>
 

@@ -19,6 +19,24 @@ const config = {
     },
     extend: {
       colors: {
+        // Dark "stage" palette — djsports/lib/core/theme/stage_colors.dart
+        stage: {
+          bg: "#121212",
+          surface: "#1E1E1E",
+          panel: "#181818",
+          high: "#2A2A2A",
+          divider: "#2E2E2E",
+          text: "#FFFFFF",
+          muted: "#B3B3B3",
+        },
+        // Playlist type colours (Flutter TypeColor extension)
+        djtype: {
+          hotspot: "#F44336",   // Colors.red
+          match: "#4CAF50",     // Colors.green
+          funStuff: "#2196F3",  // Colors.blue
+          preMatch: "#000000",  // Colors.black (grey-400 on dark)
+          archived: "#69F0AE",  // Colors.greenAccent
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
