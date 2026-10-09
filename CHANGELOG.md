@@ -5,6 +5,197 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **Cloud backups protected by Profile + PIN in the database**: stored in
+  `profiles/{SHA-256(profile|PIN)}/backups/{id}` without the profile name
+  or PIN — same key function as the djsports app (`lib/backup/profile-key.ts`,
+  shared test vector). Old backups in the shared `backups` collection are
+  listed read-only (marked OLD) until migrated
+- `npm run migrate-backups` (dry run / `--copy` / `--delete-old`) moves the
+  old backups; new `firestore.rules` live in the djsports repo. Rollout in
+  `docs/FIRESTORE_SECURITY_PLAN.md`
+
+### Changed
+- Settings: Cloud Backup moved up (right after Account); the start-time
+  list and playlist sharing are tucked away under **Advanced** as
+  collapsible sections (closed until opened or linked to)
+
+## [1.0.0] - 2026-10-09
+
+Feature parity with the djSports Flutter app 4.1.2 — same data model,
+cloud backups, look, Home, editors, Let's Play and djSports player.
+
+### Added — Settings, help and cleanup (step 6)
+- **Settings** rebuilt in the stage look (sections with jump chips):
+  Account (Premium status, log out), Spotify output + preferred device,
+  Let's Play settings, Appearance, **Manage track start time list**
+  (update from tracks, copy as JSON, paste to import, fill tracks with no
+  start time, delete empty entries / the list — `start_time_tab.dart`),
+  **Playlists** (copy / import as JSON — `playlists_tab.dart`), Cloud
+  Backup. Same JSON formats as the app. Works without Spotify login
+- **Playlist Help** `/help` (`playlist_help_screen.dart`), linked from Home
+- Login page in the stage look, with "Continue without Spotify"
+
+### Removed
+- Old `/playlists` page and its components (PlaylistSidebar,
+  PlaylistCarousel, TrackList*, FloatingPauseButton), the temporary
+  `legacy-bridge`, the old top `Navigation`, `VersionDisplay`,
+  `UserGuideDialog`, `RouteGuard`, `TokenExpiredDialog`, unused utils
+  and `lib/spotify/optimized/*`; `next-themes` dependency
+
+### Changed
+- README, USER_GUIDE.md and BRUKERVEILEDNING.md rewritten for 1.0
+- Electron build marked deprecated (kept for comparison)
+
+### Changed — Flutter data model (step 1 of `docs/FLUTTER_PARITY_PLAN.md`)
+- **Data model = Flutter's** (`lib/types/djmodels.ts`, `lib/db/codec.ts`):
+  `DJPlaylist` / `DJTrack` / `TrackTime` with the same fields and JSON as
+  the Flutter app, incl. `appleMusicPlaylistId` / `appleMusicId`.
+  `startTime` is **milliseconds**, `startTimeMS` an extra offset; playback
+  position = `startTime + startTimeMS` (`startPositionMs`)
+- **New local DB** `djsports` (Dexie) with the Flutter boxes `djplaylist`,
+  `djtrack`, `trackTime`, `settings`. The old `DJSportsDB` is deleted on
+  start — **no migration**; get data by restoring a cloud backup
+- Repositories ported from Flutter (`lib/db/playlist-repo.ts`,
+  `track-repo.ts`, `settings-repo.ts`): UUID playlist ids, duplicate
+  Spotify URI check, reorder within type, remove playlist + orphan tracks
+- **Cloud backup = Flutter's** (`lib/firebase/cloud-backup-service.ts`,
+  `lib/backup/*`): backups keyed by profile name + 4-digit PIN
+  (`"Name|1234"`), no composite index, max 5 per device, full restore
+  (ids kept as-is) and new **sync restore**
+- Spotify playlists are no longer mirrored into local data; logout keeps
+  local data
+- Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
+  working on the new data until Home and Let's Play replace them
+
+### Added — djSports player (Web Playback SDK), like the macOS app 4.1.0
+- **djSports player** (default): this browser tab runs Spotify's Web
+  Playback SDK and is its own Spotify Connect device "djSports". Plays go
+  there with `device_id` + `position_ms` — start positions land exactly
+  and no Spotify app is needed (works around Spotify for Mac accepting Web
+  API plays without loading the track). Pause / resume / seek / volume go
+  straight to the player; fade-pause lowers only the player volume
+  (smooth 40 ms steps) and the next play restores it. The player is
+  activated inside the click/key that starts playback (browser autoplay
+  rules). If it isn't ready or a play fails, plays fall back to the active
+  Spotify device
+- **Settings → Spotify output — this browser plays through**: djSports
+  player (recommended) or Spotify device (follow Spotify); same settings
+  key as Flutter (`spotifyMacPlayback`). Status, errors (e.g. Premium
+  required) and "Move Spotify playback here"
+- **Now-playing panel** (port of `web_player_panel.dart`) below every
+  screen — Let's Play too — while the djSports player is the active
+  device: cover, title, artist, album, position (slider to seek),
+  play/pause. Drag the top edge to resize (cover and text grow with it, up
+  to 70 % of the window), collapse to a slim bar and back (settings:
+  `webPlayerPanelVisible`, `webPlayerPanelHeight`). Let's Play makes room
+  for it and its controls drop their own cover/track while it is expanded
+- Home app bar chip shows `account → device` coloured by player status
+- Removed the unused `PlayerProvider` and the global SDK script tag
+
+### Fixed
+- Token refresh dropped the user's name/email from the session
+- Let's Play: EXIT sat at the left edge of the sidebar (left and right
+  positions); now centred under the controls like in Flutter
+
+### Added — Let's Play (step 5)
+- **Let's Play** `/letsplay` replaces `/match` (which now redirects) —
+  port of `djletsplay.dart`, always dark, full screen:
+  - Board: Hotspot, Match, Fun Stuff, Pre-Match sections; every section
+    gets as many columns as the largest one (tiles ≥ 180 px); tile height
+    18 % of the window (90–260 px)
+  - Tile (`letsplay_playlist_card.dart`): type-colour border, faint cover
+    background, shortcut key, name, ‹ #n/m › (arrows from 260 px, swipe on
+    touch), cover with round play button, title that never breaks inside a
+    word (shrinks or ends in "…"), artist, start time. Click plays from the
+    start position with a 700 ms flash; Auto Next moves on after 2 s; at
+    the end it starts over or shuffles (Shuffle at end). Play count, the
+    last played track and the current track per playlist are saved
+  - Controls: sidebar right/left or bottom bar on wide screens, compact bar
+    on phones — play, pause, **fade pause** (volume down over the set
+    time, pause, volume back), volume ±5 % (Spotify device volume), now
+    playing, Open Spotify, logo + version, help, always-visible **EXIT**
+  - Keyboard (when enabled): Hotspot 1–6, Match Q–Y, Fun A–H, P play,
+    Esc pause, +/− volume
+- **Let's Play Help** `/letsplay/help`
+- **LET'S PLAY SETTINGS** in Settings: keyboard shortcuts, show info
+  messages (default off, like Flutter), fade time (0–10 s), control bar
+  position
+
+### Added — playlist & track editors (step 4b)
+- **Playlist editor** `/playlist/new` and `/playlist/<id>` — port of
+  `djplaylist_edit_create.dart`: name + type, Show/Hide details, Spotify
+  URI (paste a link; **Sync** imports missing tracks and takes Spotify's
+  name, **Search** Spotify, **Browse** the linked playlist), Apple Music id
+  (kept, no web playback), example playlists, Shuffle at end, Auto next,
+  Position, Sync start times (from the TrackTime library), Shuffle. On
+  open it offers new tracks found in the Spotify playlist (like Flutter)
+- Track list: play from start time, edit, remove (deletes the track when
+  no other playlist uses it), drag to reorder
+- **Track editor** `/playlist/<id>/track/<n>` — port of
+  `djtrack_edit_create.dart`: name/album/artist/URI, start-time slider
+  (10 ms steps, ±0.5 s, value above the thumb), play / pause, Auto
+  Preview, volume ±5 %, live position with "Set as start", Update /
+  Update & next, previous / next steps and neighbour cards. Stored like
+  Flutter: whole seconds in `startTime` (ms), tenths in `startTimeMS`
+- **djSports Example Setup** on the welcome screen (5 Spotify playlists)
+- `lib/spotify/dj-client.ts` (browser Spotify calls), `useDJPlayer`
+- Tests for playlist actions and Spotify URI helpers
+
+### Fixed
+- `spotifyIdFromUri` handles `playlist/ID` and links (Flutter examples)
+
+### Added — Home (step 4a)
+- **Home page** `/home` — port of `djsports_home_page.dart`: app bar
+  (version, djsports, Cloud Backup, Settings, New playlist, Spotify chip,
+  flashing-logo **Let's Play!**; ⋮ menu on narrow screens), type chips
+  (All + per type), one shelf per type (two side by side when they fit),
+  single type = grid. Drag a card to reorder within its type (mouse: drag,
+  touch: long-press) — saved as `position`, like Flutter
+- **Playlist card** — cover mosaic, type strip, round edit button in the
+  type colour, ⋮ menu (Open in Spotify, Delete with confirm), counts
+- **Welcome screen** when there are no playlists (light design like
+  Flutter): Restore from Cloud Backup (profile + PIN, check for backups),
+  Connect to Spotify, Playlist Types, Add Your First Playlist
+- Logged-in users land on `/home`; the old top navigation is hidden on
+  the ported pages, which have their own app bar
+- Live Dexie queries (`useLive`, `useDJData`)
+
+### Changed — stage theme (step 3)
+- **Dark stage look is the default** everywhere; **light theme** as an
+  option (Settings → Tema: Dark / Light). Purple and "sports" themes
+  removed. All shadcn colours map onto the stage palette
+  (`app/globals.css`); `stage.*` Tailwind colours follow the theme
+- Playlist type colours now match Flutter (match = green, fun stuff =
+  blue; pre-match black → grey on dark)
+- Toasts work (a `Toaster` was never mounted) — top centre like Flutter,
+  themed; `showAppToast` hides info toasts unless "Show info messages"
+
+### Added
+- Shared stage components (`components/stage/`): `FlashingLogo`,
+  `CoverMosaic`, `RoundTypeButton`, `TypeBadge`/`TypeDot`, `ExitButton`,
+  `ThemeToggle`; `lib/theme/playlistTypes.ts` (type colours/labels/order)
+- **Cloud Backup page** `/backup` (step 2) — port of Flutter's
+  `cloud_backup_screen.dart` in the dark stage look: Profile + PIN (show/
+  hide), Device name, Backup Now (keeps last 5 per device), Existing
+  backups with Full restore / Sync (↓) / Delete and confirm dialogs,
+  progress and status messages. Works without Spotify login. Linked from
+  the navigation ("Cloud Backup") and Settings
+- Stage palette (`stage.*`) and playlist type colours (`djtype.*`) as
+  Tailwind colours; shared `SectionHeader` and `ConfirmDialog`
+- `djsports:data-changed` event after restore / sync
+- `npm test` (vitest + fake-indexeddb): contract test that a real Flutter
+  backup survives restore → backup unchanged
+- `npm run fetch-backup -- "<profile>" <pin>` saves the latest backup to
+  `test/fixtures/flutter-backup.json` (git-ignored)
+
+### Removed
+- `FirestoreBackupPanel` (replaced by `/backup`)
+- `lib/db/migration.ts`, `MigrationRunner`, old `*-store.ts`, localStorage
+  legacy tables, `firestore-backup-service.ts`
+
 ## [0.18.0] - 2026-03-28
 
 ### Major: Supabase removed — full Dexie + Firebase migration

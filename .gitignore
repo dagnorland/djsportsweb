@@ -65,3 +65,5 @@ electron-renderer.log
 # electron cache
 .electron-gyp/
 .electron/
+# Real Flutter backup used by the contract test (personal data)
+test/fixtures/flutter-backup.json

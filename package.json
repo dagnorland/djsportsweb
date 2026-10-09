@@ -1,6 +1,6 @@
 {
   "name": "djsportsweb",
-  "version": "0.18.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "test": "vitest run",
+    "fetch-backup": "node scripts/fetch-backup.mjs",
     "electron": "electron .",
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build-electron": "npm run build && electron-builder",
-    "dist": "npm run build && electron-builder --publish=never"
+    "dist": "npm run build && electron-builder --publish=never",
+    "migrate-backups": "node scripts/migrate-backups.mjs"
   },
   "build": {
     "appId": "com.djsports.app",
@@ -43,6 +46,9 @@
     }
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@floating-ui/react-dom": "^2.1.1",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -84,7 +90,6 @@
     "lucide-react": "^0.416.0",
     "next": "^16",
     "next-auth": "^4.24.7",
-    "next-themes": "^0.3.0",
     "node-fetch": "^3.3.2",
     "react": "^19.2",
     "react-day-picker": "^8.10.1",
@@ -111,9 +116,11 @@
     "electron-builder": "^26.0.12",
     "eslint": "^9",
     "eslint-config-next": "^16.0.7",
+    "fake-indexeddb": "^6.2.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "wait-on": "^9.0.1"
   }
 }

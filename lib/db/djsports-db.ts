@@ -1,84 +1,59 @@
 /**
- * Dexie (IndexedDB) database for djSports web — equivalent to Flutter's Hive local DB.
- * SSR-safe: only instantiated in browser context.
+ * Local database — the web equivalent of the Flutter app's Hive boxes
+ * (main.dart): `djplaylist`, `djtrack`, `trackTime`, `settings`.
+ *
+ * No migration from the old web DB (`DJSportsDB`): it is deleted on first
+ * start. New clients get their data by restoring a cloud backup.
  */
-
 import Dexie, { type Table } from 'dexie';
 import type { DJPlaylist, DJTrack, TrackTime } from '@/lib/types/djmodels';
 
-// Legacy holding tables for migration from localStorage
-export interface LegacyStartTime {
-  id: string;          // track ID
-  startTimeMS: number;
-}
+export const DB_NAME = 'djsports';
+const OLD_DB_NAMES = ['DJSportsDB'];
 
-export interface LegacyPlaylistType {
-  id: string;          // playlist ID
-  type: string;
-}
-
-export interface DbMeta {
+export interface SettingRow {
   key: string;
-  value: string;
+  value: unknown;
 }
 
-class DJSportsDB extends Dexie {
-  playlists!: Table<DJPlaylist, string>;
-  tracks!: Table<DJTrack, string>;
-  trackTimes!: Table<TrackTime, string>;
-  legacyStartTimes!: Table<LegacyStartTime, string>;
-  legacyPlaylistTypes!: Table<LegacyPlaylistType, string>;
-  meta!: Table<DbMeta, string>;
+export class DJSportsDB extends Dexie {
+  djplaylist!: Table<DJPlaylist, string>;
+  djtrack!: Table<DJTrack, string>;
+  trackTime!: Table<TrackTime, string>;
+  settings!: Table<SettingRow, string>;
 
-  constructor() {
-    super('DJSportsDB');
-
+  constructor(name = DB_NAME) {
+    super(name);
     this.version(1).stores({
-      playlists: 'id, name, type, position',
-      tracks: 'id, name, startTimeMS',
-      trackTimes: 'id, startTime',
-      legacyStartTimes: 'id',
-      legacyPlaylistTypes: 'id',
-      meta: 'key',
-    }).upgrade(tx => {
-      // Migrate existing localStorage data into holding tables on first run
-      if (typeof window === 'undefined') return;
-
-      try {
-        const rawStartTimes = window.localStorage.getItem('trackStartTimes');
-        if (rawStartTimes) {
-          const map: Record<string, number> = JSON.parse(rawStartTimes);
-          const records: LegacyStartTime[] = Object.entries(map).map(([id, startTimeMS]) => ({ id, startTimeMS }));
-          if (records.length > 0) {
-            tx.table('legacyStartTimes').bulkAdd(records);
-          }
-        }
-      } catch (_) { /* ignore */ }
-
-      try {
-        const rawTypes = window.localStorage.getItem('playlistTypes');
-        if (rawTypes) {
-          const map: Record<string, string> = JSON.parse(rawTypes);
-          const records: LegacyPlaylistType[] = Object.entries(map).map(([id, type]) => ({ id, type }));
-          if (records.length > 0) {
-            tx.table('legacyPlaylistTypes').bulkAdd(records);
-          }
-        }
-      } catch (_) { /* ignore */ }
+      djplaylist: 'id, type, position, spotifyUri, appleMusicPlaylistId',
+      djtrack: 'id, spotifyUri, appleMusicId',
+      trackTime: 'id',
+      settings: 'key',
     });
   }
 }
 
 let _db: DJSportsDB | null = null;
+let _oldDeleted = false;
 
 export function getDb(): DJSportsDB {
-  if (typeof window === 'undefined') {
-    throw new Error('DJSportsDB cannot be used on the server');
+  if (typeof indexedDB === 'undefined') {
+    throw new Error('djsports DB is only available in the browser');
   }
   if (!_db) {
     _db = new DJSportsDB();
+    if (!_oldDeleted) {
+      _oldDeleted = true;
+      for (const n of OLD_DB_NAMES) {
+        Dexie.delete(n).catch(() => { /* ignore */ });
+      }
+    }
   }
   return _db;
 }
 
-export type { DJSportsDB };
+/** Tests only: use a separate DB instance. */
+export function setDbForTests(db: DJSportsDB | null): void {
+  _db = db;
+  _oldDeleted = true;
+}

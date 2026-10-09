@@ -7,6 +7,7 @@ const config = {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -19,6 +20,25 @@ const config = {
     },
     extend: {
       colors: {
+        // Stage palette (stage_colors.dart) — CSS variables, so it follows
+        // the dark (default) / light theme. See app/globals.css.
+        stage: {
+          bg: "hsl(var(--stage-bg) / <alpha-value>)",
+          surface: "hsl(var(--stage-surface) / <alpha-value>)",
+          panel: "hsl(var(--stage-panel) / <alpha-value>)",
+          high: "hsl(var(--stage-high) / <alpha-value>)",
+          divider: "hsl(var(--stage-divider) / <alpha-value>)",
+          text: "hsl(var(--stage-text) / <alpha-value>)",
+          muted: "hsl(var(--stage-muted) / <alpha-value>)",
+        },
+        // Playlist type colours (Flutter TypeColor extension)
+        djtype: {
+          hotspot: "#F44336",   // Colors.red
+          match: "#4CAF50",     // Colors.green
+          funStuff: "#2196F3",  // Colors.blue
+          preMatch: "hsl(var(--type-prematch) / <alpha-value>)", // black, grey-400 on dark
+          archived: "#69F0AE",  // Colors.greenAccent
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

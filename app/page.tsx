@@ -1,97 +1,62 @@
-// app/page.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+/** Login / landing page. Logged-in users are redirected to /home (proxy.ts). */
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { signIn, useSession } from "next-auth/react";
-import { SignInResponse } from "next-auth/react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import packageJson from "@/package.json";
 
-export default function Page(): React.ReactElement {
-    const { data: session, status } = useSession();
-    const [showCleanedMessage, setShowCleanedMessage] = useState(false);
+export default function Page() {
+  const { data: session, status } = useSession();
+  const [cleaned, setCleaned] = useState(false);
 
-    useEffect(() => {
-        // Check if we just cleaned/logged out using window.location
-        if (typeof window !== 'undefined') {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('cleaned') === 'true') {
-                setShowCleanedMessage(true);
-                // Remove query param from URL after showing message
-                urlParams.delete('cleaned');
-                const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
-                window.history.replaceState({}, '', newUrl);
-            }
-        }
-    }, []);
-
-    // Viser loading mens session sjekkes
-    if (status === "loading") {
-        return (
-            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
-                <Card className="w-full max-w-sm">
-                    <CardHeader>
-                        <CardTitle>Laster...</CardTitle>
-                    </CardHeader>
-                </Card>
-            </div>
-        );
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("cleaned") === "true") {
+      setCleaned(true);
+      params.delete("cleaned");
+      window.history.replaceState({}, "", window.location.pathname + (params.toString() ? `?${params}` : ""));
     }
+  }, []);
 
-    // Hvis bruker er innlogget - middleware will redirect, men vis noe mens vi venter
-    if (session) {
-        return (
-            <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
-                <Card className="w-full max-w-sm">
-                    <CardHeader>
-                        <CardTitle>Omdirigerer...</CardTitle>
-                    </CardHeader>
-                </Card>
-            </div>
-        );
-    }
+  useEffect(() => {
+    if (session) window.location.replace("/home");
+  }, [session]);
 
-    // Hvis bruker IKKE er innlogget
-    return (
-        <div className="h-[calc(100vh-6rem)] w-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-sm">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Login med Spotify</CardTitle>
-                    <CardDescription>
-                        Du vil bli omdirigert til Spotify. Skriv inn dine Spotify-innloggingsdetaljer for å logge inn på din Spotify-konto.
-                        HUSK : Din spotify email (til konto) må være registrert på forhånd - send din Spotify email som brukes for pålogging til Spotify til djsportsweb@gmail.com eller dag.norland@gmail.com
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {showCleanedMessage && (
-                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 flex items-start gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                    Lokal lagring ryddet
-                                </p>
-                                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                                    Alle lokale data er slettet. Du kan nå logge inn på nytt.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        onClick={(): Promise<SignInResponse | undefined> => signIn('spotify', { callbackUrl: '/playlists' })}
-                    >
-                        Logg inn
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
-    );
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-stage-bg p-4 text-stage-text">
+      <div className="w-full max-w-sm rounded-2xl bg-stage-surface p-6 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon-192x192.png" alt="djSports" className="mx-auto h-20 w-20 rounded-full" />
+        <h1 className="mt-3 text-2xl font-bold">djSports</h1>
+        <p className="text-xs text-stage-muted">v{packageJson.version}</p>
+
+        {status === "loading" || session ? (
+          <Loader2 className="mx-auto mt-6 h-6 w-6 animate-spin" />
+        ) : (
+          <>
+            {cleaned && (
+              <p className="mt-4 flex items-center justify-center gap-2 rounded-lg bg-green-500/10 p-2 text-sm text-green-500">
+                <CheckCircle2 className="h-4 w-4" /> Logged out
+              </p>
+            )}
+            <p className="mt-4 text-sm text-stage-muted">
+              Log in with Spotify (Premium) to play. Your Spotify e-mail must be registered first — send it to
+              djsportsweb@gmail.com or dag.norland@gmail.com.
+            </p>
+            <button
+              onClick={() => signIn("spotify", { callbackUrl: "/home" })}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-[#1DB954] font-semibold text-black"
+            >
+              Login with Spotify
+            </button>
+            <Link href="/home" className="mt-3 block text-sm text-stage-muted hover:text-stage-text">
+              Continue without Spotify (playlists, cloud backup)
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { useWebPlayer } from "@/lib/hooks/useWebPlayer";
 import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume, getAvailableDevices } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
-import FloatingPauseButton from "./FloatingPauseButton";
 import { logger } from "@/lib/utils/logger";
 import { useOptimizedPolling } from "@/lib/hooks/useOptimizedPolling";
 import { usePollingSettings } from "@/lib/hooks/usePollingSettings";
@@ -15,11 +15,9 @@ import { getCachedDevice, findAndCacheMacDevice } from "@/lib/utils/deviceCache"
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const webPlayer = useWebPlayer();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const { interval, setInterval } = usePollingSettings();
-  
-  // Only show floating pause button on match page
-  const isMatchPage = pathname === "/match";
 
   // Optimized polling for now playing status
   const updateNowPlaying = async () => {
@@ -204,6 +202,14 @@ export default function GlobalNowPlayingBar() {
   };
 
 
+  // Let's Play has its own controls and now-playing.
+  if (pathname?.startsWith("/letsplay")) return null;
+  // The djSports player (this tab) has its own panel.
+  if (webPlayer.active) return null;
+  // Only when something plays on another Spotify device (no empty
+  // "waiting" bar, not on the login page).
+  if (!session || pathname === "/" || !nowPlaying?.item) return null;
+
   return (
     <>
       <NowPlayingBar
@@ -214,12 +220,6 @@ export default function GlobalNowPlayingBar() {
         onVolumeChange={handleVolumeChange}
         onStartSpotify={handleStartSpotify}
       />
-      {isMatchPage && (
-        <FloatingPauseButton
-          currentlyPlaying={nowPlaying}
-          onPlayPause={handlePlayPause}
-        />
-      )}
     </>
   );
 }

@@ -1,223 +1,69 @@
-# djSports - Spotify Music Management App
+# djSports web
 
-En avansert Next.js-applikasjon for å administrere Spotify-spillelister med fokus på sportsarrangementer. Appen inkluderer optimalisert caching, feilhåndtering, og en moderne brukeropplevelse.
+The web version of **djSports** — music for sports events, on Spotify.
+Same data model, cloud backups and look as the Flutter app
+([djsports](https://github.com/dagnorland/djsports)): restore a backup made
+in the app and carry on in the browser, or the other way round.
 
-## Hovedfunksjoner
+- **Home** — playlists by type (Hotspot, Match, Fun Stuff, Pre-match),
+  drag to reorder; welcome screen with cloud restore when empty
+- **Playlist & track editors** — sync from a Spotify playlist, search
+  Spotify, precise start times with preview
+- **Let's Play** — the live board: one click plays a track from its start
+  time; auto next, fade pause, keyboard shortcuts
+- **djSports player** — this browser tab is its own Spotify Connect
+  device "djSports" (Web Playback SDK), with a resizable now-playing panel
+- **Cloud Backup** — Firestore backups shared with the app (profile + PIN),
+  full restore or sync
+- **Settings** — Spotify output, Let's Play, dark/light theme, start-time
+  list import/export, playlist sharing
 
-- **🎵 Spotify Integration**: Fullstendig integrering med Spotify API og Web Playback SDK
-- **⚡ Optimalisert Ytelse**: Intelligent caching og adaptive polling-intervaller
-- **🔐 Sikker Autentisering**: NextAuth.js med Spotify OAuth og token-refreshing
-- **🎨 Moderne UI**: shadcn/ui komponenter med TailwindCSS
-- **📱 Responsiv Design**: Optimalisert for både desktop og mobil
-- **🛡️ Robust Feilhåndtering**: Sentralisert error handling med brukervennlige meldinger
-- **♿ Tilgjengelighet**: Route guards, keyboard navigation og loading states
-- **🔧 TypeScript**: Fullstendig type safety med forbedrede type-definisjoner
-
-## Getting Started
-
-### Prerequisites
-
-Make sure you have the following installed on your machine:
-
-- [Node.js](https://nodejs.org/) (v14 or later)
-- [npm](https://www.npmjs.com/) (v6 or later) or [Yarn](https://yarnpkg.com/) (v1.22 or later) or [pnpm](https://pnpm.io/) (v6 or later) or [Bun](https://bun.sh/)
-
-### Installation
-
-1. Clone the repository:
-
-```bash
-git clone https://github.com/CyprienDeRoef/nextjs-spotify-api-template
-cd nextjs-spotify-api-template
-```
-
-2. Install dependencies:
+## Run it
 
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
-# or
-bun install
+cp env.example .env.local   # fill in Spotify + Firebase values
+npm run dev                 # http://127.0.0.1:3000
 ```
 
-### Running the Development Server
+Open the app on the same host as `NEXTAUTH_URL` (e.g. `127.0.0.1` vs
+`localhost`) — the Spotify redirect URI in the Spotify Developer Dashboard
+must match: `<NEXTAUTH_URL>/api/auth/callback/spotify`.
 
-To start the development server, run:
+Spotify **Premium** is needed for playback. Spotify apps in development
+mode only allow registered users — add their Spotify e-mail in the
+dashboard.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+| Command | |
+|---|---|
+| `npm run dev` | development server |
+| `npm run build` / `npm start` | production build / server |
+| `npm test` | unit + contract tests (vitest) |
+| `npm run fetch-backup -- "<profile>" <pin>` | save the latest cloud backup to `test/fixtures/flutter-backup.json` (git-ignored) for the contract test |
 
-Open http://localhost:3000 with your browser to see the result.
+## Architecture
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Layer | Where | Notes |
+|---|---|---|
+| Data model | `lib/types/djmodels.ts`, `lib/db/codec.ts` | 1:1 with the Flutter models and JSON. `startTime` is **ms**, `startTimeMS` an extra offset; play position = `startTime + startTimeMS` |
+| Local DB | `lib/db/djsports-db.ts` (Dexie / IndexedDB `djsports`) | tables = Flutter Hive boxes: `djplaylist`, `djtrack`, `trackTime`, `settings` |
+| Repositories / actions | `lib/db/*-repo.ts`, `playlist-actions.ts`, `library-tools.ts` | ports of the Flutter repos and controllers |
+| Cloud backup | `lib/firebase/cloud-backup-service.ts`, `lib/backup/*` | Firestore `backups` collection, same documents as the app |
+| Spotify | `lib/spotify/dj-client.ts` (Web API), `web-player.ts` (Web Playback SDK), `playback.ts` (routing + fallback) | |
+| UI | `app/*`, `components/{home,playlist,letsplay,settings,stage}` | stage palette in `app/globals.css` / `tailwind.config.ts` |
+| Auth | `pages/api/auth/[...nextauth].js` | NextAuth + Spotify OAuth, token refresh |
 
-### Spotify API Setup
+`docs/FLUTTER_PARITY_PLAN.md` describes how the web app was brought in
+line with the Flutter app. `CHANGELOG.md` has the details per release.
 
-For å bruke Spotify API, må du sette opp en Spotify Developer-konto og få nødvendige legitimasjoner:
+## Electron (deprecated)
 
-1. Gå til [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) og logg inn.
+`main.js` and the `electron*` / `dist` scripts are kept only for
+comparison. No new work goes into the Electron build — use the browser
+(the djSports player needs no Spotify app).
 
-2. Opprett en ny applikasjon for å få Client ID og Client Secret.
+## Known follow-ups
 
-3. Kopier `env.example` til `.env.local` og fyll inn dine legitimasjoner:
-
-```bash
-cp env.example .env.local
-```
-
-4. Fyll inn dine Spotify-legitimasjoner i `.env.local`:
-
-```
-SPOTIFY_CLIENT_ID=din_spotify_client_id
-SPOTIFY_CLIENT_SECRET=din_spotify_client_secret
-JWT_SECRET=din_sikre_jwt_secret_minst_32_tegn
-NEXTAUTH_URL=http://localhost:3000
-```
-
-**Viktig (lokal utvikling)**:
-- Hold deg til én base-URL under innlogging (anbefalt: `http://localhost:3000`).
-- I Spotify Developer Dashboard må Redirect URI matche nøyaktig. For lokal utvikling er det tryggest å legge inn begge:
-  - `http://localhost:3000/api/auth/callback/spotify`
-  - `http://127.0.0.1:3000/api/auth/callback/spotify`
-
-**Viktig**: JWT_SECRET må være minst 32 tegn lang for sikkerhet.
-
-## Nye Forbedringer
-
-### 🔧 Sikkerhet & Konfigurasjon
-- **Miljøvariabel-validering**: Automatisk validering av påkrevde miljøvariabler ved oppstart
-- **Sikker JWT-håndtering**: Forbedret token-refreshing med bedre feilhåndtering
-- **Type-safe konfigurasjon**: TypeScript-definerte miljøvariabler
-
-### ⚡ Ytelse-optimalisering
-- **Adaptive polling**: Intelligent polling med eksponentiell backoff ved feil
-- **Optimalisert caching**: LRU-cache med automatisk opprydding
-- **Preloading**: Kritiske spillelister lastes inn på forhånd
-
-### 🛡️ Robust Feilhåndtering
-- **Error Boundary**: Sentralisert feilhåndtering med brukervennlige meldinger
-- **Retry-logikk**: Automatisk retry med eksponentiell backoff
-- **Kategoriserte feil**: Spotify API, nettverk og valideringsfeil
-
-### ♿ Tilgjengelighet & UX
-- **Route Guards**: Automatisk omdirigering for ikke-autentiserte brukere
-- **Loading States**: Forbedrede loading-indikatorer og skeleton-komponenter
-- **Keyboard Navigation**: Fullstendig keyboard-støtte for alle komponenter
-
-### 🔧 TypeScript-forbedringer
-- **Type Safety**: Fjernet alle `any` typer og forbedret type-definisjoner
-- **NextAuth Types**: Forbedrede type-definisjoner for autentisering
-- **Error Types**: Type-safe feilhåndtering med kategoriserte feiltyper
-
-### Playing Spotify Music with Web Playback SDK
-
-This project also integrates the Spotify Web Playback SDK as a `React.ContextProvider` to enable music playback directly within your application and share all its relative states. Note that you **must** have a Premium Spotify account to use this functionnality since Spotify only provides it to its Premium members. Here's how to implement the Spotify Web Playback SDK:
-
-```typescript
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
-import PlayerProvider from "@/providers/PlayerProvider";
-[...]
-const session = await getServerSession(authOptions);
-return (
-    <PlayerProvider token={ session.accessToken }>
-      //...
-    </PlayerProvider>
-)
-```
-
-### Building an Interface with shadcn/ui
-
-This template comes with an optional components library: [shadcn/ui](https://ui.shadcn.com/docs). Unlike many components libraries, shadcn/ui allows you to fully customize your components by placing them in a `components/ui` folder instead of the usual `node_modules`, granting you access to all properties. Here's an exemple of how to create a Card:
-
-```tsx
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-    CardContent,
-    CardFooter
-} from '@/components/ui/card';
-[...]
-return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Card Title</CardTitle>
-        <CardDescription>Card Description</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p>Card Content</p>
-      </CardContent>
-      <CardFooter>
-        <p>Card Footer</p>
-      </CardFooter>
-    </Card>
-)
-```
-Here is my current work in progress based on Spotify layout and built with shadcn/ui:
-
-![image](https://github.com/user-attachments/assets/069d1e99-40ad-4f84-a8eb-2775b687e07b)
-
-### Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-To learn more about NextAuth.js, browse the [NextAuth](https://next-auth.js.org/providers/spotify) documentation.
-
-To learn more about the Spotify API and Web Playback SDK, check out these resources:
-
-- [Spotify for Developers](https://developer.spotify.com/documentation/web-api) - find everything you need about Spotify API endpoints.
-- [Spotify Web Playback SDK](https://developer.spotify.com/documentation/web-playback-sdk) - learn how to stream and play Spotify music in your own app.
-
-To learn more about TailwindCSS, go to the [TaildwindCSS](https://tailwindcss.com/docs) documentation.
-
-To learn more about shadcn/ui, visit the [shadcn/ui](https://ui.shadcn.com/docs) documentation.
-
-## Utvikling
-
-### Arkitektur
-- **Next.js 14**: App Router med server-side rendering
-- **TypeScript**: Fullstendig type safety
-- **TailwindCSS**: Utility-first CSS framework
-- **shadcn/ui**: Moderne komponentbibliotek
-- **NextAuth.js**: Sikker autentisering
-- **Spotify Web API**: Fullstendig API-integrasjon
-
-### Kodekvalitet
-- **ESLint**: Automatisk kodekvalitetskontroll
-- **TypeScript**: Streng type-sjekking
-- **Error Boundaries**: Robust feilhåndtering
-- **Logging**: Strukturert logging med miljøbaserte nivåer
-
-### Ytelse
-- **Caching**: Intelligent caching med TTL og LRU-eviction
-- **Polling**: Adaptive polling med backoff-strategier
-- **Preloading**: Kritiske ressurser lastes på forhånd
-- **Bundle Optimization**: Optimalisert JavaScript-bundling
-
-## Bidrag
-
-Vi setter pris på bidrag! Vennligst:
-1. Fork prosjektet
-2. Opprett en feature branch
-3. Commit dine endringer
-4. Push til branch
-5. Opprett en Pull Request
-
-## Lisens
-
-Dette prosjektet er lisensiert under MIT-lisensen.
+- Firestore security rules are open (`allow read, write: if true`) —
+  tighten after parity
+- Apple Music tracks are kept in the data but can't play on the web
