@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { createHash } from 'node:crypto';
 
 const [name, pin] = process.argv.slice(2);
 if (!name || !/^\d{4}$/.test(pin ?? '')) {
@@ -27,7 +28,12 @@ const app = initializeApp({
 const db = getFirestore(app);
 
 const key = `${name}|${pin}`;
-const snap = await getDocs(query(collection(db, 'backups'), where('profileName', '==', key)));
+const storageKey = createHash('sha256').update(`djsports:v1:${name.trim().toLowerCase()}|${pin}`, 'utf8').digest('hex');
+let snap = await getDocs(collection(db, 'profiles', storageKey, 'backups'));
+if (snap.empty) {
+  // Before the migration: old shared collection.
+  snap = await getDocs(query(collection(db, 'backups'), where('profileName', '==', key))).catch(() => snap);
+}
 if (snap.empty) { console.error(`No backups for profile "${name}"`); process.exit(2); }
 
 const docs = snap.docs

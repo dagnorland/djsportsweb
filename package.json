@@ -13,7 +13,8 @@
     "electron": "electron .",
     "electron-dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
     "build-electron": "npm run build && electron-builder",
-    "dist": "npm run build && electron-builder --publish=never"
+    "dist": "npm run build && electron-builder --publish=never",
+    "migrate-backups": "node scripts/migrate-backups.mjs"
   },
   "build": {
     "appId": "com.djsports.app",

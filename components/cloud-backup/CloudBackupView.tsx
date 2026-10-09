@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { SectionHeader } from "@/components/stage/SectionHeader";
 import { ConfirmDialog, type ConfirmOptions } from "@/components/stage/ConfirmDialog";
 import {
-  createBackup, deleteBackup, listBackupsForProfile, restoreBackup, syncBackup,
+  createBackup, deleteBackup, isLegacyBackup, listBackupsForProfile, restoreBackup, syncBackup,
 } from "@/lib/firebase/cloud-backup-service";
 import { SettingKeys, backupProfileKey, getSetting, setSetting } from "@/lib/db/settings-repo";
 import getCurrentUser from "@/lib/spotify/users/getCurrentUser";
@@ -158,7 +158,7 @@ export function CloudBackupView() {
     setStatus(null);
     setIsBusy(true);
     try {
-      const [p, t] = await restoreBackup(b.id, setProgress);
+      const [p, t] = await restoreBackup(profileKey, b.id, setProgress);
       showStatus(`Restored ${p} playlists and ${t} tracks.`);
     } catch (e) {
       showStatus(`Restore failed: ${e instanceof Error ? e.message : e}`, true);
@@ -180,7 +180,7 @@ export function CloudBackupView() {
     setStatus(null);
     setIsBusy(true);
     try {
-      const { added, skipped } = await syncBackup(b.id, setProgress);
+      const { added, skipped } = await syncBackup(profileKey, b.id, setProgress);
       showStatus(`Sync complete — added ${added} playlist(s), skipped ${skipped}.`);
     } catch (e) {
       showStatus(`Sync failed: ${e instanceof Error ? e.message : e}`, true);
@@ -200,7 +200,7 @@ export function CloudBackupView() {
     if (!ok) return;
     setStatus(null);
     try {
-      await deleteBackup(b.id);
+      await deleteBackup(profileKey, b.id);
       showStatus("Backup deleted.");
       await loadBackups();
     } catch (e) {
@@ -360,7 +360,10 @@ function BackupTile({
   return (
     <li className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl bg-stage-surface px-4 py-3">
       <div className="flex-1 min-w-[200px]">
-        <p className="font-medium truncate">{backup.deviceName || "Unknown device"}</p>
+        <p className="font-medium truncate">
+          {backup.deviceName || "Unknown device"}
+          {isLegacyBackup(backup) && <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-400" title="Stored the old way — will be moved by the migration">OLD</span>}
+        </p>
         <p className="text-sm text-stage-muted">{fmtDate(backup.createdAt)}</p>
         <p className="text-sm text-stage-muted">
           {backup.playlistCount} playlists · {backup.trackCount} tracks · {backup.tracksWithStartTime} with start time

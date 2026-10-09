@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Cloud backups protected by Profile + PIN in the database**: stored in
+  `profiles/{SHA-256(profile|PIN)}/backups/{id}` without the profile name
+  or PIN — same key function as the djsports app (`lib/backup/profile-key.ts`,
+  shared test vector). Old backups in the shared `backups` collection are
+  listed read-only (marked OLD) until migrated
+- `npm run migrate-backups` (dry run / `--copy` / `--delete-old`) moves the
+  old backups; new `firestore.rules` live in the djsports repo. Rollout in
+  `docs/FIRESTORE_SECURITY_PLAN.md`
+
 ### Changed
 - Settings: Cloud Backup moved up (right after Account); the start-time
   list and playlist sharing are tucked away under **Advanced** as
