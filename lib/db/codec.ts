@@ -100,7 +100,10 @@ export function trackTimeFromTrack(t: DJTrack): TrackTime {
   return { id: t.id, startTime: t.startTime, startTimeMS: t.startTimeMS };
 }
 
-/** Spotify id from "spotify:playlist:ID", "ID?si=…" or a bare "ID". */
+/**
+ * Spotify id from "spotify:playlist:ID", "playlist/ID", "playlist:ID",
+ * an open.spotify.com link, "ID?si=…" or a bare "ID".
+ */
 export function spotifyIdFromUri(uri: string): string {
-  return (uri ?? '').split(':').pop()?.split('?')[0]?.trim() ?? '';
+  return (uri ?? '').split('?')[0].split(/[:/]/).filter(Boolean).pop()?.trim() ?? '';
 }

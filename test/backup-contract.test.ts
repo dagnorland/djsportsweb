@@ -104,3 +104,23 @@ describe.skipIf(!hasFixture)('Flutter backup contract', () => {
     for (const id of orphans) expect(after.tracks.find(t => t.id === id)).toBeUndefined();
   });
 });
+
+import { spotifyIdFromUri } from '@/lib/db/codec';
+import { normalizeSpotifyUri } from '@/lib/db/playlist-actions';
+
+describe('Spotify uri helpers', () => {
+  it('extracts the playlist id from every form Flutter stores', () => {
+    for (const u of [
+      '7mpOe1Luw2gNjG7x8EgeLJ',
+      'spotify:playlist:7mpOe1Luw2gNjG7x8EgeLJ',
+      'playlist/7mpOe1Luw2gNjG7x8EgeLJ',
+      'playlist:7mpOe1Luw2gNjG7x8EgeLJ',
+      '7mpOe1Luw2gNjG7x8EgeLJ?si=43ea45edc7074725',
+      'https://open.spotify.com/playlist/7mpOe1Luw2gNjG7x8EgeLJ?si=abc',
+    ]) expect(spotifyIdFromUri(u)).toBe('7mpOe1Luw2gNjG7x8EgeLJ');
+  });
+  it('normalizes pasted links like Flutter', () => {
+    expect(normalizeSpotifyUri('https://open.spotify.com/playlist/7mpOe1Luw2gNjG7x8EgeLJ?si=x')).toBe('7mpOe1Luw2gNjG7x8EgeLJ');
+    expect(normalizeSpotifyUri('spotify:playlist:abc')).toBe('spotify:playlist:abc');
+  });
+});

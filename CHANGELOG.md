@@ -28,6 +28,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
   working on the new data until Home and Let's Play replace them
 
+### Added — playlist & track editors (step 4b)
+- **Playlist editor** `/playlist/new` and `/playlist/<id>` — port of
+  `djplaylist_edit_create.dart`: name + type, Show/Hide details, Spotify
+  URI (paste a link; **Sync** imports missing tracks and takes Spotify's
+  name, **Search** Spotify, **Browse** the linked playlist), Apple Music id
+  (kept, no web playback), example playlists, Shuffle at end, Auto next,
+  Position, Sync start times (from the TrackTime library), Shuffle. On
+  open it offers new tracks found in the Spotify playlist (like Flutter)
+- Track list: play from start time, edit, remove (deletes the track when
+  no other playlist uses it), drag to reorder
+- **Track editor** `/playlist/<id>/track/<n>` — port of
+  `djtrack_edit_create.dart`: name/album/artist/URI, start-time slider
+  (10 ms steps, ±0.5 s, value above the thumb), play / pause, Auto
+  Preview, volume ±5 %, live position with "Set as start", Update /
+  Update & next, previous / next steps and neighbour cards. Stored like
+  Flutter: whole seconds in `startTime` (ms), tenths in `startTimeMS`
+- **djSports Example Setup** on the welcome screen (5 Spotify playlists)
+- `lib/spotify/dj-client.ts` (browser Spotify calls), `useDJPlayer`
+- Tests for playlist actions and Spotify URI helpers
+
+### Fixed
+- `spotifyIdFromUri` handles `playlist/ID` and links (Flutter examples)
+
 ### Added — Home (step 4a)
 - **Home page** `/home` — port of `djsports_home_page.dart`: app bar
   (version, djsports, Cloud Backup, Settings, New playlist, Spotify chip,

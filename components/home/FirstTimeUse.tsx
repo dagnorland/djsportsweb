@@ -10,12 +10,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { format } from "date-fns";
-import { Cloud, ListPlus, Loader2, Music, Trophy } from "lucide-react";
+import { AlertCircle, CheckCircle2, Circle, Cloud, ListPlus, Loader2, Music, Sparkles, Trophy } from "lucide-react";
 import { TypeBadge } from "@/components/stage/TypeBadge";
 import { SettingKeys, backupProfileKey, getSetting, setSetting } from "@/lib/db/settings-repo";
 import { listBackupsForProfile } from "@/lib/firebase/cloud-backup-service";
 import type { BackupSummary } from "@/lib/types/djmodels";
 import { NEW_PLAYLIST_HREF } from "./HomeAppBar";
+import { EXAMPLE_SETUP, loadExampleSetup } from "@/lib/db/playlist-actions";
+import { typeLabel } from "@/lib/theme/playlistTypes";
 
 const input =
   "h-10 rounded-lg bg-transparent px-3 text-sm border border-input focus:border-2 focus:border-ring outline-none";
@@ -113,6 +115,52 @@ function RestoreSection() {
   );
 }
 
+type Entry = { status: "pending" | "syncing" | "done" | "error"; name?: string; trackCount?: number; error?: string };
+
+function ExampleSetupSection() {
+  const { data: session } = useSession();
+  const [entries, setEntries] = useState<Entry[] | null>(null);
+  const [running, setRunning] = useState(false);
+
+  const run = async () => {
+    if (!session?.accessToken) return;
+    setRunning(true);
+    setEntries(EXAMPLE_SETUP.map(() => ({ status: "pending" })));
+    await loadExampleSetup(session.accessToken, (i, st) =>
+      setEntries(list => list && list.map((e, j) => (j === i ? { ...e, ...st } : e))));
+    setRunning(false);
+  };
+
+  return (
+    <InfoCard icon={Sparkles} title="djSports Example Setup">
+      <p className="mb-3 text-sm text-stage-muted">
+        Creates 5 real Spotify playlists (HotSpot, Match ×2, Fun Stuff, Pre Match) and syncs all
+        tracks from Spotify. Requires Spotify connection.
+      </p>
+      {entries && (
+        <ul className="mb-3 space-y-1 text-sm">
+          {entries.map((e, i) => (
+            <li key={i} className="flex items-center gap-2">
+              {e.status === "done" ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                : e.status === "error" ? <AlertCircle className="h-4 w-4 text-red-600" />
+                : e.status === "syncing" ? <Loader2 className="h-4 w-4 animate-spin" />
+                : <Circle className="h-4 w-4 text-stage-muted" />}
+              <span className="font-medium">{e.name ?? typeLabel(EXAMPLE_SETUP[i].type)}</span>
+              <span className="text-stage-muted">
+                {e.status === "done" ? `${e.trackCount} tracks synced` : e.status === "error" ? e.error : e.status === "pending" ? "Pending" : "Syncing…"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button onClick={run} disabled={!session || running}
+        className="inline-flex h-10 items-center gap-2 rounded-full bg-stage-text px-4 text-sm font-semibold text-stage-bg disabled:opacity-40">
+        {running && <Loader2 className="h-4 w-4 animate-spin" />} {running ? "Syncing…" : "Load Example Setup"}
+      </button>
+    </InfoCard>
+  );
+}
+
 export function FirstTimeUse() {
   const { data: session } = useSession();
   return (
@@ -163,6 +211,8 @@ export function FirstTimeUse() {
           <ListPlus className="h-4 w-4" /> New playlist
         </Link>
       </InfoCard>
+
+      <ExampleSetupSection />
     </div>
   );
 }
