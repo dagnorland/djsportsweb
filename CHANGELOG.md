@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Settings: Cloud Backup moved up (right after Account); the start-time
+  list and playlist sharing are tucked away under **Advanced** as
+  collapsible sections (closed until opened or linked to)
+
 ## [1.0.0] - 2026-10-09
 
 Feature parity with the djSports Flutter app 4.1.2 — same data model,

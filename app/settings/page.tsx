@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { ArrowLeft, Cloud, LogOut, User } from "lucide-react";
+import { ArrowLeft, ChevronDown, Cloud, LogOut, User } from "lucide-react";
 import { SectionHeader } from "@/components/stage/SectionHeader";
 import { ThemeToggle } from "@/components/stage/ThemeToggle";
 import { LetsPlaySettingsCard } from "@/components/letsplay/LetsPlaySettingsCard";
@@ -22,16 +22,36 @@ import packageJson from "@/package.json";
 
 function Section({ id, title, help, children }: { id?: string; title: string; help?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="scroll-mt-16 rounded-2xl bg-stage-surface p-5">
+    <section id={id} className="scroll-mt-28 rounded-2xl bg-stage-surface p-5">
       <SectionHeader label={title}>{help}</SectionHeader>
       <div className="mt-3">{children}</div>
     </section>
   );
 }
 
+/** Tucked-away section (like Flutter's legacy pages): closed until opened or linked to. */
+function Collapsible({ id, title, help, children }: { id: string; title: string; help?: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const check = () => { if (window.location.hash === `#${id}`) setOpen(true); };
+    check();
+    window.addEventListener("hashchange", check);
+    return () => window.removeEventListener("hashchange", check);
+  }, [id]);
+  return (
+    <section id={id} className="scroll-mt-28 rounded-2xl bg-stage-surface">
+      <button className="flex w-full items-start gap-3 p-5 text-left" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+        <span className="flex-1"><SectionHeader label={title}>{help}</SectionHeader></span>
+        <ChevronDown className={`mt-0.5 h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && <div className="px-5 pb-5">{children}</div>}
+    </section>
+  );
+}
+
 const NAV = [
-  ["account", "Account"], ["playback", "Spotify output"], ["letsplay", "Let's Play"],
-  ["appearance", "Appearance"], ["starttimes", "Start times"], ["playlists", "Playlists"], ["backup", "Cloud Backup"],
+  ["account", "Account"], ["backup", "Cloud Backup"], ["playback", "Spotify output"], ["letsplay", "Let's Play"],
+  ["appearance", "Appearance"],
 ] as const;
 
 export default function SettingsPage() {
@@ -93,6 +113,12 @@ export default function SettingsPage() {
           <p className="mt-3 text-xs text-stage-muted">Logging out keeps your playlists, tracks and start times in this browser.</p>
         </Section>
 
+        <Section id="backup" title="Cloud Backup" help="Back up and restore all playlists, tracks and start times — shared with the djSports app (profile + PIN).">
+          <Link href="/backup" className="inline-flex h-9 items-center gap-2 rounded-full bg-stage-high px-4 text-sm font-medium hover:bg-stage-divider">
+            <Cloud className="h-4 w-4" /> Open Cloud Backup
+          </Link>
+        </Section>
+
         <Section id="playback" title="Spotify output — this browser plays through" help={'Same as "This Mac plays through" in the djSports app.'}>
           <PlaybackOutputCard />
           {session && (
@@ -112,19 +138,16 @@ export default function SettingsPage() {
           <ThemeToggle />
         </Section>
 
-        <Section id="starttimes" title="Manage track start time list">
+        <p className="px-1 pt-4 text-xs font-black uppercase tracking-[0.1em] text-stage-muted">Advanced</p>
+
+        <Collapsible id="starttimes" title="Manage track start time list" help="Export, import and clean up the start-time list (JSON).">
           <StartTimesSection />
-        </Section>
+        </Collapsible>
 
-        <Section id="playlists" title="Playlists" help="Share playlists with other djSports users">
+        <Collapsible id="playlists" title="Playlists" help="Share playlists with other djSports users (JSON).">
           <PlaylistShareSection />
-        </Section>
+        </Collapsible>
 
-        <Section id="backup" title="Cloud Backup" help="Back up and restore all playlists, tracks and start times — shared with the djSports app (profile + PIN).">
-          <Link href="/backup" className="inline-flex h-9 items-center gap-2 rounded-full bg-stage-high px-4 text-sm font-medium hover:bg-stage-divider">
-            <Cloud className="h-4 w-4" /> Open Cloud Backup
-          </Link>
-        </Section>
       </main>
     </div>
   );
