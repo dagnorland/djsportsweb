@@ -18,7 +18,7 @@ import { SettingKeys, setSetting } from "@/lib/db/settings-repo";
 import { shufflePlaylist } from "@/lib/db/playlist-actions";
 import { typeBg, typeLabel, typeText } from "@/lib/theme/playlistTypes";
 import { useDJPlayer } from "@/lib/hooks/useDJPlayer";
-import { getVolume } from "@/lib/spotify/dj-client";
+import { getVolume } from "@/lib/spotify/playback";
 import { abortFade, adjustVolume, fadeAndPause } from "@/lib/letsplay/transport";
 import { useLetsPlaySettings } from "@/lib/letsplay/settings";
 import { showAppToast } from "@/lib/ui/app-toast";

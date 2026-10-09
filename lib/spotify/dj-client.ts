@@ -59,9 +59,10 @@ function deviceQuery(): string {
   return id ? `?device_id=${encodeURIComponent(id)}` : "";
 }
 
-/** Plays one track from `positionMs` on the active (or cached) device. */
-export async function playTrack(token: string, uri: string, positionMs = 0): Promise<void> {
-  await call(token, `/me/player/play${deviceQuery()}`, {
+/** Plays one track from `positionMs` on `deviceId`, or the active (or cached) device. */
+export async function playTrack(token: string, uri: string, positionMs = 0, deviceId?: string): Promise<void> {
+  const q = deviceId ? `?device_id=${encodeURIComponent(deviceId)}` : deviceQuery();
+  await call(token, `/me/player/play${q}`, {
     method: "PUT",
     body: JSON.stringify({ uris: [uri], position_ms: Math.max(0, Math.round(positionMs)) }),
   });
@@ -107,4 +108,9 @@ export async function setVolume(token: string, percent: number): Promise<void> {
   const v = Math.max(0, Math.min(100, Math.round(percent)));
   const q = deviceQuery();
   await call(token, `/me/player/volume?volume_percent=${v}${q ? `&${q.slice(1)}` : ""}`, { method: "PUT" });
+}
+
+/** Moves Spotify playback to `deviceId` (PUT /me/player), keeping play/pause. */
+export async function transferPlayback(token: string, deviceId: string, play = false): Promise<void> {
+  await call(token, "/me/player", { method: "PUT", body: JSON.stringify({ device_ids: [deviceId], play }) });
 }

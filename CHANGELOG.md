@@ -28,6 +28,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
   working on the new data until Home and Let's Play replace them
 
+### Added — djSports player (Web Playback SDK), like the macOS app 4.1.0
+- **djSports player** (default): this browser tab runs Spotify's Web
+  Playback SDK and is its own Spotify Connect device "djSports". Plays go
+  there with `device_id` + `position_ms` — start positions land exactly
+  and no Spotify app is needed (works around Spotify for Mac accepting Web
+  API plays without loading the track). Pause / resume / seek / volume go
+  straight to the player; fade-pause lowers only the player volume
+  (smooth 40 ms steps) and the next play restores it. The player is
+  activated inside the click/key that starts playback (browser autoplay
+  rules). If it isn't ready or a play fails, plays fall back to the active
+  Spotify device
+- **Settings → Spotify output — this browser plays through**: djSports
+  player (recommended) or Spotify device (follow Spotify); same settings
+  key as Flutter (`spotifyMacPlayback`). Status, errors (e.g. Premium
+  required) and "Move Spotify playback here"
+- **Now-playing panel** for the djSports player at the bottom (cover,
+  title, artist/album, position slider to seek, play/pause)
+- Home app bar chip shows `account → device` coloured by player status
+- Removed the unused `PlayerProvider` and the global SDK script tag
+
+### Fixed
+- Token refresh dropped the user's name/email from the session
+
 ### Added — Let's Play (step 5)
 - **Let's Play** `/letsplay` replaces `/match` (which now redirects) —
   port of `djletsplay.dart`, always dark, full screen:

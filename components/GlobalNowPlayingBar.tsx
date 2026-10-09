@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
+import { useWebPlayer } from "@/lib/hooks/useWebPlayer";
+import { WebNowPlayingPanel } from "@/components/WebNowPlayingPanel";
 import { getCurrentlyPlayingTrack, pausePlayback, startResumePlayback, skipToNext, skipToPrevious, setPlaybackVolume, getAvailableDevices } from "@/lib/spotify";
 import type { CurrentlyPlaying } from "@/lib/types";
 import NowPlayingBar from "./NowPlayingBar";
@@ -15,6 +17,7 @@ import { getCachedDevice, findAndCacheMacDevice } from "@/lib/utils/deviceCache"
 export default function GlobalNowPlayingBar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const webPlayer = useWebPlayer();
   const [nowPlaying, setNowPlaying] = useState<CurrentlyPlaying | null>(null);
   const { interval, setInterval } = usePollingSettings();
   
@@ -206,6 +209,8 @@ export default function GlobalNowPlayingBar() {
 
   // Let's Play has its own controls and now-playing.
   if (pathname?.startsWith("/letsplay")) return null;
+  // The djSports player (this tab) has its own panel.
+  if (webPlayer.active) return <WebNowPlayingPanel />;
 
   return (
     <>

@@ -40,6 +40,8 @@ async function refreshAccessToken(token) {
         
         const data = await response.json();
         return {
+            ...token, // keep name, email, picture … and clear an earlier error
+            error: undefined,
             access_token: data.access_token,
             refresh_token: data.refresh_token ?? token.refresh_token,
             accessTokenExpires: Date.now() + data.expires_in * 1000,

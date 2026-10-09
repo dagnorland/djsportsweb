@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { FlashingLogo } from "@/components/stage/FlashingLogo";
 import { cn } from "@/lib/utils";
+import { useWebPlayer } from "@/lib/hooks/useWebPlayer";
+import { WEB_PLAYER_NAME } from "@/lib/spotify/web-player";
 import packageJson from "@/package.json";
 
 export const LETS_PLAY_LABEL = "Let's Play!";
@@ -24,6 +26,7 @@ const version = `v${packageJson.version}`;
 
 export function SpotifyStatusChip({ compact }: { compact?: boolean }) {
   const { data: session, status } = useSession();
+  const web = useWebPlayer();
   if (status === "loading") return null;
   if (!session) {
     return (
@@ -35,14 +38,18 @@ export function SpotifyStatusChip({ compact }: { compact?: boolean }) {
       </button>
     );
   }
+  // account → device, coloured by the djSports player status (4.1.0).
+  const dot = web.status === "ready" ? "bg-[#1DB954]" : web.status === "error" ? "bg-red-500" : web.status === "loading" ? "bg-amber-400" : "bg-stage-muted";
+  const device = web.status === "ready" ? WEB_PLAYER_NAME : web.status === "loading" ? "starting…" : web.status === "error" ? "player error" : "Spotify device";
   return (
-    <span
-      className="inline-flex h-8 max-w-[200px] items-center gap-2 rounded-full bg-stage-high px-3 text-sm"
-      title={`Spotify: ${session.user?.name ?? session.user?.email ?? ""}`}
+    <Link
+      href="/settings#playback"
+      className="inline-flex h-8 max-w-[260px] items-center gap-2 rounded-full bg-stage-high px-3 text-sm hover:bg-stage-divider"
+      title={`Spotify: ${session.user?.name ?? session.user?.email ?? ""} → ${device}${web.error ? `\n${web.error}` : ""}`}
     >
-      <span className="h-2 w-2 shrink-0 rounded-full bg-[#1DB954]" />
-      {!compact && <span className="truncate">{session.user?.name ?? "Spotify"}</span>}
-    </span>
+      <span className={cn("h-2 w-2 shrink-0 rounded-full", dot)} />
+      {!compact && <span className="truncate">{session.user?.name ?? "Spotify"} → {device}</span>}
+    </Link>
   );
 }
 

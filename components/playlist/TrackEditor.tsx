@@ -15,7 +15,7 @@ import { getDb } from "@/lib/db/djsports-db";
 import { useLive } from "@/lib/db/useLive";
 import { updateDJTrack } from "@/lib/db/track-repo";
 import { useDJPlayer } from "@/lib/hooks/useDJPlayer";
-import { getPlaybackPosition, getVolume, setVolume } from "@/lib/spotify/dj-client";
+import { getPosition, getVolume, setVolume } from "@/lib/spotify/playback";
 import { formatDuration, formatMs } from "@/lib/utils/formatTime";
 import { startPositionMs, type DJTrack } from "@/lib/types/djmodels";
 import { StartTimeSlider } from "./StartTimeSlider";
@@ -92,7 +92,7 @@ export function TrackEditor({ playlistId, index }: { playlistId: string; index: 
     setPolling(true);
     const tok = player.token;
     timer.current = setInterval(() => {
-      getPlaybackPosition(tok).then(s => { if (s) setLivePos(s.progressMs); }).catch(() => {});
+      getPosition(tok).then(s => { if (s) setLivePos(s.progressMs); }).catch(() => {});
     }, 500);
   }, [player.token]);
   useEffect(() => () => clearInterval(timer.current), []);

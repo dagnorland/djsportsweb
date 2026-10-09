@@ -6,10 +6,10 @@ import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PollingSettingsProvider } from "@/contexts/PollingSettingsContext";
-import Script from "next/script";
 import { ThemeProvider } from "@/lib/theme/theme";
 import { themeInitScript } from "@/lib/theme/theme-script";
 import { Toaster } from "@/components/ui/sonner";
+import { WebPlayerBoot } from "@/components/WebPlayerBoot";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,19 +44,6 @@ export default async function RootLayout({
                 <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
                 <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
                 <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `
-                            (function() {
-                                // Definer callback før SDK-en lastes for å unngå feil
-                                window.onSpotifyWebPlaybackSDKReady = function() {
-                                    // Callback vil bli overskrevet av PlayerProvider hvis den brukes
-                                    console.log('Spotify Web Playback SDK loaded');
-                                };
-                            })();
-                        `,
-                    }}
-                />
             </head>
             <body className={inter.className}>
                 <ErrorBoundary>
@@ -68,11 +55,8 @@ export default async function RootLayout({
                                 {children}
                             </main>
                             <GlobalNowPlayingBar />
-                            <Script
-                                src="https://sdk.scdn.co/spotify-player.js"
-                                strategy="afterInteractive"
-                            />
                             <Toaster />
+                            <WebPlayerBoot />
                         </PollingSettingsProvider>
                       </ThemeProvider>
                     </NextAuthProvider>

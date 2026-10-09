@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/stage/ThemeToggle";
 import { LetsPlaySettingsCard } from "@/components/letsplay/LetsPlaySettingsCard";
+import { PlaybackOutputCard } from "@/components/PlaybackOutputCard";
 import { DeviceSelector } from "@/components/DeviceSelector";
 import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -114,6 +115,17 @@ export default function SettingsPage() {
                 </div>
                 <ThemeToggle />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Playback output */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Spotify output — this browser plays through</CardTitle>
+              <CardDescription>Same as &quot;This Mac plays through&quot; in the djSports app</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PlaybackOutputCard />
             </CardContent>
           </Card>
 

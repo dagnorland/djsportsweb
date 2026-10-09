@@ -1,9 +1,12 @@
 /**
- * Let's Play transport on Spotify (Web API): volume steps, fade-out pause
- * (SpotifyRemoteRepository.fadeAndPausePlayer), play with last-played
- * bookkeeping.
+ * Let's Play transport: volume steps and fade-out pause
+ * (SpotifyRemoteRepository.fadeAndPausePlayer). With the djSports player
+ * only its own volume fades (smooth, ~40 ms steps); otherwise the Spotify
+ * device volume steps down through the Web API and is restored after.
  */
-import { getVolume, pause, resume, setVolume } from "@/lib/spotify/dj-client";
+import { getVolume as apiGetVolume, pause as apiPause, setVolume as apiSetVolume } from "@/lib/spotify/dj-client";
+import { adjustVolume as routedAdjust, isWebPlayerInUse, webFadeAndPause } from "@/lib/spotify/playback";
+import { cancelWebFade } from "@/lib/spotify/web-player";
 
 let fading: AbortController | null = null;
 
@@ -13,25 +16,20 @@ export const isFading = () => fading !== null;
 export function abortFade(): void {
   fading?.abort();
   fading = null;
+  cancelWebFade();
 }
 
-/** Volume ±delta (percent points). Returns the new volume or null. */
-export async function adjustVolume(token: string, delta: number): Promise<number | null> {
-  const v = await getVolume(token);
-  if (v == null) return null;
-  const next = Math.max(0, Math.min(100, v + delta));
-  await setVolume(token, next);
-  return next;
-}
+export const adjustVolume = routedAdjust;
 
-/**
- * Lowers the volume to 0 over `ms`, pauses, then restores the volume so the
- * next track starts at the old level.
- */
 export async function fadeAndPause(token: string, ms: number, onState?: (fading: boolean) => void): Promise<void> {
   abortFade();
-  const start = await getVolume(token);
-  if (start == null || ms <= 0) { await pause(token); return; }
+  if (isWebPlayerInUse()) {
+    onState?.(true);
+    try { await webFadeAndPause(ms); } finally { onState?.(false); }
+    return;
+  }
+  const start = await apiGetVolume(token);
+  if (start == null || ms <= 0) { await apiPause(token); return; }
   const ctrl = new AbortController();
   fading = ctrl;
   onState?.(true);
@@ -39,19 +37,14 @@ export async function fadeAndPause(token: string, ms: number, onState?: (fading:
     const steps = Math.max(4, Math.min(12, Math.round(ms / 150)));
     for (let i = 1; i <= steps; i++) {
       await new Promise(r => setTimeout(r, ms / steps));
-      if (ctrl.signal.aborted) { await setVolume(token, start); return; }
-      await setVolume(token, Math.round(start * (1 - i / steps)));
+      if (ctrl.signal.aborted) { await apiSetVolume(token, start); return; }
+      await apiSetVolume(token, Math.round(start * (1 - i / steps)));
     }
-    if (ctrl.signal.aborted) { await setVolume(token, start); return; }
-    await pause(token);
-    await setVolume(token, start);
+    if (ctrl.signal.aborted) { await apiSetVolume(token, start); return; }
+    await apiPause(token);
+    await apiSetVolume(token, start);
   } finally {
     if (fading === ctrl) fading = null;
     onState?.(false);
   }
-}
-
-export async function resumeAbortingFade(token: string): Promise<void> {
-  abortFade();
-  await resume(token);
 }
