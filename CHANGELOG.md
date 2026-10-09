@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed — Flutter data model (step 1 of `docs/FLUTTER_PARITY_PLAN.md`)
+- **Data model = Flutter's** (`lib/types/djmodels.ts`, `lib/db/codec.ts`):
+  `DJPlaylist` / `DJTrack` / `TrackTime` with the same fields and JSON as
+  the Flutter app, incl. `appleMusicPlaylistId` / `appleMusicId`.
+  `startTime` is **milliseconds**, `startTimeMS` an extra offset; playback
+  position = `startTime + startTimeMS` (`startPositionMs`)
+- **New local DB** `djsports` (Dexie) with the Flutter boxes `djplaylist`,
+  `djtrack`, `trackTime`, `settings`. The old `DJSportsDB` is deleted on
+  start — **no migration**; get data by restoring a cloud backup
+- Repositories ported from Flutter (`lib/db/playlist-repo.ts`,
+  `track-repo.ts`, `settings-repo.ts`): UUID playlist ids, duplicate
+  Spotify URI check, reorder within type, remove playlist + orphan tracks
+- **Cloud backup = Flutter's** (`lib/firebase/cloud-backup-service.ts`,
+  `lib/backup/*`): backups keyed by profile name + 4-digit PIN
+  (`"Name|1234"`), no composite index, max 5 per device, full restore
+  (ids kept as-is) and new **sync restore**
+- Spotify playlists are no longer mirrored into local data; logout keeps
+  local data
+- Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
+  working on the new data until Home and Let's Play replace them
+
+### Added
+- `npm test` (vitest + fake-indexeddb): contract test that a real Flutter
+  backup survives restore → backup unchanged
+- `npm run fetch-backup -- "<profile>" <pin>` saves the latest backup to
+  `test/fixtures/flutter-backup.json` (git-ignored)
+
+### Removed
+- `lib/db/migration.ts`, `MigrationRunner`, old `*-store.ts`, localStorage
+  legacy tables, `firestore-backup-service.ts`
+
 ## [0.18.0] - 2026-03-28
 
 ### Major: Supabase removed — full Dexie + Firebase migration

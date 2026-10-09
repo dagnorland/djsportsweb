@@ -25,29 +25,16 @@ import {
 import { toast } from 'sonner';
 import {
   createBackup,
-  listBackupsForAccount,
+  listBackupsForProfile,
   restoreBackup,
+  syncBackup,
   deleteBackup,
-} from '@/lib/firebase/firestore-backup-service';
+} from '@/lib/firebase/cloud-backup-service';
 import getCurrentUser from '@/lib/spotify/users/getCurrentUser';
 import type { BackupSummary } from '@/lib/types/djmodels';
+import { SettingKeys, backupProfileKey, getSetting, setSetting } from '@/lib/db/settings-repo';
 
-const DEVICE_NAME_KEY = 'djsports_device_name';
-
-function getStoredDeviceName(): string {
-  try {
-    return window.localStorage.getItem(DEVICE_NAME_KEY) ?? '';
-  } catch (_) {
-    return '';
-  }
-}
-
-function setStoredDeviceName(name: string): void {
-  try {
-    window.localStorage.setItem(DEVICE_NAME_KEY, name);
-  } catch (_) { /* ignore */ }
-}
-
+// Interim panel (step 1). Replaced by the /backup page in step 2.
 export function FirestoreBackupPanel() {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
@@ -55,11 +42,20 @@ export function FirestoreBackupPanel() {
   const [backups, setBackups] = useState<BackupSummary[]>([]);
   const [deviceName, setDeviceNameState] = useState('');
   const [spotifyUser, setSpotifyUser] = useState<{ id: string; name: string } | null>(null);
+  const [profile, setProfile] = useState('');
+  const [pin, setPin] = useState('');
+  const profileKey = backupProfileKey(profile.trim(), pin);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDeviceNameState(getStoredDeviceName());
-    }
+    Promise.all([
+      getSetting(SettingKeys.deviceName, ''),
+      getSetting(SettingKeys.backupProfile, ''),
+      getSetting(SettingKeys.backupPin, ''),
+    ]).then(([d, p, n]) => {
+      setDeviceNameState(d as string);
+      setProfile(p as string);
+      setPin(n as string);
+    }).catch(() => { /* ignore */ });
   }, []);
 
   useEffect(() => {
@@ -71,27 +67,32 @@ export function FirestoreBackupPanel() {
   }, [session?.accessToken]);
 
   const loadBackups = useCallback(async () => {
-    if (!spotifyUser) return;
+    if (!profileKey) { setBackups([]); return; }
     try {
-      const list = await listBackupsForAccount(spotifyUser.id);
+      const list = await listBackupsForProfile(profileKey);
       setBackups(list);
     } catch (err) {
       console.error('Failed to list backups:', err);
       toast.error('Kunne ikke laste sikkerhetskopier');
     }
-  }, [spotifyUser]);
+  }, [profileKey]);
 
   useEffect(() => {
-    if (isOpen && spotifyUser) {
+    if (isOpen) {
       loadBackups();
     }
-  }, [isOpen, spotifyUser, loadBackups]);
+  }, [isOpen, loadBackups]);
 
   const handleCreate = async () => {
-    if (!spotifyUser) return;
+    if (!profileKey) { toast.error('Sett profilnavn og 4-sifret PIN først'); return; }
     setLoading(true);
     try {
-      await createBackup(spotifyUser.id, spotifyUser.name, deviceName || 'Web');
+      await createBackup({
+        profileName: profileKey,
+        spotifyUserId: spotifyUser?.id ?? '',
+        spotifyDisplayName: spotifyUser?.name ?? '',
+        deviceName: deviceName || 'Web',
+      });
       toast.success('Sikkerhetskopi opprettet!');
       await loadBackups();
     } catch (err) {
@@ -116,6 +117,20 @@ export function FirestoreBackupPanel() {
     }
   };
 
+  const handleSync = async (backupId: string) => {
+    setLoading(true);
+    try {
+      const { added, skipped } = await syncBackup(backupId);
+      toast.success(`Synk ferdig — la til ${added}, hoppet over ${skipped}. Laster siden på nytt...`);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      console.error('Sync backup error:', err);
+      toast.error('Kunne ikke synkronisere sikkerhetskopi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (backupId: string) => {
     setLoading(true);
     try {
@@ -132,10 +147,21 @@ export function FirestoreBackupPanel() {
 
   const handleDeviceNameChange = (value: string) => {
     setDeviceNameState(value);
-    setStoredDeviceName(value);
+    setSetting(SettingKeys.deviceName, value).catch(() => { /* ignore */ });
   };
 
-  if (status !== 'authenticated' || !spotifyUser) return null;
+  const handleProfileChange = (value: string) => {
+    setProfile(value);
+    setSetting(SettingKeys.backupProfile, value.trim()).catch(() => { /* ignore */ });
+  };
+
+  const handlePinChange = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 4);
+    setPin(digits);
+    setSetting(SettingKeys.backupPin, digits).catch(() => { /* ignore */ });
+  };
+
+  if (status === 'loading') return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -154,6 +180,29 @@ export function FirestoreBackupPanel() {
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Profile + PIN (same as the Flutter app) */}
+          <div className="space-y-2">
+            <Label htmlFor="backup-profile">Profil (navn + 4-sifret PIN)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="backup-profile"
+                value={profile}
+                onChange={e => handleProfileChange(e.target.value)}
+                placeholder="Profilnavn"
+                className="flex-1"
+              />
+              <Input
+                id="backup-pin"
+                value={pin}
+                onChange={e => handlePinChange(e.target.value)}
+                placeholder="PIN"
+                inputMode="numeric"
+                type="password"
+                className="w-24"
+              />
+            </div>
+          </div>
+
           {/* Device name */}
           <div className="space-y-2">
             <Label htmlFor="device-name">Enhetsnavn</Label>
@@ -235,6 +284,16 @@ export function FirestoreBackupPanel() {
                       >
                         <Download className="h-3 w-3" />
                         Gjenopprett
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSync(backup.id)}
+                        disabled={loading}
+                        className="flex-1 flex items-center gap-1"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Synk
                       </Button>
                       <Button
                         size="sm"

@@ -14,7 +14,7 @@ import {
 import { getCurrentlyPlayingTrack, getAvailableDevices } from "@/lib/spotify";
 import { SimplifiedPlaylist, PlaylistTrack, CurrentlyPlaying } from "@/lib/types";
 import { getAllPlaylistTypes } from "@/lib/utils/playlistTypes";
-import { getAllPlaylists } from "@/lib/db/playlist-store";
+import { getAllPlaylists } from "@/lib/db/legacy-bridge";
 import PlaylistCarousel from "@/components/PlaylistCarousel";
 import { getPlaylistTypeColor } from "@/lib/utils";
 import { loadPlaylistsCached, loadMultiplePlaylistTracks, preloadCriticalPlaylists } from "@/lib/spotify/optimized/playlistLoader";
@@ -63,7 +63,7 @@ export default function MatchPage() {
       // Merge in typed Dexie playlists not in Spotify result (e.g. restored from backup)
       const spotifyIds = new Set(data.map((p: SimplifiedPlaylist) => p.id));
       const dexiePlaylists = await getAllPlaylists();
-      const dexieOnly = dexiePlaylists.filter(p => p.type && p.type !== 'none' && !spotifyIds.has(p.id));
+      const dexieOnly = dexiePlaylists.filter(p => p.type && !spotifyIds.has(p.id));
       if (dexieOnly.length > 0) {
         const extra: SimplifiedPlaylist[] = dexieOnly.map(p => ({
           id: p.id,

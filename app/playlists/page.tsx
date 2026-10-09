@@ -16,8 +16,7 @@ import {
   loadPlaylistsCached,
   loadPlaylistTracksCached,
 } from "@/lib/spotify/optimized/playlistLoader";
-import { getAllPlaylists, updatePlaylistTrackIds } from "@/lib/db/playlist-store";
-import { getAllTracks } from "@/lib/db/track-store";
+import { getAllPlaylists, updatePlaylistTrackIds, getAllTracks } from "@/lib/db/legacy-bridge";
 import type {
   SimplifiedPlaylist,
   PlaylistTrack,
@@ -109,7 +108,7 @@ export default function PlaylistsPage() {
       // Merge in any typed Dexie playlists not present in Spotify result (e.g. restored from backup)
       const spotifyIds = new Set(items.map(p => p.id));
       const dexiePlaylists = await getAllPlaylists();
-      const dexieOnly = dexiePlaylists.filter(p => p.type && p.type !== 'none' && !spotifyIds.has(p.id));
+      const dexieOnly = dexiePlaylists.filter(p => p.type && !spotifyIds.has(p.id));
       if (dexieOnly.length > 0) {
         const extra: SimplifiedPlaylist[] = dexieOnly.map(p => ({
           id: p.id,

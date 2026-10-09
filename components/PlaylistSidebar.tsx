@@ -66,7 +66,7 @@ export default function PlaylistSidebar({
   }, [playlists]);
 
   const handlePlaylistTypeChange = (playlistId: string, newType: DJPlaylistType) => {
-    savePlaylistType(playlistId, newType);
+    savePlaylistType(playlistId, newType, playlists.find(p => p.id === playlistId)?.name ?? '');
     setPlaylistTypes(prev => ({
       ...prev,
       [playlistId]: newType,

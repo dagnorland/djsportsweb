@@ -26,12 +26,8 @@ export function clearLocalStorage(): void {
     console.error('Failed to clear localStorage:', error);
   }
 
-  // Clear Dexie stores (async, fire and forget)
-  Promise.all([
-    import('@/lib/db/playlist-store').then(m => m.clearAllPlaylists()),
-    import('@/lib/db/track-store').then(m => m.clearAllTracks()),
-    import('@/lib/db/tracktime-store').then(m => m.clearAllTrackTimes()),
-  ]).catch(err => console.error('Failed to clear Dexie on logout:', err));
+  // Local DJ data (playlists, tracks, start times) is kept on logout —
+  // like the Flutter app. Use cloud backup / restore to move it.
 }
 
 /**

@@ -7,28 +7,12 @@ import { getCachedData, setCachedData, CACHE_KEYS } from "@/lib/utils/cache";
 import { withTiming, performanceMonitor } from "@/lib/utils/performance";
 import { SimplifiedPlaylist, PlaylistTrack, Track } from "@/lib/types";
 
-async function persistPlaylistsToDexie(playlists: SimplifiedPlaylist[]): Promise<void> {
-  if (typeof window === 'undefined') return;
-  try {
-    const { upsertPlaylistFromSpotify } = await import('@/lib/db/playlist-store');
-    await Promise.all(playlists.map((p, i) => upsertPlaylistFromSpotify(p, i)));
-  } catch (err) {
-    console.error('[dexie] Failed to persist playlists:', err);
-  }
-}
+// Spotify is no longer mirrored into the local DJ data (Flutter model:
+// DJ playlists are local; Spotify is an import source). Kept as no-ops so
+// existing callers keep working until §4/§5 replace them.
+async function persistPlaylistsToDexie(_playlists: SimplifiedPlaylist[]): Promise<void> {}
 
-async function persistTracksToDexie(tracks: PlaylistTrack[]): Promise<void> {
-  if (typeof window === 'undefined') return;
-  try {
-    const { upsertTrackFromSpotify } = await import('@/lib/db/track-store');
-    const realTracks = tracks
-      .map(pt => pt.track)
-      .filter((t): t is Track => !!t && 'duration_ms' in t);
-    await Promise.all(realTracks.map(t => upsertTrackFromSpotify(t)));
-  } catch (err) {
-    console.error('[dexie] Failed to persist tracks:', err);
-  }
-}
+async function persistTracksToDexie(_tracks: PlaylistTrack[]): Promise<void> {}
 
 interface PlaylistWithTracks {
   playlist: SimplifiedPlaylist;

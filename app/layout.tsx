@@ -6,7 +6,6 @@ import { Navigation } from "@/components/Navigation";
 import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PollingSettingsProvider } from "@/contexts/PollingSettingsContext";
-import { MigrationRunner } from "@/components/MigrationRunner";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -71,7 +70,6 @@ export default async function RootLayout({
                 <ErrorBoundary>
                     <NextAuthProvider>
                         <PollingSettingsProvider>
-                            <MigrationRunner />
                             <Navigation />
                             <main className="pb-24">
                                 {children}
