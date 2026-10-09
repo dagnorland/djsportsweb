@@ -7,6 +7,9 @@ import GlobalNowPlayingBar from "@/components/GlobalNowPlayingBar";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PollingSettingsProvider } from "@/contexts/PollingSettingsContext";
 import Script from "next/script";
+import { ThemeProvider } from "@/lib/theme/theme";
+import { themeInitScript } from "@/lib/theme/theme-script";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,25 +36,14 @@ export default async function RootLayout({
         <html lang="no" suppressHydrationWarning>
             <head>
                 <link rel="manifest" href="/manifest.json" />
-                <meta name="theme-color" content="#1db954" />
+                <meta name="theme-color" content="#121212" />
                 <meta name="apple-mobile-web-app-capable" content="yes" />
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
                 <meta name="apple-mobile-web-app-title" content="djSports" />
                 <link rel="apple-touch-icon" href="/icon-192x192.png" />
                 <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
                 <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
-                <script
-                    dangerouslySetInnerHTML={{
-                        __html: `
-                            (function() {
-                                try {
-                                    var theme = localStorage.getItem('theme') || 'dark';
-                                    document.documentElement.classList.add(theme);
-                                } catch (e) {}
-                            })();
-                        `,
-                    }}
-                />
+                <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
                 <script
                     dangerouslySetInnerHTML={{
                         __html: `
@@ -69,6 +61,7 @@ export default async function RootLayout({
             <body className={inter.className}>
                 <ErrorBoundary>
                     <NextAuthProvider>
+                      <ThemeProvider>
                         <PollingSettingsProvider>
                             <Navigation />
                             <main className="pb-24">
@@ -79,7 +72,9 @@ export default async function RootLayout({
                                 src="https://sdk.scdn.co/spotify-player.js"
                                 strategy="afterInteractive"
                             />
+                            <Toaster />
                         </PollingSettingsProvider>
+                      </ThemeProvider>
                     </NextAuthProvider>
                 </ErrorBoundary>
             </body>

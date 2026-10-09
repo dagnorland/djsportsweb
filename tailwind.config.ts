@@ -7,6 +7,7 @@ const config = {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -19,22 +20,23 @@ const config = {
     },
     extend: {
       colors: {
-        // Dark "stage" palette — djsports/lib/core/theme/stage_colors.dart
+        // Stage palette (stage_colors.dart) — CSS variables, so it follows
+        // the dark (default) / light theme. See app/globals.css.
         stage: {
-          bg: "#121212",
-          surface: "#1E1E1E",
-          panel: "#181818",
-          high: "#2A2A2A",
-          divider: "#2E2E2E",
-          text: "#FFFFFF",
-          muted: "#B3B3B3",
+          bg: "hsl(var(--stage-bg) / <alpha-value>)",
+          surface: "hsl(var(--stage-surface) / <alpha-value>)",
+          panel: "hsl(var(--stage-panel) / <alpha-value>)",
+          high: "hsl(var(--stage-high) / <alpha-value>)",
+          divider: "hsl(var(--stage-divider) / <alpha-value>)",
+          text: "hsl(var(--stage-text) / <alpha-value>)",
+          muted: "hsl(var(--stage-muted) / <alpha-value>)",
         },
         // Playlist type colours (Flutter TypeColor extension)
         djtype: {
           hotspot: "#F44336",   // Colors.red
           match: "#4CAF50",     // Colors.green
           funStuff: "#2196F3",  // Colors.blue
-          preMatch: "#000000",  // Colors.black (grey-400 on dark)
+          preMatch: "hsl(var(--type-prematch) / <alpha-value>)", // black, grey-400 on dark
           archived: "#69F0AE",  // Colors.greenAccent
         },
         border: "hsl(var(--border))",

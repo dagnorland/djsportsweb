@@ -5,12 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Background class for a playlist type (Flutter colours). */
 export function getPlaylistTypeColor(type: string): string {
   switch (type) {
-    case "hotspot": return "bg-red-500";
-    case "match": return "bg-blue-500";
-    case "funStuff": return "bg-green-500";
-    case "preMatch": return "bg-yellow-500";
-    default: return "bg-gray-500";
+    case "hotspot": return "bg-djtype-hotspot";
+    case "match": return "bg-djtype-match";
+    case "funStuff": return "bg-djtype-funStuff";
+    case "preMatch": return "bg-djtype-preMatch";
+    case "archived": return "bg-djtype-archived";
+    default: return "bg-stage-muted";
   }
 }

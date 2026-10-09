@@ -28,7 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
   working on the new data until Home and Let's Play replace them
 
+### Changed — stage theme (step 3)
+- **Dark stage look is the default** everywhere; **light theme** as an
+  option (Settings → Tema: Dark / Light). Purple and "sports" themes
+  removed. All shadcn colours map onto the stage palette
+  (`app/globals.css`); `stage.*` Tailwind colours follow the theme
+- Playlist type colours now match Flutter (match = green, fun stuff =
+  blue; pre-match black → grey on dark)
+- Toasts work (a `Toaster` was never mounted) — top centre like Flutter,
+  themed; `showAppToast` hides info toasts unless "Show info messages"
+
 ### Added
+- Shared stage components (`components/stage/`): `FlashingLogo`,
+  `CoverMosaic`, `RoundTypeButton`, `TypeBadge`/`TypeDot`, `ExitButton`,
+  `ThemeToggle`; `lib/theme/playlistTypes.ts` (type colours/labels/order)
 - **Cloud Backup page** `/backup` (step 2) — port of Flutter's
   `cloud_backup_screen.dart` in the dark stage look: Profile + PIN (show/
   hide), Device name, Backup Now (keeps last 5 per device), Existing

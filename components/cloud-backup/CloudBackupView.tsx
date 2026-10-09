@@ -22,11 +22,11 @@ import getCurrentUser from "@/lib/spotify/users/getCurrentUser";
 import type { BackupSummary } from "@/lib/types/djmodels";
 
 const inputCls =
-  "h-10 rounded-lg bg-transparent px-3 text-sm text-stage-text placeholder:text-white/40 " +
-  "border border-white/40 focus:border-2 focus:border-stage-text outline-none";
+  "h-10 rounded-lg bg-transparent px-3 text-sm text-stage-text placeholder:text-stage-text/40 " +
+  "border border-input focus:border-2 focus:border-ring outline-none";
 const buttonCls =
   "inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-sm font-semibold " +
-  "bg-stage-high text-stage-text hover:bg-[#3a3a3a] disabled:opacity-40 disabled:pointer-events-none";
+  "bg-stage-high text-stage-text hover:bg-stage-divider disabled:opacity-40 disabled:pointer-events-none";
 
 const fmtDate = (d: Date) => format(d, "MMM d y  HH:mm");
 
@@ -289,7 +289,7 @@ export function CloudBackupView() {
             {isSaving ? "Backing up…" : "Backup Now"}
           </button>
           {status && (
-            <p className={`mt-2 text-[13px] select-text ${status.error ? "text-red-500" : "text-green-400"}`}>
+            <p className={`mt-2 text-[13px] select-text ${status.error ? "text-red-500" : "text-green-500"}`}>
               {status.msg}
             </p>
           )}

@@ -3,7 +3,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ThemeSwitcherTransition } from "@/components/ui/theme-switcher-transition";
+import { ThemeToggle } from "@/components/stage/ThemeToggle";
 import { DeviceSelector } from "@/components/DeviceSelector";
 import { PollingIntervalSlider } from "@/components/PollingIntervalSlider";
 import { RouteGuard } from "@/components/RouteGuard";
@@ -108,10 +108,10 @@ export default function SettingsPage() {
                 <div className="flex-1">
                   <p className="text-sm font-medium mb-2">Tema</p>
                   <p className="text-sm text-muted-foreground">
-                    Velg mellom lys, mørk eller sports-tema
+                    Mørk scene-look (standard) eller lyst tema
                   </p>
                 </div>
-                <ThemeSwitcherTransition />
+                <ThemeToggle />
               </div>
             </CardContent>
           </Card>
