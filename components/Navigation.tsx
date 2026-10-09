@@ -29,11 +29,15 @@ import {
 import { clearLocalStorage } from "@/lib/utils/logout";
 
 const navigationItems = [
+  { name: "Home", href: "/home" },
   { name: "Spillelister", href: "/playlists" },
   { name: "Kamp", href: "/match" },
   { name: "Cloud Backup", href: "/backup", icon: Cloud },
   { name: "Innstillinger", href: "/settings", icon: Settings },
 ];
+
+/** Stage pages (ported from Flutter) have their own app bar. */
+const STAGE_ROUTES = ["/home", "/backup", "/playlist"];
 
 export function Navigation() {
   const pathname = usePathname();
@@ -71,6 +75,8 @@ export function Navigation() {
     // Force a hard redirect to ensure clean state
     window.location.href = '/';
   };
+
+  if (STAGE_ROUTES.some(r => pathname === r || pathname?.startsWith(`${r}/`))) return null;
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -141,7 +147,7 @@ export function Navigation() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-            <Link href="/playlists" className="flex items-center space-x-2">
+            <Link href="/home" className="flex items-center space-x-2">
               <VersionDisplay className="text-xs text-muted-foreground" />
               <Image
                 src="/icon-192x192.png"

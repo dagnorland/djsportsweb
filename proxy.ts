@@ -21,7 +21,7 @@ export async function proxy(
 
     // Redirect authenticated users from home to playlists
     if (token) {
-      return NextResponse.redirect(new URL("/playlists", req.url));
+      return NextResponse.redirect(new URL("/home", req.url));
     }
   }
 

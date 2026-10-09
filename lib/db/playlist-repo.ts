@@ -85,6 +85,13 @@ export async function reorderPlaylistsOfType(type: string, oldIndex: number, new
   await db.djplaylist.bulkPut(list);
 }
 
+/** Moves a playlist within its type (array-move semantics, as dnd-kit). */
+export async function movePlaylistInType(type: string, from: number, to: number): Promise<void> {
+  if (from === to) return;
+  // reorderPlaylistsOfType uses Flutter's ReorderableList indices.
+  await reorderPlaylistsOfType(type, from, to > from ? to + 1 : to);
+}
+
 export async function setPlaylistType(id: string, type: string): Promise<void> {
   await getDb().djplaylist.update(id, { type });
 }

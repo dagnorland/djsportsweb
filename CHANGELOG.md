@@ -28,6 +28,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Temporary `lib/db/legacy-bridge.ts` keeps `/playlists` and `/match`
   working on the new data until Home and Let's Play replace them
 
+### Added — Home (step 4a)
+- **Home page** `/home` — port of `djsports_home_page.dart`: app bar
+  (version, djsports, Cloud Backup, Settings, New playlist, Spotify chip,
+  flashing-logo **Let's Play!**; ⋮ menu on narrow screens), type chips
+  (All + per type), one shelf per type (two side by side when they fit),
+  single type = grid. Drag a card to reorder within its type (mouse: drag,
+  touch: long-press) — saved as `position`, like Flutter
+- **Playlist card** — cover mosaic, type strip, round edit button in the
+  type colour, ⋮ menu (Open in Spotify, Delete with confirm), counts
+- **Welcome screen** when there are no playlists (light design like
+  Flutter): Restore from Cloud Backup (profile + PIN, check for backups),
+  Connect to Spotify, Playlist Types, Add Your First Playlist
+- Logged-in users land on `/home`; the old top navigation is hidden on
+  the ported pages, which have their own app bar
+- Live Dexie queries (`useLive`, `useDJData`)
+
 ### Changed — stage theme (step 3)
 - **Dark stage look is the default** everywhere; **light theme** as an
   option (Settings → Tema: Dark / Light). Purple and "sports" themes

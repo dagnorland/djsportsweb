@@ -86,7 +86,7 @@ export default function Page(): React.ReactElement {
                     <Button
                         type="submit"
                         className="w-full"
-                        onClick={(): Promise<SignInResponse | undefined> => signIn('spotify', { callbackUrl: '/playlists' })}
+                        onClick={(): Promise<SignInResponse | undefined> => signIn('spotify', { callbackUrl: '/home' })}
                     >
                         Logg inn
                     </Button>

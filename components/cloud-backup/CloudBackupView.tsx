@@ -211,7 +211,7 @@ export function CloudBackupView() {
   return (
     <div className="min-h-screen bg-stage-bg text-stage-text">
       <header className="flex items-center gap-2 h-14 px-2 max-w-3xl mx-auto">
-        <Link href="/playlists" aria-label="Back" className="p-2 rounded-full hover:bg-stage-high">
+        <Link href="/home" aria-label="Back" className="p-2 rounded-full hover:bg-stage-high">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <h1 className="text-xl font-semibold">Cloud Backup</h1>
