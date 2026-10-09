@@ -209,3 +209,8 @@ export function webFadeAndPause(totalMs: number): Promise<void> {
     }, 40);
   });
 }
+
+/** Tests / previews only: fake a player state. */
+export function debugSetWebPlayerState(patch: Partial<WebPlayerState>): void {
+  set(patch);
+}

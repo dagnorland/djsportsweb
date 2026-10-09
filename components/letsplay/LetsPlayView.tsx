@@ -26,6 +26,8 @@ import { formatDuration } from "@/lib/utils/formatTime";
 import { startPositionMs, type DJPlaylist, type DJPlaylistType, type DJTrack } from "@/lib/types/djmodels";
 import { LetsPlayCard, type LetsPlayCardHandle } from "./LetsPlayCard";
 import { LetsPlayCompactBar, LetsPlaySidebar, type ControlsProps } from "./LetsPlayControls";
+import { usePanelSettings } from "@/components/WebPlayerPanel";
+import { useWebPlayer } from "@/lib/hooks/useWebPlayer";
 
 const SECTIONS: DJPlaylistType[] = ["hotspot", "match", "funStuff", "preMatch"];
 const KEYS: Partial<Record<DJPlaylistType, string[]>> = {
@@ -52,7 +54,15 @@ export function LetsPlayView() {
   const router = useRouter();
   const player = useDJPlayer();
   const settings = useLetsPlaySettings();
-  const { w, h } = useViewport();
+  const { w: vw, h: vh } = useViewport();
+  const web = useWebPlayer();
+  const panel = usePanelSettings();
+  // The djSports player panel sits below Let's Play (like Flutter's
+  // WebPlayerPanelHost); while it is expanded the controls drop their own
+  // cover/track.
+  const panelH = web.active && web.playback ? (panel.visible ? Math.min(Math.max(72, vh * 0.7), Math.max(72, panel.height)) : 30) : 0;
+  const showNowPlaying = !(web.active && web.playback && panel.visible);
+  const w = vw, h = vh - panelH;
 
   const data = useLive(async () => {
     const [playlists, tracks] = await Promise.all([getDb().djplaylist.toArray(), getDb().djtrack.toArray()]);
@@ -146,7 +156,7 @@ export function LetsPlayView() {
   }, [settings.keyboardShortcutsEnabled, sections, pause, resume, changeVolume]);
 
   const controls: ControlsProps = {
-    lastTrack, volume, fadeMs: settings.fadeVolumeMs, fading,
+    lastTrack: showNowPlaying ? lastTrack : null, volume, fadeMs: settings.fadeVolumeMs, fading,
     onPlay: resume, onPause: pause, onFadePause: fadePause, onVolume: changeVolume, onExit: exit,
   };
 
@@ -186,7 +196,7 @@ export function LetsPlayView() {
   );
 
   return (
-    <div className="dark fixed inset-0 z-50 bg-stage-bg text-stage-text">
+    <div className="dark fixed inset-x-0 top-0 z-50 bg-stage-bg text-stage-text" style={{ bottom: "var(--now-playing-h, 0px)" }}>
       {wide ? (
         position === "bottom" ? (
           <div className="flex h-full flex-col">

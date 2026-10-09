@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/lib/theme/theme";
 import { themeInitScript } from "@/lib/theme/theme-script";
 import { Toaster } from "@/components/ui/sonner";
 import { WebPlayerBoot } from "@/components/WebPlayerBoot";
+import { WebPlayerPanel } from "@/components/WebPlayerPanel";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -57,6 +58,7 @@ export default async function RootLayout({
                             <GlobalNowPlayingBar />
                             <Toaster />
                             <WebPlayerBoot />
+                            <WebPlayerPanel />
                         </PollingSettingsProvider>
                       </ThemeProvider>
                     </NextAuthProvider>

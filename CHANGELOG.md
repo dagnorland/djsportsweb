@@ -43,8 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   player (recommended) or Spotify device (follow Spotify); same settings
   key as Flutter (`spotifyMacPlayback`). Status, errors (e.g. Premium
   required) and "Move Spotify playback here"
-- **Now-playing panel** for the djSports player at the bottom (cover,
-  title, artist/album, position slider to seek, play/pause)
+- **Now-playing panel** (port of `web_player_panel.dart`) below every
+  screen — Let's Play too — while the djSports player is the active
+  device: cover, title, artist, album, position (slider to seek),
+  play/pause. Drag the top edge to resize (cover and text grow with it, up
+  to 70 % of the window), collapse to a slim bar and back (settings:
+  `webPlayerPanelVisible`, `webPlayerPanelHeight`). Let's Play makes room
+  for it and its controls drop their own cover/track while it is expanded
 - Home app bar chip shows `account → device` coloured by player status
 - Removed the unused `PlayerProvider` and the global SDK script tag
 
